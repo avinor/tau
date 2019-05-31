@@ -28,5 +28,10 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
+	p := rootCmd.PersistentFlags()
+	p.BoolVar(&debug, "debug", false, "enable verbose debug logs")
+
+	rootCmd.AddCommand(newPlanCmd())
+
 	return rootCmd
 }
