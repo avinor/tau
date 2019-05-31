@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -14,20 +15,27 @@ import (
 	getter "github.com/hashicorp/go-getter"
 )
 
+const (
+	maxDependencyDepth = 5
+)
+
 type Loader struct {
 	hashing func(string) string
 	pwd     string
-	configs []*config.Config
 }
 
 type Module struct {
+	src string // ./examples
+	dst string // .tau/dfaf
+
+	config *config.Config
 	// Executor
 }
 
 func NewLoader() *Loader {
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Panicf("Unable to get working directory: %s", err)
+		log.Fatalf("Unable to get working directory: %s", err)
 	}
 
 	return &Loader{
@@ -36,11 +44,35 @@ func NewLoader() *Loader {
 	}
 }
 
-func (l *Loader) Loadfile(src string) error {
+func (l *Loader) Load(src string) error {
+	dst, err := l.loadSources(src)
+
+	if err != nil {
+		return err
+	}
+
+	l.resolveModules(dst)
+
+	// Load src into dst
+	// Resolve all .hcl / .tau files
+	// Create config / module for all files
+
+	// Check dependencies
+	// Load unresolved dependencies into dst
+	// Create config for dependencies
+
+	return nil
+}
+
+func (l *Loader) GetModules() ([]*Module, error) {
+	return nil, nil
+}
+
+func (l *Loader) loadSources(src string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
 
-	dst := fmt.Sprintf(".tau/%s/source", l.hashing(src))
+	dst := fmt.Sprintf(".tau/%s", l.hashing(src))
 	var err error
 
 	// Try with .hcl and .tau extension if cannot find file
@@ -54,15 +86,41 @@ func (l *Loader) Loadfile(src string) error {
 		}
 
 		if err = client.Get(); err == nil {
-			break
+			return dst, nil
 		}
+	}
+
+	return dst, err
+}
+
+func (l *Loader) resolveModules(src string) error {
+
+	matches, err := resolveModuleExt(src, []string{"*.hcl", "*.tau"})
+
+	if err != nil {
+		return err
+	}
+
+	for _, match := range matches {
+		log.Info(match)
 	}
 
 	return nil
 }
 
-func (l *Loader) GetModules() ([]*Module, error) {
-	return nil, nil
+func resolveModuleExt(src string, exts []string) ([]string, error) {
+	matches := []string{}
+
+	for _, ext := range exts {
+		m, err := filepath.Glob(filepath.Join(src, ext))
+		if err != nil {
+			return nil, err
+		}
+
+		matches = append(matches, m...)
+	}
+
+	return matches, nil
 }
 
 func getDstPath(src string) string {
