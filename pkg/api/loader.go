@@ -32,7 +32,7 @@ func NewLoader(src string) *Loader {
 }
 
 func (l *Loader) Load() error {
-	log.Info("Loading modules...")
+	log.WithField("blank_before", true).Info("Loading modules...")
 
 	modules, err := l.loadModules(Root)
 	if err != nil {
@@ -43,7 +43,7 @@ func (l *Loader) Load() error {
 		l.modules[module.Hash()] = module
 	}
 
-	log.Info("Loading dependencies...")
+	log.WithField("blank_before", true).Info("Loading dependencies...")
 	return l.resolveRemainingDependencies(0)
 }
 

@@ -58,9 +58,18 @@ func (m *Module) resolveDependencies(loaded map[string]*Module) error {
 
 	for _, dep := range m.config.Dependencies {
 		source := getSource(dep.Source, m.pwd)
-		_, err := source.loadModules(Dependency)
+		modules, err := source.loadModules(Dependency)
 		if err != nil {
 			return err
+		}
+
+		for _, module := range modules {
+			hash := module.Hash()
+
+			if _, ok := loaded[hash]; !ok {
+				loaded[hash] = module
+			}
+			m.deps[dep.Name] = loaded[hash]
 		}
 	}
 
