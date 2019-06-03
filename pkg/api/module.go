@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/avinor/tau/pkg/config"
+	log "github.com/sirupsen/logrus"
 )
 
 type Level int
@@ -40,6 +42,8 @@ func NewModule(src, pwd string, level Level) (*Module, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.WithField("indent", 1).Infof("%v loaded", path.Base(src))
 
 	return &Module{
 		Source:  getSource(src, pwd),

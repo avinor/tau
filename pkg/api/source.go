@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-getter"
+	log "github.com/sirupsen/logrus"
 )
 
 // Source is parent type for all types that need to load sources
@@ -53,6 +54,8 @@ func (src *Source) loadSources() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
 
+	log.Debugf("Loading sources for %v", src.src)
+
 	client := &getter.Client{
 		Ctx:  ctx,
 		Src:  src.src,
@@ -86,6 +89,8 @@ func (src *Source) findModuleFiles() ([]string, error) {
 			}
 		}
 	}
+
+	log.Debugf("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
 }

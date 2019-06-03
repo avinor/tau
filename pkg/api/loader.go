@@ -32,6 +32,8 @@ func NewLoader(src string) *Loader {
 }
 
 func (l *Loader) Load() error {
+	log.Info("Loading modules...")
+
 	modules, err := l.loadModules(Root)
 	if err != nil {
 		return err
@@ -41,6 +43,7 @@ func (l *Loader) Load() error {
 		l.modules[module.Hash()] = module
 	}
 
+	log.Info("Loading dependencies...")
 	return l.resolveRemainingDependencies(0)
 }
 
@@ -75,6 +78,7 @@ func getRootSource(src string) (*Source, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("Current working directory: %v", pwd)
 
 	getterSource, err := getter.Detect(src, pwd, getter.Detectors)
 	if err != nil {
@@ -82,6 +86,7 @@ func getRootSource(src string) (*Source, error) {
 	}
 
 	if strings.Index(getterSource, "file://") == 0 {
+		log.Debug("File source detected. Changing working directory")
 		rootPath := strings.Replace(getterSource, "file://", "", 1)
 
 		fi, err := os.Stat(rootPath)
@@ -97,6 +102,9 @@ func getRootSource(src string) (*Source, error) {
 			pwd = rootPath
 			src = "."
 		}
+
+		log.Debugf("New working directory: %v", pwd)
+		log.Debugf("New source: %v", src)
 	}
 
 	source := getSource(src, pwd)
