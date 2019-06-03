@@ -33,7 +33,7 @@ func (p *parser) Parse(content []byte, filename string) (*Config, error) {
 	}
 
 	config := &Config{}
-	
+
 	if diags := gohcl2.DecodeBody(f.Body, nil, config); diags.HasErrors() {
 		return nil, diags
 	}

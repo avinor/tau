@@ -15,6 +15,12 @@ type Config struct {
 	Remaining hcl2.Body `hcl:",remain"`
 }
 
+// InitConfig contains data structure for module run to retrieve values
+type InitConfig struct {
+	Datas   []Data   `hcl:"data,block"`
+	Outputs []Output `hcl:"output,block"`
+}
+
 // Data sources to read from
 type Data struct {
 	Type string `hcl:"type,label"`
@@ -46,4 +52,12 @@ type Module struct {
 // Inputs that are converted to terraform.tfvars for module
 type Inputs struct {
 	Config hcl2.Body `hcl:",remain"`
+}
+
+// Output from a module
+type Output struct {
+	Name string `hcl:"name,label"`
+
+	ValueExpr   hcl2.Expression `hcl:"value,attr"`
+	Description *string         `hcl:"description,attr"`
 }

@@ -47,6 +47,12 @@ func (l *Loader) Load() error {
 	return l.resolveRemainingDependencies(0)
 }
 
+func (l *Loader) CreateInitModule() error {
+	
+
+	return nil
+}
+
 func (l *Loader) resolveRemainingDependencies(depth int) error {
 	if depth >= maxDependencyDepth {
 		return fmt.Errorf("Max dependency depth reached (%v)", maxDependencyDepth)
