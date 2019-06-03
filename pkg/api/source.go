@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -54,24 +53,15 @@ func (src *Source) loadSources() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
 
-	var err error
-
-	// Try with .hcl and .tau extension if cannot find file
-	for _, extsrc := range []string{src.src, fmt.Sprintf("%s.tau", src.src), fmt.Sprintf("%s.hcl", src.src)} {
-		client := &getter.Client{
-			Ctx:  ctx,
-			Src:  extsrc,
-			Dst:  src.dst,
-			Pwd:  src.pwd,
-			Mode: getter.ClientModeAny,
-		}
-
-		if err = client.Get(); err == nil {
-			return nil
-		}
+	client := &getter.Client{
+		Ctx:  ctx,
+		Src:  src.src,
+		Dst:  src.dst,
+		Pwd:  src.pwd,
+		Mode: getter.ClientModeAny,
 	}
 
-	return err
+	return client.Get()
 }
 
 func (src *Source) findModuleFiles() ([]string, error) {
