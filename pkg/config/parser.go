@@ -5,28 +5,36 @@ import (
 	hcl2parse "github.com/hashicorp/hcl2/hclparse"
 )
 
+var (
+	Parser *parser
+)
+
+func init() {
+	Parser = newParser()
+}
+
 // Parser can load config files
-type Parser struct {
+type parser struct {
 	parser *hcl2parse.Parser
 }
 
 // NewParser returns a new parser instance
-func NewParser() (*Parser) {
-	return &Parser{
+func newParser() *parser {
+	return &parser{
 		parser: hcl2parse.NewParser(),
 	}
 }
 
 // Parse file and return the complete Config
-func (p *Parser) Parse(filename string) (*Config, error) {
-	f, diags := p.parser.ParseHCLFile(filename)
+func (p *parser) Parse(content []byte, filename string) (*Config, error) {
+	f, diags := p.parser.ParseHCL(content, filename)
 	if diags.HasErrors() {
 		return nil, diags
 	}
 
 	config := &Config{}
 
-	if diags := gohcl2.DecodeBody(f.Body, nil, &config); diags.HasErrors() {
+	if diags := gohcl2.DecodeBody(f.Body, nil, config); diags.HasErrors() {
 		return nil, diags
 	}
 
