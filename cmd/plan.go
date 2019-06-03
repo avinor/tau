@@ -46,6 +46,13 @@ func (pc *planCmd) run(args []string) error {
 
 	// Check dependencies
 
+	plan := pc.loader.GetExecutionPlan()
+
+	plan.CreatePreModule()
+	plan.ReadOutputValues()
+	plan.RunInit()
+	plan.RunPlan()
+
 	// Create pre-module (based on config)
 
 	// Run pre-module

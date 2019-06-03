@@ -47,10 +47,12 @@ func (l *Loader) Load() error {
 	return l.resolveRemainingDependencies(0)
 }
 
-func (l *Loader) CreateInitModule() error {
-	
+func (l *Loader) GetExecutionPlan() (*Plan, error) {
+	plan := &Plan{}
 
-	return nil
+	for _, module := 
+
+	return plan, nil
 }
 
 func (l *Loader) resolveRemainingDependencies(depth int) error {

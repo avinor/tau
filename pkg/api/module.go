@@ -11,12 +11,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Level int
-
 const (
 	Root Level = 1 << iota
 	Dependency
 )
+
+type Level int
+
+type ByDependencies []*Module
+
+func (a ByDependencies) Len() int           { return len(a) }
+func (a ByDependencies) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByDependencies) Less(i, j int) bool {
+	
+
+	return a[i].Age < a[j].Age
+}
 
 type Module struct {
 	Source
