@@ -4,7 +4,7 @@ data "azurerm_key_vault_secret" "test" {
 }
 
 dependency "vnet" {
-    source = "./virtual-network"
+    source = "./virtual-network.tau"
 }
 
 backend "azurerm" {

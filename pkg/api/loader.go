@@ -3,7 +3,10 @@ package api
 import (
 	"fmt"
 	"os"
+	"path"
+	"strings"
 
+	"github.com/hashicorp/go-getter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,13 +20,13 @@ type Loader struct {
 }
 
 func NewLoader(src string) *Loader {
-	pwd, err := os.Getwd()
+	source, err := getRootSource(src)
 	if err != nil {
-		log.Fatalf("Unable to get working directory: %s", err)
+		log.Fatalf("Unable to get root source: %s", err)
 	}
 
 	return &Loader{
-		Source:  getSource(src, pwd),
+		Source:  *source,
 		modules: map[string]*Module{},
 	}
 }
@@ -65,4 +68,37 @@ func (l *Loader) resolveRemainingDependencies(depth int) error {
 	}
 
 	return l.resolveRemainingDependencies(depth + 1)
+}
+
+func getRootSource(src string) (*Source, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	getterSource, err := getter.Detect(src, pwd, getter.Detectors)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.Index(getterSource, "file://") == 0 {
+		rootPath := strings.Replace(getterSource, "file://", "", 1)
+
+		fi, err := os.Stat(rootPath)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if !fi.IsDir() {
+			pwd = path.Dir(rootPath)
+			src = path.Base(rootPath)
+		} else {
+			pwd = rootPath
+			src = "."
+		}
+	}
+
+	source := getSource(src, pwd)
+	return &source, nil
 }
