@@ -36,32 +36,21 @@ func NewModule(src, pwd string, level Level) (*Module, error) {
 		return nil, err
 	}
 
+	config, err := config.Parser.Parse(b, src)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Module{
 		Source:  getSource(src, pwd),
 		content: b,
 		level:   level,
-		deps:    map[string]*Module{},
+		config:  config,
 	}, nil
 }
 
-func (m *Module) Parse() error {
-	config, err := config.Parser.Parse(m.content, m.src)
-	if err != nil {
-		return err
-	}
-
-	m.config = config
-
-	return nil
-}
-
 func (m *Module) resolveDependencies(loaded map[string]*Module) error {
-	config, err := config.Parser.Parse(m.content, m.src)
-	if err != nil {
-		return err
-	}
-
-	m.config = config
+	m.deps = map[string]*Module{}
 
 	for _, dep := range m.config.Dependencies {
 		source := getSource(dep.Source, m.pwd)

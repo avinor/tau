@@ -1,52 +1,68 @@
 package api
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	maxDependencyDepth = 5
+)
+
 type Loader struct {
-	pwd string
+	Source
+	modules map[string]*Module
 }
 
-func NewLoader() *Loader {
-	dir, err := os.Getwd()
+func NewLoader(src string) *Loader {
+	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Unable to get working directory: %s", err)
 	}
 
 	return &Loader{
-		pwd: dir,
+		Source:  getSource(src, pwd),
+		modules: map[string]*Module{},
 	}
 }
 
-func (l *Loader) Load(src string) error {
-
-	pkg, err := LoadPackage(src, l.pwd)
+func (l *Loader) Load() error {
+	modules, err := l.loadModules(Root)
 	if err != nil {
 		return err
 	}
 
-	for _, m := range pkg.modules {
-		log.Infof("%s", m.src)
+	for _, module := range modules {
+		l.modules[module.Hash()] = module
 	}
 
-	// Load src into dst
-	// Resolve all .hcl / .tau files
-	// Create config / module for all files
-
-	// Check dependencies
-	// Load unresolved dependencies into dst
-	// Create config for dependencies
-
-	return nil
+	return l.resolveRemainingDependencies(0)
 }
 
-func hash(src string) string {
-	h := sha1.New()
-	h.Write([]byte(src))
-	return hex.EncodeToString(h.Sum(nil))
+func (l *Loader) resolveRemainingDependencies(depth int) error {
+	if depth >= maxDependencyDepth {
+		return fmt.Errorf("Max dependency depth reached (%v)", maxDependencyDepth)
+	}
+
+	mods := []*Module{}
+
+	for _, m := range l.modules {
+		if m.deps == nil {
+			mods = append(mods, m)
+		}
+	}
+
+	if len(mods) == 0 {
+		return nil
+	}
+
+	for _, mod := range mods {
+		if err := mod.resolveDependencies(l.modules); err != nil {
+			return err
+		}
+	}
+
+	return l.resolveRemainingDependencies(depth + 1)
 }

@@ -36,9 +36,9 @@ func newPlanCmd() *cobra.Command {
 }
 
 func (pc *planCmd) load(args []string) error {
-	pc.loader = api.NewLoader()
+	pc.loader = api.NewLoader(args[0])
 
-	return pc.loader.Load(args[0])
+	return pc.loader.Load()
 }
 
 func (pc *planCmd) run(args []string) error {
