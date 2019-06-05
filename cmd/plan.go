@@ -12,7 +12,7 @@ const (
 )
 
 type planCmd struct {
-	loader *api.Loader
+	noPrepare bool
 }
 
 func newPlanCmd() *cobra.Command {
@@ -24,10 +24,6 @@ func newPlanCmd() *cobra.Command {
 		Long:  planLongDescription,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := pc.load(args); err != nil {
-				return err
-			}
-
 			return pc.run(args)
 		},
 	}
@@ -35,23 +31,32 @@ func newPlanCmd() *cobra.Command {
 	return planCmd
 }
 
-func (pc *planCmd) load(args []string) error {
-	pc.loader = api.NewLoader(args[0])
-
-	return pc.loader.Load()
-}
-
 func (pc *planCmd) run(args []string) error {
-	// Load file -> return config
+	modules, err := api.Load(args[0])
+	if err != nil {
+		return err
+	}
+
+	for _, mod := range modules {
+		executor := api.NewExecutor(mod)
+
+		if err := executor.Prepare(mod); err != nil {
+			return err
+		}
+
+		if err := executor.Run("plan"); err != nil {
+			return err
+		}
+	}
+
+	return nil
 
 	// Check dependencies
 
-	plan := pc.loader.GetExecutionPlan()
+	// exec.Prepare()
 
-	plan.CreatePreModule()
-	plan.ReadOutputValues()
-	plan.RunInit()
-	plan.RunPlan()
+	// exec.Run("init")
+	// exec.Run("plan")
 
 	// Create pre-module (based on config)
 

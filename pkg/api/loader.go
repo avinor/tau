@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/go-getter"
@@ -47,12 +48,18 @@ func (l *Loader) Load() error {
 	return l.resolveRemainingDependencies(0)
 }
 
-func (l *Loader) GetExecutionPlan() (*Plan, error) {
-	plan := &Plan{}
+func (l *Loader) GetSortedModules() []*Module {
+	modules := []*Module{}
 
-	for _, module := 
+	for _, mod := range l.modules {
+		if mod.level == Root {
+			modules = append(modules, mod)
+		}
+	}
 
-	return plan, nil
+	sort.Sort(ByDependencies(modules))
+
+	return modules
 }
 
 func (l *Loader) resolveRemainingDependencies(depth int) error {
