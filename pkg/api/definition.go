@@ -12,6 +12,7 @@ import (
 // Definition of the api
 type Definition struct {
 	config *Config
+	modules []*Module
 }
 
 // Config parameters for configuring api definition
@@ -43,11 +44,13 @@ func New(config *Config) (*Definition, error) {
 		return nil, err
 	}
 
-	if err := loader.load(); err != nil {
+	modules, err := loader.load()
+	if err != nil {
 		return nil, err
 	}
 
 	return &Definition{
+		modules: modules,
 		config: config,
 	}, nil
 }

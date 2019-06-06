@@ -1,6 +1,7 @@
 package api
 
 import (
+	"sort"
 	"context"
 	"os"
 	"path"
@@ -42,20 +43,22 @@ func newLoader(config *Config) (*loader, error) {
 	return loader, nil
 }
 
-func (l *loader) load() error {
+func (l *loader) load() ([]*Module, error) {
 	log.WithField("blank_before", true).Info("Loading modules...")
 
 	modules, err := l.loadModules(l.src)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.WithField("blank_before", true).Info("Loading dependencies...")
 	if err := l.loadDependencies(modules, 0); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	sort.Sort(ByDependencies(modules))
+
+	return modules, nil
 }
 
 func (l *loader) loadModules(src string) ([]*Module, error) {
@@ -176,74 +179,6 @@ func (l *loader) findModuleFiles(dst string) ([]string, error) {
 
 	return matches, nil
 }
-
-// func NewLoader(src string) *Loader {
-// 	source, err := getRootSource(src)
-// 	if err != nil {
-// 		log.Fatalf("Unable to get root source: %s", err)
-// 	}
-
-// 	return &Loader{
-// 		Source:  *source,
-// 		modules: map[string]*Module{},
-// 	}
-// }
-
-// func (l *Loader) Load() error {
-// 	log.WithField("blank_before", true).Info("Loading modules...")
-
-// 	modules, err := l.loadModules(Root)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	for _, module := range modules {
-// 		l.modules[module.Hash()] = module
-// 	}
-
-// 	log.WithField("blank_before", true).Info("Loading dependencies...")
-// 	return l.resolveRemainingDependencies(0)
-// }
-
-// func (l *Loader) GetSortedModules() []*Module {
-// 	modules := []*Module{}
-
-// 	for _, mod := range l.modules {
-// 		if mod.level == Root {
-// 			modules = append(modules, mod)
-// 		}
-// 	}
-
-// 	sort.Sort(ByDependencies(modules))
-
-// 	return modules
-// }
-
-// func (l *Loader) resolveRemainingDependencies(depth int) error {
-// 	if depth >= maxDependencyDepth {
-// 		return fmt.Errorf("Max dependency depth reached (%v)", maxDependencyDepth)
-// 	}
-
-// 	mods := []*Module{}
-
-// 	for _, m := range l.modules {
-// 		if m.deps == nil {
-// 			mods = append(mods, m)
-// 		}
-// 	}
-
-// 	if len(mods) == 0 {
-// 		return nil
-// 	}
-
-// 	for _, mod := range mods {
-// 		if err := mod.resolveDependencies(l.modules); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return l.resolveRemainingDependencies(depth + 1)
-// }
 
 func (l *loader) setSourceDirectory() error {
 	pwd, err := os.Getwd()

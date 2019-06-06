@@ -67,6 +67,7 @@ func NewModule(file string) (*Module, error) {
 	}, nil
 }
 
+// Hash generates a hash of modules content file
 func (m *Module) Hash() string {
 	md5Ctx := md5.New()
 	md5Ctx.Write(m.content)
