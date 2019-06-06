@@ -69,7 +69,7 @@ func (l *loader) load() ([]*Module, error) {
 }
 
 func (l *loader) loadModules(src string) ([]*Module, error) {
-	dst := filepath.Join(l.tempDir, "sources", hash(src))
+	dst := filepath.Join(l.tempDir, "init", hash(src))
 
 	if err := l.loadSources(src, dst); err != nil {
 		return nil, err
