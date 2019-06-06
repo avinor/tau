@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
 	"os"
 	"path/filepath"
 	"time"
@@ -93,10 +91,4 @@ func (src *Source) findModuleFiles() ([]string, error) {
 	log.Debugf("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
-}
-
-func hash(src string) string {
-	h := sha1.New()
-	h.Write([]byte(src))
-	return hex.EncodeToString(h.Sum(nil))
 }
