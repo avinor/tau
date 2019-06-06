@@ -11,69 +11,60 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	Root Level = 1 << iota
-	Dependency
-)
-
-type Level int
-
+// Module is a single module that should be deployed or a dependency for another module
 type Module struct {
-	Source
-
+	file    string
 	content []byte
-	level   Level
-
-	config *config.Config
-	deps   map[string]*Module
+	config  *config.Config
+	deps    map[string]*Module
 }
 
-func NewModule(src, pwd string, level Level) (*Module, error) {
-	if _, err := os.Stat(src); err != nil {
+// ByDependencies sorts a list of modules by their dependencies
+type ByDependencies []*Module
+
+func (a ByDependencies) Len() int {
+	return len(a)
+}
+
+func (a ByDependencies) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a ByDependencies) Less(i, j int) bool {
+
+	for _, dep := range a[j].deps {
+		if dep == a[i] {
+			return true
+		}
+	}
+
+	return false
+}
+
+// NewModule creates a new module from a file
+func NewModule(file string) (*Module, error) {
+	if _, err := os.Stat(file); err != nil {
 		return nil, err
 	}
 
-	b, err := ioutil.ReadFile(src)
+	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	config, err := config.Parser.Parse(b, src)
+	config, err := config.Parser.Parse(b, file)
 	if err != nil {
 		return nil, err
 	}
 
-	log.WithField("indent", 1).Infof("%v loaded", path.Base(src))
+	log.WithField("indent", 1).Infof("%v loaded", path.Base(file))
 
 	return &Module{
-		Source:  getSource(src, pwd),
+		file:    file,
 		content: b,
-		level:   level,
 		config:  config,
+		deps:    map[string]*Module{},
 	}, nil
-}
-
-func (m *Module) resolveDependencies(loaded map[string]*Module) error {
-	m.deps = map[string]*Module{}
-
-	for _, dep := range m.config.Dependencies {
-		source := getSource(dep.Source, m.pwd)
-		modules, err := source.loadModules(Dependency)
-		if err != nil {
-			return err
-		}
-
-		for _, module := range modules {
-			hash := module.Hash()
-
-			if _, ok := loaded[hash]; !ok {
-				loaded[hash] = module
-			}
-			m.deps[dep.Name] = loaded[hash]
-		}
-	}
-
-	return nil
 }
 
 func (m *Module) Hash() string {
