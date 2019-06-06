@@ -15,8 +15,11 @@ import (
 type Module struct {
 	file    string
 	content []byte
-	config  *config.Config
 	deps    map[string]*Module
+
+	config     *config.Config
+	initConfig *config.InitConfig
+	values     *config.ValuesConfig
 }
 
 // ByDependencies sorts a list of modules by their dependencies
@@ -65,6 +68,15 @@ func NewModule(file string) (*Module, error) {
 		config:  config,
 		deps:    map[string]*Module{},
 	}, nil
+}
+
+// Prepare module
+func (m *Module) Prepare() error {
+	log.WithField("indent", 1).Infof("%v", path.Base(m.file))
+
+
+
+	return nil
 }
 
 // Hash generates a hash of modules content file

@@ -1,11 +1,11 @@
 package api
 
 import (
-	"sort"
 	"context"
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -57,6 +57,13 @@ func (l *loader) load() ([]*Module, error) {
 	}
 
 	sort.Sort(ByDependencies(modules))
+
+	log.WithField("blank_before", true).Info("Preparing modules...")
+	for _, module := range modules {
+		if err := module.Prepare(); err != nil {
+			return nil, err
+		}
+	}
 
 	return modules, nil
 }

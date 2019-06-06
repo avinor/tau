@@ -11,7 +11,7 @@ import (
 
 // Definition of the api
 type Definition struct {
-	config *Config
+	config  *Config
 	modules []*Module
 }
 
@@ -51,7 +51,7 @@ func New(config *Config) (*Definition, error) {
 
 	return &Definition{
 		modules: modules,
-		config: config,
+		config:  config,
 	}, nil
 }
 

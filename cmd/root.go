@@ -81,7 +81,7 @@ func (rc *rootCmd) load(args []string) error {
 		WorkingDirectory:   rc.workingDir,
 		ExtraArguments:     extraArgs,
 		MaxDependencyDepth: rc.maxDependencyDepth,
-		CleanTempDir:    !rc.noPrepare,
+		CleanTempDir:       !rc.noPrepare,
 	})
 	if err != nil {
 		return err

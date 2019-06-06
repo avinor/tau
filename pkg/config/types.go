@@ -21,6 +21,11 @@ type InitConfig struct {
 	Outputs []Output `hcl:"output,block"`
 }
 
+// ValuesConfig contains structure of terraform.tfvars file
+type ValuesConfig struct {
+	ValueExpr []hcl2.Expression
+}
+
 // Data sources to read from
 type Data struct {
 	Type string `hcl:"type,label"`
