@@ -74,8 +74,10 @@ func NewModule(file string) (*Module, error) {
 func (m *Module) Prepare() error {
 	log.WithField("indent", 1).Infof("%v", path.Base(m.file))
 
+	return nil
+}
 
-
+func (m *Module) GetBackendArgs() []string {
 	return nil
 }
 

@@ -14,25 +14,16 @@ import (
 )
 
 type loader struct {
-	config  *Config
 	tempDir string
 	src     string
 	pwd     string
 	loaded  map[string]*Module
 }
 
-func newLoader(config *Config) (*loader, error) {
-	tempDir := filepath.Join(config.WorkingDirectory, ".tau", hash(config.Source))
-
-	if config.CleanTempDir {
-		log.Debugf("Cleaning temp directory...")
-		// TODO os.RemoveAll(config.WorkingDirectory)
-	}
-
+func newLoader(src, tempDir string) (*loader, error) {
 	loader := &loader{
-		config:  config,
 		tempDir: tempDir,
-		src:     config.Source,
+		src:     src,
 		loaded:  map[string]*Module{},
 	}
 
@@ -43,10 +34,10 @@ func newLoader(config *Config) (*loader, error) {
 	return loader, nil
 }
 
-func (l *loader) load() ([]*Module, error) {
+func (l *loader) loadModules() ([]*Module, error) {
 	log.WithField("blank_before", true).Info("Loading modules...")
 
-	modules, err := l.loadModules(l.src)
+	modules, err := l.loadSource(l.src)
 	if err != nil {
 		return nil, err
 	}
@@ -68,10 +59,10 @@ func (l *loader) load() ([]*Module, error) {
 	return modules, nil
 }
 
-func (l *loader) loadModules(src string) ([]*Module, error) {
+func (l *loader) loadSource(src string) ([]*Module, error) {
 	dst := filepath.Join(l.tempDir, "init", hash(src))
 
-	if err := l.loadSources(src, dst); err != nil {
+	if err := l.getSources(src, dst); err != nil {
 		return nil, err
 	}
 
@@ -121,7 +112,7 @@ func (l *loader) loadModuleDependencies(module *Module) ([]*Module, error) {
 	deps := []*Module{}
 
 	for _, dep := range module.config.Dependencies {
-		modules, err := l.loadModules(dep.Source)
+		modules, err := l.loadSource(dep.Source)
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +133,7 @@ func (l *loader) loadModuleDependencies(module *Module) ([]*Module, error) {
 	return deps, nil
 }
 
-func (l *loader) loadSources(src, dst string) error {
+func (l *loader) getSources(src, dst string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
 

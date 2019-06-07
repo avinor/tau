@@ -1,67 +1,91 @@
 package api
 
-import (
-	"crypto/sha1"
-	"encoding/hex"
-	"os"
+// // Definition of the api
+// type Definition struct {
+// 	tempDir string
+// 	config  *Config
+// }
 
-	"github.com/go-errors/errors"
-	log "github.com/sirupsen/logrus"
-)
+// // Config parameters for configuring api definition
+// type Config struct {
+// 	Source           string
+// 	WorkingDirectory string
+// 	ExtraArguments   []string
+// }
 
-// Definition of the api
-type Definition struct {
-	config  *Config
-	modules []*Module
-}
+// // New returns a new api definition
+// func New(config *Config) (*Definition, error) {
+// 	if config.Source == "" {
+// 		return nil, errors.Errorf("Source is empty")
+// 	}
 
-// Config parameters for configuring api definition
-type Config struct {
-	Source             string
-	WorkingDirectory   string
-	ExtraArguments     []string
-	MaxDependencyDepth int
-	CleanTempDir       bool
-}
+// 	if config.WorkingDirectory == "" {
+// 		pwd, err := os.Getwd()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		config.WorkingDirectory = pwd
+// 		log.Debugf("Current working directory: %v", pwd)
+// 	}
 
-// New returns a new api definition
-func New(config *Config) (*Definition, error) {
-	if config.Source == "" {
-		return nil, errors.Errorf("Source is empty")
-	}
+// 	return &Definition{
+// 		tempDir: filepath.Join(config.WorkingDirectory, ".tau", hash(config.Source)),
+// 		config:  config,
+// 	}, nil
+// }
 
-	if config.WorkingDirectory == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-		config.WorkingDirectory = pwd
-		log.Debugf("Current working directory: %v", pwd)
-	}
+// func (d *Definition) LoadSources(maxDependencyDepth int) error {
+// 	return nil
+// }
 
-	loader, err := newLoader(config)
-	if err != nil {
-		return nil, err
-	}
+// func (d *Definition) LoadSettings() error {
+// 	// Save to file
+// 	return nil
+// }
 
-	modules, err := loader.load()
-	if err != nil {
-		return nil, err
-	}
+// func (d *Definition) SaveSettings() error {
+// 	// Load file, if exists
+// 	return nil
+// }
 
-	return &Definition{
-		modules: modules,
-		config:  config,
-	}, nil
-}
+// func (d *Definition) InitTerraform() error {
+// 	// Travers modules and run terraform init
+// 	return nil
+// }
 
-// Run a terraform command on loaded modules
-func (d *Definition) Run(cmd string) error {
-	return nil
-}
+// func (d *Definition) RunTerraform(cmd string, args ...string) error {
+// 	// Run terraform <cmd>
+// 	return nil
+// }
 
-func hash(src string) string {
-	h := sha1.New()
-	h.Write([]byte(src))
-	return hex.EncodeToString(h.Sum(nil))
-}
+// func (d *Definition) CreateValues() error {
+// 	return nil
+// }
+
+// // Run a terraform command on loaded modules, init is handled special
+// func (d *Definition) Run(cmd string) error {
+// 	runner, err := commands.GetRunner(cmd)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return runner.Run()
+// }
+
+// func (d *Definition) runInit() error {
+// 	loader, err := newLoader(d.config)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	modules, err := loader.load()
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if modules == nil {
+// 		return nil
+// 	}
+
+// 	return nil
+// }
