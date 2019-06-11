@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -37,42 +34,7 @@ func NewRootCmd() *cobra.Command {
 	p.StringVar(&workingDir, "working-directory", "", "working directory (default to current directory)")
 
 	rootCmd.AddCommand(newInitCmd())
+	rootCmd.AddCommand(newPlanCmd())
 
 	return rootCmd
-}
-
-func getSourceArg(args []string) (string, error) {
-	source := ""
-	for _, arg := range args {
-		if !strings.HasPrefix(arg, "-") {
-			if source != "" {
-				return "", errors.Errorf("Only one source argument should be defined")
-			}
-
-			source = arg
-		}
-	}
-
-	return source, nil
-}
-
-func getExtraArgs(args []string, invalidArgs ...string) []string {
-	extraArgs := []string{}
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			invalidArg := false
-
-			for _, ia := range invalidArgs {
-				if strings.HasPrefix(arg, ia) {
-					invalidArg = true
-				}
-			}
-
-			if !invalidArg {
-				extraArgs = append(extraArgs, arg)
-			}
-		}
-	}
-
-	return extraArgs
 }

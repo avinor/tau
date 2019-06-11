@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -22,28 +25,34 @@ func newPlanCmd() *cobra.Command {
 		Long:  planLongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return pc.run()
+			return pc.run(args)
 		},
 	}
 
 	return planCmd
 }
 
-func (pc *planCmd) run() error {
-	// catalog, err := api.LoadCatalog(&api.LoaderConfig{})
-	// if err != nil {
-	// 	return err
-	// }
+func (pc *planCmd) run(args []string) error {
+	source, err := utils.GetSourceArg(args)
+	if err != nil {
+		return err
+	}
 
-	// shell := api.NewExecutor()
+	loader, err := config.Load(source, &config.LoadOptions{})
+	if err != nil {
+		return err
+	}
 
-	// for _, module := range catalog.Modules {
-	// 	config := &api.ShellConfig{}
+	for _, source := range loader.Sources {
+		extraArgs := utils.GetExtraArgs(args, "-backend-config")
+		options := &shell.Options{
+			WorkingDirectory: source.ModuleDirectory(),
+		}
 
-	// 	if err := shell.ExecuteTerraform(config, "plan", extraArgs); err != nil {
-	// 		return err
-	// 	}
-	// }
+		if err := shell.ExecuteTerraform("plan", options, extraArgs...); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

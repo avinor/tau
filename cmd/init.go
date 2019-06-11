@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/api"
-	"github.com/avinor/tau/pkg/executor"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -42,33 +43,32 @@ func (ic *initCmd) run(args []string) error {
 	// 	os.RemoveAll(config.WorkingDirectory)
 	// }
 
-	source, err := getSourceArg(args)
+	source, err := utils.GetSourceArg(args)
 	if err != nil {
 		return err
 	}
 
-	catalog, err := api.NewCatalog(source, &api.Config{
+	loader, err := config.Load(source, &config.LoadOptions{
 		LoadSources: true,
 	})
 	if err != nil {
 		return err
 	}
 
-	for _, module := range catalog.Modules {
-		//extraArgs := module.GetBackendArgs()
-
-		shell, err := executor.NewShell(&executor.Config{})
-		if err != nil {
+	for _, source := range loader.Sources {
+		if err := source.CreateBackendFile(); err != nil {
 			return err
 		}
 
-		extraArgs := getExtraArgs(args, "-backend-config")
-		extraArgs = append(extraArgs, module.GetBackendArgs()...)
+		extraArgs := utils.GetExtraArgs(args, "-backend-config")
+		options := &shell.Options{
+			WorkingDirectory: source.ModuleDirectory(),
+		}
 
-		if err := shell.ExecuteTerraform("init", extraArgs...); err != nil {
+		if err := shell.ExecuteTerraform("init", options, extraArgs...); err != nil {
 			return err
 		}
 	}
 
-	return catalog.Save()
+	return loader.Save()
 }
