@@ -108,7 +108,7 @@ func (l *Loader) loadAllSources(src string) error {
 }
 
 func (l *Loader) loadSource(src string) ([]*Source, error) {
-	dst := filepath.Join(l.TempDir, "init", utils.Hash(src))
+	dst := filepath.Join(l.TempDir, "sources", utils.Hash(src))
 
 	if err := l.getSources(src, dst); err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (l *Loader) loadSource(src string) ([]*Source, error) {
 
 	sources := []*Source{}
 	for _, file := range files {
-		source, err := NewSource(file)
+		source, err := NewSource(file, l)
 		if err != nil {
 			return nil, err
 		}
