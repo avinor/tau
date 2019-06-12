@@ -1,12 +1,12 @@
 package config
 
 import (
-	"path"
-	"strings"
 	"context"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/avinor/tau/pkg/utils"
@@ -62,7 +62,7 @@ func Load(src string, options *LoadOptions) (*Loader, error) {
 	loader := &Loader{
 		TempDir: tempDir,
 		Pwd:     cPwd,
-		loaded: map[string]*Source{},
+		loaded:  map[string]*Source{},
 	}
 
 	if err := loader.loadAllSources(cSrc); err != nil {

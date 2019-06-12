@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"encoding/hex"
 	"crypto/sha1"
+	"encoding/hex"
 )
 
 func Hash(src string) string {

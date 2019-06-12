@@ -2,9 +2,9 @@ package config
 
 import (
 	"github.com/avinor/tau/pkg/utils"
-	"path"
 	"io/ioutil"
 	"os"
+	"path"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -60,11 +60,11 @@ func NewSource(file string) (*Source, error) {
 	log.WithField("indent", 1).Infof("%v loaded", path.Base(file))
 
 	return &Source{
-		Hash: utils.Hash(file),
-		File:    file,
-		Content: b,
-		Config:  config,
-		Dependencies:    map[string]*Source{},
+		Hash:         utils.Hash(file),
+		File:         file,
+		Content:      b,
+		Config:       config,
+		Dependencies: map[string]*Source{},
 	}, nil
 }
 

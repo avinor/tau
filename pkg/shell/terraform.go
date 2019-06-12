@@ -1,5 +1,5 @@
 package shell
 
-func ExecuteTerraform(cmd string, options *Options, args... string) error {
+func ExecuteTerraform(cmd string, options *Options, args ...string) error {
 	return nil
 }

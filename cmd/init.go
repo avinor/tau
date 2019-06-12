@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
