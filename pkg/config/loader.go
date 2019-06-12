@@ -1,18 +1,30 @@
 package config
 
 import (
-	"sort"
-	"github.com/avinor/tau/pkg/utils"
-	"path/filepath"
+	"context"
 	"os"
+	"path/filepath"
+	"sort"
+	"time"
+
+	"github.com/avinor/tau/pkg/utils"
 	"github.com/go-errors/errors"
+	"github.com/hashicorp/go-getter"
 	log "github.com/sirupsen/logrus"
 )
 
+// Loader contains all sources loaded
+type Loader struct {
+	TempDir string
+	Pwd     string
+	Sources []*Source
+	loaded  map[string]*Source
+}
+
 // LoadOptions are options when loading modules
 type LoadOptions struct {
-	LoadSources bool
-	CleanTempDir bool
+	LoadSources      bool
+	CleanTempDir     bool
 	WorkingDirectory string
 }
 
@@ -22,63 +34,76 @@ func Load(src string, options *LoadOptions) (*Loader, error) {
 		return nil, errors.Errorf("Source is empty")
 	}
 
-	pwd := options.WorkingDirectory
-	if pwd == "" {
-		wd, err := os.Getwd()
+	if options.WorkingDirectory == "" {
+		pwd, err := os.Getwd()
 		if err != nil {
 			return nil, err
 		}
 
-		pwd = wd
+		options.WorkingDirectory = pwd
 	}
-	log.Debugf("Current working directory: %v", pwd)
+	log.Debugf("Current working directory: %v", options.WorkingDirectory)
 
-	tempDir := filepath.Join(pwd, ".tau", utils.Hash(src))
-	
+	tempDir := filepath.Join(options.WorkingDirectory, ".tau", utils.Hash(src))
+
 	if !options.LoadSources {
+		loader, err := getLoader(tempDir)
+		if err != nil {
+			return nil, err
+		}
 
+		return loader, nil
 	}
 
-	if err := loader.loadModules(); err != nil {
+	loader := &Loader{
+		TempDir: tempDir,
+		Pwd:     options.WorkingDirectory,
+	}
+
+	if err := loader.loadAllSources(src); err != nil {
 		return nil, err
 	}
 
 	return loader, nil
 }
 
+func getLoader(tempDir string) (*Loader, error) {
+	return nil, nil
+}
+
 func (l *Loader) Save() error {
 	return nil
 }
 
-func (l *Loader) get
-
-func (l *Loader) loadModules() error {
+func (l *Loader) loadAllSources(src string) error {
 	log.WithField("blank_before", true).Info("Loading modules...")
 
-	modules, err := l.loadSource(l.src)
+	sources, err := l.loadSource(src)
 	if err != nil {
 		return err
 	}
 
 	log.WithField("blank_before", true).Info("Loading dependencies...")
-	if err := l.loadDependencies(modules, 0); err != nil {
+	if err := l.loadDependencies(sources, 0); err != nil {
 		return err
 	}
 
-	sort.Sort(ByDependencies(modules))
+	sort.Sort(ByDependencies(sources))
 
-	log.WithField("blank_before", true).Info("Preparing modules...")
-	for _, module := range modules {
-		if err := module.Prepare(); err != nil {
-			return err
-		}
-	}
+	// log.WithField("blank_before", true).Info("Preparing modules...")
+	// for _, module := range sources {
+	// 	if err := module.Prepare(); err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	return modules, nil
+	l.Sources = sources
+
+	return nil
 }
 
-func (l *Loader) loadSource(src string) ([]*Module, error) {
-	dst := filepath.Join(l.tempDir, "init", hash(src))
+func (l *Loader) loadSource(src string) ([]*Source, error) {
+	dst := filepath.Join(l.TempDir, "init", utils.Hash(src))
 
 	if err := l.getSources(src, dst); err != nil {
 		return nil, err
@@ -89,30 +114,30 @@ func (l *Loader) loadSource(src string) ([]*Module, error) {
 		return nil, err
 	}
 
-	modules := []*Module{}
+	sources := []*Source{}
 	for _, file := range files {
-		module, err := NewModule(file)
+		source, err := NewModule(file)
 		if err != nil {
 			return nil, err
 		}
 
-		modules = append(modules, module)
+		sources = append(sources, source)
 	}
 
-	return modules, nil
+	return sources, nil
 }
 
-func (l *Loader) loadDependencies(modules []*Module, depth int) error {
-	remaining := []*Module{}
+func (l *Loader) loadDependencies(sources []*Source, depth int) error {
+	remaining := []*Source{}
 
-	for _, module := range modules {
-		if _, ok := l.loaded[module.Hash()]; !ok {
-			remaining = append(remaining, module)
+	for _, source := range sources {
+		if _, ok := l.loaded[source.Hash]; !ok {
+			remaining = append(remaining, source)
 		}
 	}
 
-	for _, module := range remaining {
-		deps, err := l.loadModuleDependencies(module)
+	for _, source := range remaining {
+		deps, err := l.loadModuleDependencies(source)
 		if err != nil {
 			return err
 		}
@@ -125,11 +150,11 @@ func (l *Loader) loadDependencies(modules []*Module, depth int) error {
 	return nil
 }
 
-func (l *Loader) loadModuleDependencies(module *Module) ([]*Module, error) {
-	l.loaded[module.Hash()] = module
-	deps := []*Module{}
+func (l *Loader) loadModuleDependencies(source *Source) ([]*Source, error) {
+	l.loaded[source.Hash] = source
+	deps := []*Source{}
 
-	for _, dep := range module.config.Dependencies {
+	for _, dep := range source.Config.Dependencies {
 		modules, err := l.loadSource(dep.Source)
 		if err != nil {
 			return nil, err

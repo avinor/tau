@@ -4,23 +4,6 @@ import (
 	hcl2 "github.com/hashicorp/hcl2/hcl"
 )
 
-// Loader contains all sources loaded
-type Loader struct  {
-	TempDir string
-	Pwd string
-	Sources []*Source
-}
-
-// Source for one file loaded
-type Source struct {
-	Hash string
-	File    string
-	Content []byte
-	Dependencies    map[string]*Module
-
-	Config     *Config
-}
-
 // Config represents the configuration object to read
 type Config struct {
 	Datas        []Data       `hcl:"data,block"`
