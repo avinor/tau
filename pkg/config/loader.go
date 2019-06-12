@@ -1,6 +1,8 @@
 package config
 
 import (
+	"path"
+	"strings"
 	"context"
 	"os"
 	"path/filepath"
@@ -55,12 +57,15 @@ func Load(src string, options *LoadOptions) (*Loader, error) {
 		return loader, nil
 	}
 
+	cSrc, cPwd := changeSourceDirectory(src, options.WorkingDirectory)
+
 	loader := &Loader{
 		TempDir: tempDir,
-		Pwd:     options.WorkingDirectory,
+		Pwd:     cPwd,
+		loaded: map[string]*Source{},
 	}
 
-	if err := loader.loadAllSources(src); err != nil {
+	if err := loader.loadAllSources(cSrc); err != nil {
 		return nil, err
 	}
 
@@ -116,7 +121,7 @@ func (l *Loader) loadSource(src string) ([]*Source, error) {
 
 	sources := []*Source{}
 	for _, file := range files {
-		source, err := NewModule(file)
+		source, err := NewSource(file)
 		if err != nil {
 			return nil, err
 		}
@@ -155,21 +160,19 @@ func (l *Loader) loadModuleDependencies(source *Source) ([]*Source, error) {
 	deps := []*Source{}
 
 	for _, dep := range source.Config.Dependencies {
-		modules, err := l.loadSource(dep.Source)
+		sources, err := l.loadSource(dep.Source)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, mod := range modules {
-			hash := mod.Hash()
-
-			if _, ok := l.loaded[hash]; !ok {
-				deps = append(deps, mod)
+		for _, src := range sources {
+			if _, ok := l.loaded[src.Hash]; !ok {
+				deps = append(deps, src)
 			} else {
-				mod = l.loaded[hash]
+				src = l.loaded[src.Hash]
 			}
 
-			mod.deps[dep.Name] = mod
+			source.Dependencies[dep.Name] = src
 		}
 	}
 
@@ -186,7 +189,7 @@ func (l *Loader) getSources(src, dst string) error {
 		Ctx:  ctx,
 		Src:  src,
 		Dst:  dst,
-		Pwd:  l.pwd,
+		Pwd:  l.Pwd,
 		Mode: getter.ClientModeAny,
 	}
 
@@ -219,4 +222,36 @@ func (l *Loader) findModuleFiles(dst string) ([]string, error) {
 	log.Debugf("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
+}
+
+func changeSourceDirectory(src, pwd string) (string, string) {
+	getterSource, err := getter.Detect(src, pwd, getter.Detectors)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to detect source.")
+		return src, ""
+	}
+
+	if strings.Index(getterSource, "file://") == 0 {
+		log.Debug("File source detected. Changing source directory")
+		rootPath := strings.Replace(getterSource, "file://", "", 1)
+
+		fi, err := os.Stat(rootPath)
+		if err != nil {
+			log.WithError(err).Errorf("Failed to read %v", rootPath)
+			return src, ""
+		}
+
+		if !fi.IsDir() {
+			pwd = path.Dir(rootPath)
+			src = path.Base(rootPath)
+		} else {
+			pwd = rootPath
+			src = "."
+		}
+
+		log.Debugf("New source directory: %v", pwd)
+		log.Debugf("New source: %v", src)
+	}
+
+	return src, pwd
 }

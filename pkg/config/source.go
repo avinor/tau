@@ -1,11 +1,20 @@
 package config
 
+import (
+	"github.com/avinor/tau/pkg/utils"
+	"path"
+	"io/ioutil"
+	"os"
+
+	log "github.com/sirupsen/logrus"
+)
+
 // Source for one file loaded
 type Source struct {
 	Hash         string
 	File         string
 	Content      []byte
-	Dependencies map[string]*Module
+	Dependencies map[string]*Source
 
 	Config *Config
 }
@@ -23,13 +32,40 @@ func (a ByDependencies) Swap(i, j int) {
 
 func (a ByDependencies) Less(i, j int) bool {
 
-	for _, dep := range a[j].deps {
+	for _, dep := range a[j].Dependencies {
 		if dep == a[i] {
 			return true
 		}
 	}
 
 	return false
+}
+
+// NewSource creates a new source from a file
+func NewSource(file string) (*Source, error) {
+	if _, err := os.Stat(file); err != nil {
+		return nil, err
+	}
+
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := Parser.Parse(b, file)
+	if err != nil {
+		return nil, err
+	}
+
+	log.WithField("indent", 1).Infof("%v loaded", path.Base(file))
+
+	return &Source{
+		Hash: utils.Hash(file),
+		File:    file,
+		Content: b,
+		Config:  config,
+		Dependencies:    map[string]*Source{},
+	}, nil
 }
 
 func (src *Source) ModuleDirectory() string {
