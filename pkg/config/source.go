@@ -107,7 +107,7 @@ func (src *Source) CreateOverrides() error {
 		return err
 	}
 
-	filename := filepath.Join(src.ModuleDirectory(), "terraform_overrides.tf")
+	filename := filepath.Join(src.ModuleDirectory(), "tau_override.tf")
 	if err := ioutil.WriteFile(filename, b, os.ModePerm); err != nil {
 		return err
 	}

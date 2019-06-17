@@ -37,12 +37,6 @@ func newInitCmd() *cobra.Command {
 }
 
 func (ic *initCmd) run(args []string) error {
-	// TODO Option to clean out
-	// if config.CleanTempDir {
-	// 	log.Debugf("Cleaning temp directory...")
-	// 	os.RemoveAll(config.WorkingDirectory)
-	// }
-
 	source, err := utils.GetSourceArg(args)
 	if err != nil {
 		return err
@@ -50,24 +44,30 @@ func (ic *initCmd) run(args []string) error {
 
 	loader, err := config.Load(source, &config.LoadOptions{
 		LoadSources: true,
+		CleanTempDir: true,
 	})
 	if err != nil {
 		return err
 	}
 
 	for _, source := range loader.Sources {
-		// if err := source.CreateOverrides(); err != nil {
-		// 	return err
-		// }
-
 		extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
-
 		initArgs := append(extraArgs, "-from-module", source.Config.Module.Source, "-backend=false")
+		backendArgs := append(extraArgs, "-backend=true", "-reconfigure")
+
 		options := &shell.Options{
 			WorkingDirectory: source.ModuleDirectory(),
 		}
 
 		if err := shell.Execute("terraform", options, initArgs...); err != nil {
+			return err
+		}
+
+		if err := source.CreateOverrides(); err != nil {
+			return err
+		}
+
+		if err := shell.Execute("terraform", options, backendArgs...); err != nil {
 			return err
 		}
 
