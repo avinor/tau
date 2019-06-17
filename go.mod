@@ -8,8 +8,10 @@ require (
 	github.com/google/martian v2.1.0+incompatible
 	github.com/hashicorp/go-getter v1.3.0
 	github.com/hashicorp/hcl2 v0.0.0-20190515223218-4b22149b7cef
+	github.com/hashicorp/terraform v0.12.2
 	github.com/mattn/go-colorable v0.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.4
+	github.com/zclconf/go-cty v0.0.0-20190516203816-4fecf87372ec
 )

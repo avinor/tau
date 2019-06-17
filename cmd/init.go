@@ -56,7 +56,7 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	for _, source := range loader.Sources {
-		if err := source.CreateBackendFile(); err != nil {
+		if err := source.CreateOverrides(); err != nil {
 			return err
 		}
 
@@ -66,6 +66,10 @@ func (ic *initCmd) run(args []string) error {
 		}
 
 		if err := shell.ExecuteTerraform("init", options, extraArgs...); err != nil {
+			return err
+		}
+
+		if err := source.CreateInputVariables(); err != nil {
 			return err
 		}
 	}

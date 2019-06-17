@@ -11,7 +11,7 @@ backend "azurerm" {
     storage_account_name = "abcd1234"
     container_name       = "tfstate"
     key                  = "prod.terraform.tfstate"
-    sas_token            = env("SAS-TOKEN")
+    sas_token            = env("SAS_TOKEN")
 }
 
 module {

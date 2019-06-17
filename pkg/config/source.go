@@ -7,9 +7,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/hashicorp/hcl2/hclwrite"
-	"github.com/hashicorp/hcl2/gohcl"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -87,15 +84,17 @@ func (src *Source) ModuleDirectory() string {
 	return path
 }
 
-func (src *Source) CreateBackendFile() error {
-	f := hclwrite.NewEmptyFile()
-	rootBody := f.Body()
-	tfBlock := rootBody.AppendNewBlock("terraform", nil)
-	tfBody := tfBlock.Body()
-	backendBlock := tfBody.AppendNewBlock("backend", []string{"azurerm"})
-	gohcl.EncodeIntoBody(src.Config.Backend, backendBlock.Body())
+func (src *Source) CreateOverrides() error {
+	b, err := GetTerraformOverride(src.Config)
+	if err != nil {
+		return err
+	}
 
-	log.Debugf("%s", f.Bytes())
+	log.Debugf("%s", b)
 
+	return nil
+}
+
+func (src *Source) CreateInputVariables() error {
 	return nil
 }
