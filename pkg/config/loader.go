@@ -57,6 +57,11 @@ func Load(src string, options *LoadOptions) (*Loader, error) {
 		return loader, nil
 	}
 
+	if options.CleanTempDir {
+		log.Debugf("Removing temp directory")
+		os.RemoveAll(tempDir)
+	}
+
 	cSrc, cPwd := changeSourceDirectory(src, options.WorkingDirectory)
 
 	loader := &Loader{

@@ -40,6 +40,8 @@ type Dependency struct {
 
 	Source  string  `hcl:"source,attr"`
 	Version *string `hcl:"version,attr"`
+
+	Backend *Backend `hcl:"backend,block"`
 }
 
 // Backend for remote state

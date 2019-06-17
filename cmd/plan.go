@@ -49,7 +49,7 @@ func (pc *planCmd) run(args []string) error {
 			WorkingDirectory: source.ModuleDirectory(),
 		}
 
-		if err := shell.ExecuteTerraform("plan", options, extraArgs...); err != nil {
+		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
 			return err
 		}
 	}

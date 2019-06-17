@@ -1,11 +1,12 @@
 package config
 
 import (
-	"path/filepath"
-	"github.com/avinor/tau/pkg/utils"
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
+
+	"github.com/avinor/tau/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +17,7 @@ type Source struct {
 	File         string
 	Content      []byte
 	Dependencies map[string]*Source
-	Config *Config
+	Config       *Config
 
 	loader *Loader
 }
@@ -68,7 +69,7 @@ func NewSource(file string, loader *Loader) (*Source, error) {
 		Content:      b,
 		Config:       config,
 		Dependencies: map[string]*Source{},
-		loader: loader,
+		loader:       loader,
 	}, nil
 }
 
@@ -78,7 +79,23 @@ func (src *Source) ModuleDirectory() string {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.Debugf("Creating module directory")
-		os.Mkdir(path, os.ModeDir)
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return path
+}
+
+// DependencyDirectory where dependencies should be resolved
+func (src *Source) DependencyDirectory() string {
+	path := filepath.Join(src.loader.TempDir, "deps", src.Hash)
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Debugf("Creating dependency directory")
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return path
@@ -90,7 +107,10 @@ func (src *Source) CreateOverrides() error {
 		return err
 	}
 
-	log.Debugf("%s", b)
+	filename := filepath.Join(src.ModuleDirectory(), "terraform_overrides.tf")
+	if err := ioutil.WriteFile(filename, b, os.ModePerm); err != nil {
+		return err
+	}
 
 	return nil
 }

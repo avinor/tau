@@ -56,16 +56,18 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	for _, source := range loader.Sources {
-		if err := source.CreateOverrides(); err != nil {
-			return err
-		}
+		// if err := source.CreateOverrides(); err != nil {
+		// 	return err
+		// }
 
-		extraArgs := utils.GetExtraArgs(args, "-backend-config")
+		extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
+
+		initArgs := append(extraArgs, "-from-module", source.Config.Module.Source, "-backend=false")
 		options := &shell.Options{
 			WorkingDirectory: source.ModuleDirectory(),
 		}
 
-		if err := shell.ExecuteTerraform("init", options, extraArgs...); err != nil {
+		if err := shell.Execute("terraform", options, initArgs...); err != nil {
 			return err
 		}
 

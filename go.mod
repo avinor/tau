@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/davecgh/go-spew v1.1.1
+	github.com/go-cmd/cmd v1.0.4
 	github.com/go-errors/errors v1.0.1
 	github.com/google/martian v2.1.0+incompatible
 	github.com/hashicorp/go-getter v1.3.0
