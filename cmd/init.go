@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/sources"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/sources"
 	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
@@ -42,10 +43,8 @@ func (ic *initCmd) run(args []string) error {
 		return err
 	}
 
-	//src, pwd := sources.ResolveDirectory(source)
-
 	client := config.New(source, &config.Options{
-		LoadSources: true,
+		LoadSources:  true,
 		CleanTempDir: true,
 	})
 
@@ -55,32 +54,27 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	for _, source := range loaded {
-		//extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
-		//backendArgs := append(extraArgs, "-backend=true", "-reconfigure")
-
 		modClient := sources.New(&sources.Options{})
+		if err := modClient.Get(source.Config.Module.Source, source.ModuleDirectory(), source.Config.Module.Version); err != nil {
+			return err
+		}
 
-		modClient.Get(source.Config.Module.Source, source.ModuleDirectory(), source.Config.Module.Version)
+		options := &shell.Options{
+			WorkingDirectory: source.ModuleDirectory(),
+		}
 
-		// options := &shell.Options{
-		// 	WorkingDirectory: source.ModuleDirectory(),
-		// }
+		if err := source.CreateOverrides(); err != nil {
+			return err
+		}
 
-		// if err := shell.Execute("terraform", options, initArgs...); err != nil {
-		// 	return err
-		// }
+		extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
+		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
+			return err
+		}
 
-		// if err := source.CreateOverrides(); err != nil {
-		// 	return err
-		// }
-
-		// if err := shell.Execute("terraform", options, backendArgs...); err != nil {
-		// 	return err
-		// }
-
-		// if err := source.CreateInputVariables(); err != nil {
-		// 	return err
-		// }
+		if err := source.CreateInputVariables(); err != nil {
+			return err
+		}
 	}
 
 	return nil
