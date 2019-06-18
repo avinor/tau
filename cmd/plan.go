@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
@@ -33,26 +31,26 @@ func newPlanCmd() *cobra.Command {
 }
 
 func (pc *planCmd) run(args []string) error {
-	source, err := utils.GetSourceArg(args)
+	_, err := utils.GetSourceArg(args)
 	if err != nil {
 		return err
 	}
 
-	loader, err := config.Load(source, &config.LoadOptions{})
-	if err != nil {
-		return err
-	}
+	// loader, err := config.Load(source, &config.LoadOptions{})
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, source := range loader.Sources {
-		extraArgs := utils.GetExtraArgs(args, "-backend-config")
-		options := &shell.Options{
-			WorkingDirectory: source.ModuleDirectory(),
-		}
+	// for _, source := range loader.Sources {
+	// 	extraArgs := utils.GetExtraArgs(args, "-backend-config")
+	// 	options := &shell.Options{
+	// 		WorkingDirectory: source.ModuleDirectory(),
+	// 	}
 
-		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
-			return err
-		}
-	}
+	// 	if err := shell.Execute("terraform", options, extraArgs...); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }

@@ -19,7 +19,7 @@ type Source struct {
 	Dependencies map[string]*Source
 	Config       *Config
 
-	loader *Loader
+	client *Client
 }
 
 // ByDependencies sorts a list of sources by their dependencies
@@ -45,7 +45,7 @@ func (a ByDependencies) Less(i, j int) bool {
 }
 
 // NewSource creates a new source from a file
-func NewSource(file string, loader *Loader) (*Source, error) {
+func NewSource(file string, client *Client) (*Source, error) {
 	if _, err := os.Stat(file); err != nil {
 		return nil, err
 	}
@@ -69,13 +69,13 @@ func NewSource(file string, loader *Loader) (*Source, error) {
 		Content:      b,
 		Config:       config,
 		Dependencies: map[string]*Source{},
-		loader:       loader,
+		client: client,
 	}, nil
 }
 
 // ModuleDirectory where module should be installed, also creates if does not exist
 func (src *Source) ModuleDirectory() string {
-	path := filepath.Join(src.loader.TempDir, "module", src.Hash)
+	path := filepath.Join(src.client.TempDir, "module", src.Hash)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.Debugf("Creating module directory")
@@ -89,7 +89,7 @@ func (src *Source) ModuleDirectory() string {
 
 // DependencyDirectory where dependencies should be resolved
 func (src *Source) DependencyDirectory() string {
-	path := filepath.Join(src.loader.TempDir, "deps", src.Hash)
+	path := filepath.Join(src.client.TempDir, "deps", src.Hash)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.Debugf("Creating dependency directory")

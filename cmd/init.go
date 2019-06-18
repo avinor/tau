@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/avinor/tau/pkg/sources"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
@@ -42,39 +42,46 @@ func (ic *initCmd) run(args []string) error {
 		return err
 	}
 
-	loader, err := config.Load(source, &config.LoadOptions{
+	//src, pwd := sources.ResolveDirectory(source)
+
+	client := config.New(source, &config.Options{
 		LoadSources: true,
 		CleanTempDir: true,
 	})
+
+	loaded, err := client.Load(source, nil)
 	if err != nil {
 		return err
 	}
 
-	for _, source := range loader.Sources {
-		extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
-		initArgs := append(extraArgs, "-from-module", source.Config.Module.Source, "-backend=false")
-		backendArgs := append(extraArgs, "-backend=true", "-reconfigure")
+	for _, source := range loaded {
+		//extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
+		//backendArgs := append(extraArgs, "-backend=true", "-reconfigure")
 
-		options := &shell.Options{
-			WorkingDirectory: source.ModuleDirectory(),
-		}
+		modClient := sources.New(&sources.Options{})
 
-		if err := shell.Execute("terraform", options, initArgs...); err != nil {
-			return err
-		}
+		modClient.Get(source.Config.Module.Source, source.ModuleDirectory(), source.Config.Module.Version)
 
-		if err := source.CreateOverrides(); err != nil {
-			return err
-		}
+		// options := &shell.Options{
+		// 	WorkingDirectory: source.ModuleDirectory(),
+		// }
 
-		if err := shell.Execute("terraform", options, backendArgs...); err != nil {
-			return err
-		}
+		// if err := shell.Execute("terraform", options, initArgs...); err != nil {
+		// 	return err
+		// }
 
-		if err := source.CreateInputVariables(); err != nil {
-			return err
-		}
+		// if err := source.CreateOverrides(); err != nil {
+		// 	return err
+		// }
+
+		// if err := shell.Execute("terraform", options, backendArgs...); err != nil {
+		// 	return err
+		// }
+
+		// if err := source.CreateInputVariables(); err != nil {
+		// 	return err
+		// }
 	}
 
-	return loader.Save()
+	return nil
 }
