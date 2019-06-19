@@ -15,17 +15,6 @@ type Config struct {
 	Remaining hcl2.Body `hcl:",remain"`
 }
 
-// InitConfig contains data structure for module run to retrieve values
-type InitConfig struct {
-	Datas   []Data   `hcl:"data,block"`
-	Outputs []Output `hcl:"output,block"`
-}
-
-// ValuesConfig contains structure of terraform.tfvars file
-type ValuesConfig struct {
-	ValueExpr []hcl2.Expression
-}
-
 // Data sources to read from
 type Data struct {
 	Type string `hcl:"type,label"`

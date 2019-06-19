@@ -11,23 +11,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Client for loading sources
-type Client struct {
-	TempDir string
-
+// Loader client for loading sources
+type Loader struct {
+	tempDir string
 	loaded  map[string]*Source
 	options *Options
 }
 
 // Options are options when loading modules
 type Options struct {
-	LoadSources      bool
-	CleanTempDir     bool
 	WorkingDirectory string
 }
 
-// New creates a new loader client
-func New(profile string, options *Options) *Client {
+// NewLoader creates a new loader client
+func NewLoader(tempDir string, options *Options) *Loader {
 	if options.WorkingDirectory == "" {
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -48,18 +45,9 @@ func New(profile string, options *Options) *Client {
 }
 
 // Load all sources from src
-func (c *Client) Load(src string, version *string) ([]*Source, error) {
+func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 	if src == "" {
 		return nil, errors.Errorf("Source is empty")
-	}
-
-	if !c.options.LoadSources {
-		return c.getSavedSources(src)
-	}
-
-	if c.options.CleanTempDir {
-		log.Debugf("Removing temp directory")
-		os.RemoveAll(c.TempDir)
 	}
 
 	cSrc, cPwd := sources.ResolveDirectory(src)
@@ -84,9 +72,18 @@ func (c *Client) Load(src string, version *string) ([]*Source, error) {
 	return sources, nil
 }
 
+func (l *Loader) LoadTempDir() ([]*Source, error) {
+	return nil, nil
+}
+
 // Save loaded sources in temp directory
 func (c *Client) Save(sources []*Source) error {
 	return nil
+}
+
+func (l *Loader) CleanTempDir() {
+	log.Debugf("Removing temp directory")
+	os.RemoveAll(c.TempDir)
 }
 
 func (c *Client) loadSource(sClient *sources.Client, src string, version *string) ([]*Source, error) {

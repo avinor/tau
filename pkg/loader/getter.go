@@ -1,4 +1,4 @@
-package sources
+package loader
 
 import (
 	"fmt"
@@ -11,56 +11,56 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Options for initialization
-type Options struct {
+// GetterOptions for initialization
+type GetterOptions struct {
 	HttpClient *http.Client
-	WorkingDirectory string
 }
 
-// Client to retrieve sources
-type Client struct {
+// GetterClient to retrieve sources
+type GetterClient struct {
 	httpClient *http.Client
-	pwd string
+	detectors []getter.Detector
 }
-
-// Detectors is the list of detectors used
-var Detectors []getter.Detector
 
 const (
 	defaultTimeout = 10 * time.Second
 )
 
-func init() {
-	Detectors = append([]getter.Detector{new(RegistryDetector)}, getter.Detectors...)
-}
+// NewGetter creates a new getter client
+func NewGetter(options *GetterOptions) *GetterClient {
+	if options == nil {
+		options = &GetterOptions{}
+	}
 
-// New creates a new client
-func New(options *Options) *Client {
 	if options.HttpClient == nil {
 		options.HttpClient = &http.Client{
 			Timeout: defaultTimeout,
 		}
 	}
 
-	if options.WorkingDirectory == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return nil
-		}
-
-		options.WorkingDirectory = pwd
+	registryDetector := &RegistryDetector{
+		httpClient: options.HttpClient,
 	}
 
-	return &Client{
+	return &GetterClient{
 		httpClient: options.HttpClient,
-		pwd: options.WorkingDirectory,
+		detectors: append([]getter.Detector{registryDetector}, getter.Detectors...),
 	}
 }
 
 // Get retrieves sources from src and load them into dst
-func (c *Client) Get(src, dst string, version *string) error {
+func (c *GetterClient) Get(src, dst string, pwd, version *string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
+
+	if pwd == nil {
+		cpwd, err := os.Getwd()
+		if err != nil {
+			return nil
+		}
+
+		pwd = &cpwd
+	}
 
 	if version != nil {
 		src = fmt.Sprintf("%s?registryVersion=%s", src, *version)
@@ -72,9 +72,9 @@ func (c *Client) Get(src, dst string, version *string) error {
 		Ctx:  ctx,
 		Src:  src,
 		Dst:  dst,
-		Pwd:  c.pwd,
+		Pwd:  *pwd,
 		Mode: getter.ClientModeAny,
-		Detectors: Detectors,
+		Detectors: c.detectors,
 	}
 
 	return client.Get()

@@ -37,6 +37,8 @@ func newInitCmd() *cobra.Command {
 	return initCmd
 }
 
+func (ic *initCmd) init(args)
+
 func (ic *initCmd) run(args []string) error {
 	source, err := utils.GetSourceArg(args)
 	if err != nil {
@@ -63,18 +65,18 @@ func (ic *initCmd) run(args []string) error {
 			WorkingDirectory: source.ModuleDirectory(),
 		}
 
-		if err := source.CreateOverrides(); err != nil {
-			return err
-		}
+		// if err := source.CreateOverrides(); err != nil {
+		// 	return err
+		// }
 
 		extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
 		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
 			return err
 		}
 
-		if err := source.CreateInputVariables(); err != nil {
-			return err
-		}
+		// if err := source.CreateInputVariables(); err != nil {
+		// 	return err
+		// }
 	}
 
 	return nil
