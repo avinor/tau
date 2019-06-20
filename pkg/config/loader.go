@@ -1,44 +1,41 @@
 package config
 
 import (
-	"github.com/avinor/tau/pkg/sources"
+	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/getter"
 	"os"
 	"path/filepath"
 	"sort"
 
-	"github.com/avinor/tau/pkg/utils"
 	"github.com/go-errors/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // Loader client for loading sources
 type Loader struct {
-	tempDir string
-	loaded  map[string]*Source
 	options *Options
+	loaded  map[string]*Source
+	getter *getter.Client
 }
 
-// Options are options when loading modules
+// Options when loading modules
 type Options struct {
 	WorkingDirectory string
+	TempDirectory string
 }
 
 // NewLoader creates a new loader client
-func NewLoader(tempDir string, options *Options) *Loader {
+func NewLoader(options *Options) *Loader {
 	if options.WorkingDirectory == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			log.WithError(err).Fatal("Unable to get working directory")
-		}
-
-		options.WorkingDirectory = pwd
+		options.WorkingDirectory = dir.Working
 	}
-	log.Debugf("Current working directory: %v", options.WorkingDirectory)
+	
+	// if options.SourceDirectory == "" {
+	// 	options.SourceDirectory = options.WorkingDirectory
+	// }
+	
 
-	tempDir := filepath.Join(options.WorkingDirectory, ".tau", utils.Hash(profile))
 
-	return &Client{
-		TempDir: tempDir,
+	return &Loader{
 		loaded:  map[string]*Source{},
 		options: options,
 	}
@@ -50,20 +47,15 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 		return nil, errors.Errorf("Source is empty")
 	}
 
-	cSrc, cPwd := sources.ResolveDirectory(src)
-	sClient := sources.New(&sources.Options{
-		WorkingDirectory: cPwd,
-	})
+	//log.WithField("blank_before", true).Info("Loading modules...")
 
-	log.WithField("blank_before", true).Info("Loading modules...")
-
-	sources, err := c.loadSource(sClient, cSrc, nil)
+	sources, err := l.loadSource(src, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	log.WithField("blank_before", true).Info("Loading dependencies...")
-	if err := c.loadDependencies(sClient, sources, 0); err != nil {
+	//log.WithField("blank_before", true).Info("Loading dependencies...")
+	if err := l.loadDependencies(sources, 0); err != nil {
 		return nil, err
 	}
 
@@ -72,35 +64,31 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 	return sources, nil
 }
 
+// LoadTempDir loads sources from temp dir. Temp dir already has to be initialized
 func (l *Loader) LoadTempDir() ([]*Source, error) {
 	return nil, nil
 }
 
 // Save loaded sources in temp directory
-func (c *Client) Save(sources []*Source) error {
+func (l *Loader) Save(sources []*Source) error {
 	return nil
 }
 
-func (l *Loader) CleanTempDir() {
-	log.Debugf("Removing temp directory")
-	os.RemoveAll(c.TempDir)
-}
+func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
+	dst := dir.Source(l.options.TempDirectory, src)
 
-func (c *Client) loadSource(sClient *sources.Client, src string, version *string) ([]*Source, error) {
-	dst := filepath.Join(c.TempDir, "sources", utils.Hash(src))
-
-	if err := sClient.Get(src, dst, version); err != nil {
+	if err := l.getter.Get(src, dst, version); err != nil {
 		return nil, err
 	}
 
-	files, err := c.findModuleFiles(dst)
+	files, err := l.findModuleFiles(dst)
 	if err != nil {
 		return nil, err
 	}
 
 	sources := []*Source{}
 	for _, file := range files {
-		source, err := NewSource(file, c)
+		source, err := NewSource(file)
 		if err != nil {
 			return nil, err
 		}
@@ -111,22 +99,22 @@ func (c *Client) loadSource(sClient *sources.Client, src string, version *string
 	return sources, nil
 }
 
-func (c *Client) loadDependencies(sClient *sources.Client, sources []*Source, depth int) error {
+func (l *Loader) loadDependencies(sources []*Source, depth int) error {
 	remaining := []*Source{}
 
 	for _, source := range sources {
-		if _, ok := c.loaded[source.Hash]; !ok {
+		if _, ok := l.loaded[source.ContentHash]; !ok {
 			remaining = append(remaining, source)
 		}
 	}
 
 	for _, source := range remaining {
-		deps, err := c.loadModuleDependencies(sClient, source)
+		deps, err := l.loadModuleDependencies(source)
 		if err != nil {
 			return err
 		}
 
-		if err := c.loadDependencies(sClient, deps, depth+1); err != nil {
+		if err := l.loadDependencies(deps, depth+1); err != nil {
 			return err
 		}
 	}
@@ -134,21 +122,21 @@ func (c *Client) loadDependencies(sClient *sources.Client, sources []*Source, de
 	return nil
 }
 
-func (c *Client) loadModuleDependencies(sClient *sources.Client, source *Source) ([]*Source, error) {
-	c.loaded[source.Hash] = source
+func (l *Loader) loadModuleDependencies(source *Source) ([]*Source, error) {
+	l.loaded[source.ContentHash] = source
 	deps := []*Source{}
 
 	for _, dep := range source.Config.Dependencies {
-		sources, err := c.loadSource(sClient, dep.Source, dep.Version)
+		sources, err := l.loadSource(dep.Source, dep.Version)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, src := range sources {
-			if _, ok := c.loaded[src.Hash]; !ok {
+			if _, ok := l.loaded[src.ContentHash]; !ok {
 				deps = append(deps, src)
 			} else {
-				src = c.loaded[src.Hash]
+				src = l.loaded[src.ContentHash]
 			}
 
 			source.Dependencies[dep.Name] = src
@@ -158,7 +146,7 @@ func (c *Client) loadModuleDependencies(sClient *sources.Client, source *Source)
 	return deps, nil
 }
 
-func (c *Client) findModuleFiles(dst string) ([]string, error) {
+func (l *Loader) findModuleFiles(dst string) ([]string, error) {
 
 	matches := []string{}
 
@@ -181,11 +169,7 @@ func (c *Client) findModuleFiles(dst string) ([]string, error) {
 		}
 	}
 
-	log.Debugf("Found %v template file(s): %v", len(matches), matches)
+	// log.Debugf("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
-}
-
-func (c *Client) getSavedSources(src string) ([]*Source, error) {
-	return nil, nil
 }

@@ -1,9 +1,9 @@
-package loader
+package getter
 
 import (
+	"github.com/avinor/tau/pkg/dir"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 	"context"
 
@@ -11,14 +11,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// GetterOptions for initialization
-type GetterOptions struct {
+// Options for initialization
+type Options struct {
 	HttpClient *http.Client
+	WorkingDirectory string
 }
 
-// GetterClient to retrieve sources
-type GetterClient struct {
+// Client to retrieve sources
+type Client struct {
 	httpClient *http.Client
+	pwd string
 	detectors []getter.Detector
 }
 
@@ -26,10 +28,10 @@ const (
 	defaultTimeout = 10 * time.Second
 )
 
-// NewGetter creates a new getter client
-func NewGetter(options *GetterOptions) *GetterClient {
+// New creates a new getter client
+func New(options *Options) *Client {
 	if options == nil {
-		options = &GetterOptions{}
+		options = &Options{}
 	}
 
 	if options.HttpClient == nil {
@@ -38,29 +40,25 @@ func NewGetter(options *GetterOptions) *GetterClient {
 		}
 	}
 
+	if options.WorkingDirectory == "" {
+		options.WorkingDirectory = dir.Working
+	}
+
 	registryDetector := &RegistryDetector{
 		httpClient: options.HttpClient,
 	}
 
-	return &GetterClient{
+	return &Client{
 		httpClient: options.HttpClient,
+		pwd : options.WorkingDirectory,
 		detectors: append([]getter.Detector{registryDetector}, getter.Detectors...),
 	}
 }
 
 // Get retrieves sources from src and load them into dst
-func (c *GetterClient) Get(src, dst string, pwd, version *string) error {
+func (c *Client) Get(src, dst string, version *string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
-
-	if pwd == nil {
-		cpwd, err := os.Getwd()
-		if err != nil {
-			return nil
-		}
-
-		pwd = &cpwd
-	}
 
 	if version != nil {
 		src = fmt.Sprintf("%s?registryVersion=%s", src, *version)
@@ -72,7 +70,7 @@ func (c *GetterClient) Get(src, dst string, pwd, version *string) error {
 		Ctx:  ctx,
 		Src:  src,
 		Dst:  dst,
-		Pwd:  *pwd,
+		Pwd:  c.pwd,
 		Mode: getter.ClientModeAny,
 		Detectors: c.detectors,
 	}

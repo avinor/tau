@@ -3,8 +3,6 @@ package cmd
 import (
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/shell"
-	"github.com/avinor/tau/pkg/sources"
-	"github.com/avinor/tau/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +13,8 @@ const (
 )
 
 type initCmd struct {
+	Meta
+
 	maxDependencyDepth int
 }
 
@@ -27,6 +27,10 @@ func newInitCmd() *cobra.Command {
 		Long:  initLongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := ic.initMeta(args); err != nil {
+				return err
+			}
+
 			return ic.run(args)
 		},
 	}
@@ -36,8 +40,6 @@ func newInitCmd() *cobra.Command {
 
 	return initCmd
 }
-
-func (ic *initCmd) init(args)
 
 func (ic *initCmd) run(args []string) error {
 	source, err := utils.GetSourceArg(args)

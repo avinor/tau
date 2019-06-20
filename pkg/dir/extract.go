@@ -1,4 +1,4 @@
-package loader
+package dir
 
 import (
 	"path"
@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// ResolveDirectory returns working directory and source path for src
-func ResolveDirectory(source string) (src string, pwd string) {
+// Split the source directory into working directory and source directory
+func Split(source string) (src string, pwd string) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.WithError(err).Fatal("Unable to resolve working directory")

@@ -1,9 +1,40 @@
-package utils
+package cmd
 
 import (
+	"github.com/avinor/tau/pkg/getter"
+	"github.com/avinor/tau/pkg/config"
 	"github.com/go-errors/errors"
 	"strings"
 )
+
+type Meta struct {
+	Loader *config.Loader
+	Getter *getter.Client
+	TempDir string
+	SourceDir string
+	SourceFile string
+}
+
+func (m *Meta) initMeta(args []string) error {
+	tempDir := filepath.Join(options.WorkingDirectory, ".tau", utils.Hash(profile))
+
+	loader, err := config.NewLoader(tempDir)
+	if err != nil {
+		return err
+	}
+
+	source, err := utils.GetSourceArg(args)
+	if err != nil {
+		return err
+	}
+
+	client := config.New(source, &config.Options{
+		LoadSources:  true,
+		CleanTempDir: true,
+	})
+
+	return nil
+}
 
 // GetSourceArg finds argument that does not start with dash (-)
 func GetSourceArg(args []string) (string, error) {
