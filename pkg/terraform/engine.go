@@ -1,7 +1,11 @@
 package terraform
 
 import (
+	"regexp"
+
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/shell/processors"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -39,6 +43,14 @@ type Engine struct {
 	Backend       Backend
 }
 
+const (
+	versionPattern = "Terraform v(\\d+.\\d+)"
+)
+
+var (
+	versionRegex = regexp.MustCompile(versionPattern)
+)
+
 // NewEngine creates a terraform engine for the currently installed terraform version
 func NewEngine() *Engine {
 	version := version()
@@ -56,11 +68,7 @@ func NewEngine() *Engine {
 		processor = v012Engine
 		backend = v012Engine
 	default:
-		v012Engine := v012.NewEngine()
-		compatibility = v012Engine
-		generator = v012Engine
-		processor = v012Engine
-		backend = v012Engine
+
 	}
 
 	return &Engine{
@@ -73,5 +81,22 @@ func NewEngine() *Engine {
 }
 
 func version() string {
-	return "0.12"
+	buffer := &processors.Buffer{}
+
+	options := &shell.Options{
+		Stdout: shell.Processors(buffer),
+		Stderr: shell.Processors(buffer),
+	}
+
+	if err := shell.Execute(options, "terraform", "version"); err != nil {
+		return ""
+	}
+
+	matches := versionRegex.FindAllStringSubmatch(buffer.Stdout(), -1)
+
+	if len(matches) < 1 && len(matches[0]) < 2 {
+		return ""
+	}
+
+	return matches[0][1]
 }

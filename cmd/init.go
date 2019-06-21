@@ -62,10 +62,14 @@ func (ic *initCmd) run(args []string) error {
 		// 	// 	return err
 		// 	// }
 
-		options := shell.NewOptions().WithWorkingDirectory(moduleDir).WithStdout(new(processors.Log))
+		options := &shell.Options{
+			WorkingDirectory: moduleDir,
+			Stdout:           shell.Processors(new(processors.Log)),
+			Stderr:           shell.Processors(new(processors.Log)),
+		}
 
 		extraArgs := append([]string{"init"}, getExtraArgs(args, "-backend-config", "-from-module")...)
-		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
+		if err := shell.Execute(options, "terraform", extraArgs...); err != nil {
 			return err
 		}
 

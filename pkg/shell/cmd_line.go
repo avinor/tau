@@ -7,7 +7,7 @@ import (
 )
 
 // Execute a shell command
-func Execute(command string, options *Options, args ...string) error {
+func Execute(options *Options, command string, args ...string) error {
 	if options == nil {
 		options = &Options{}
 	}
@@ -28,9 +28,9 @@ func Execute(command string, options *Options, args ...string) error {
 		for {
 			select {
 			case line := <-execCmd.Stdout:
-				options.ProcessStdout(line)
+				processLine(options.Stdout, line)
 			case line := <-execCmd.Stderr:
-				options.ProcessStderr(line)
+				processLine(options.Stderr, line)
 			}
 		}
 	}()
@@ -42,4 +42,10 @@ func Execute(command string, options *Options, args ...string) error {
 	}
 
 	return status.Error
+}
+
+func processLine(processors []OutputProcessor, line string) {
+	for _, out := range processors {
+		out.WriteStdout(line)
+	}
 }

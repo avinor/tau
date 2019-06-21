@@ -7,10 +7,10 @@ import (
 type Log struct {
 }
 
-func (l *Log) Stdout(line string) {
+func (l *Log) WriteStdout(line string) {
 	log.Info(line)
 }
 
-func (l *Log) Stderr(line string) {
+func (l *Log) WriteStderr(line string) {
 	log.Error(line)
 }
