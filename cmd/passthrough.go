@@ -4,32 +4,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	planName             = "plan"
-	planShortDescription = "Generate and show an execution plan"
-	planLongDescription  = "Generate and show an execution plan"
-)
-
-type planCmd struct {
+type ptCmd struct {
+	meta
 }
 
-func newPlanCmd() *cobra.Command {
-	pc := &planCmd{}
+func newPtCmd(command Command) *cobra.Command {
+	pt := &ptCmd{}
 
-	planCmd := &cobra.Command{
-		Use:   planName,
-		Short: planShortDescription,
-		Long:  planLongDescription,
+	ptCmd := &cobra.Command{
+		Use:   command.Use,
+		Short: command.ShortDescription,
+		Long:  command.LongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return pc.run(args)
+			if err := pt.processArgs(args); err != nil {
+				return err
+			}
+
+			return pt.run(args)
 		},
 	}
 
-	return planCmd
+	return ptCmd
 }
 
-func (pc *planCmd) run(args []string) error {
+func (pt *ptCmd) run(args []string) error {
 	// _, err := utils.GetSourceArg(args)
 	// if err != nil {
 	// 	return err

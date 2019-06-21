@@ -7,12 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	initName             = "init"
-	initShortDescription = "Initialize a Terraform working directory"
-	initLongDescription  = "Initialize a Terraform working directory"
-)
-
 type initCmd struct {
 	meta
 
@@ -22,13 +16,15 @@ type initCmd struct {
 func newInitCmd() *cobra.Command {
 	ic := &initCmd{}
 
+	command := validCommands["init"]
+
 	initCmd := &cobra.Command{
-		Use:   initName,
-		Short: initShortDescription,
-		Long:  initLongDescription,
+		Use:   command.Use,
+		Short: command.ShortDescription,
+		Long:  command.LongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := ic.initMeta(args); err != nil {
+			if err := ic.processArgs(args); err != nil {
 				return err
 			}
 

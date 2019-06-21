@@ -28,7 +28,7 @@ type meta struct {
 	SourceFile string
 }
 
-func (m *meta) initMeta(args []string) error {
+func (m *meta) processArgs(args []string) error {
 	{
 		src, err := getSourceArg(args)
 		if err != nil {
