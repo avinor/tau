@@ -9,6 +9,8 @@ import (
 	"github.com/avinor/tau/pkg/getter"
 
 	"github.com/go-errors/errors"
+	"github.com/apex/log"
+	"github.com/fatih/color"
 )
 
 // Loader client for loading sources
@@ -48,19 +50,22 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 		return nil, errors.Errorf("Source is empty")
 	}
 
-	//log.WithField("blank_before", true).Info("Loading modules...")
+	log.Info(color.New(color.Bold).Sprint("Loading sources..."))
 
 	sources, err := l.loadSource(src, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	//log.WithField("blank_before", true).Info("Loading dependencies...")
+	log.Info("")
+	log.Info(color.New(color.Bold).Sprint("Loading dependencies..."))
 	if err := l.loadDependencies(sources, 0); err != nil {
 		return nil, err
 	}
 
 	sort.Sort(ByDependencies(sources))
+
+	log.Info("")
 
 	return sources, nil
 }

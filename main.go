@@ -5,15 +5,19 @@ package main
 
 import (
 	"os"
+	stdlog "log"
 
 	"github.com/avinor/tau/cmd"
-	colorable "github.com/mattn/go-colorable"
-	log "github.com/sirupsen/logrus"
+	"github.com/apex/log"
+	"github.com/apex/log/handlers/cli"
+	"github.com/avinor/tau/pkg/getter"
 )
 
 func main() {
-	log.SetFormatter(&log.TextFormatter{ForceColors: true})
-	log.SetOutput(colorable.NewColorableStdout())
+	handler := cli.Default
+	log.SetHandler(handler)
+	stdlog.SetOutput(new(getter.LogParser))
+
 	if err := cmd.NewRootCmd().Execute(); err != nil {
 		os.Exit(1)
 	}

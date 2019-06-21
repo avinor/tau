@@ -14,6 +14,8 @@ import (
 	"github.com/go-errors/errors"
 	gogetter "github.com/hashicorp/go-getter"
 	"github.com/spf13/pflag"
+	"github.com/apex/log"
+	"github.com/fatih/color"
 )
 
 type meta struct {
@@ -29,6 +31,8 @@ type meta struct {
 }
 
 func (m *meta) processArgs(args []string) error {
+	log.Debug(color.New(color.Bold).Sprint("Processing arguments..."))
+
 	{
 		src, err := getSourceArg(args)
 		if err != nil {
@@ -42,14 +46,23 @@ func (m *meta) processArgs(args []string) error {
 
 		m.SourceFile = src
 		m.SourceDir = wd
+
+		log.Debugf("- Source file: %s", m.SourceFile)
+		log.Debugf("- Source dir: %s", m.SourceDir)
 	}
 
 	m.TempDir = dir.TempDir(dir.Working, m.SourceFile)
 
+	log.Debugf("- Temp dir: %s", m.TempDir)
+
 	{
+		timeout := time.Duration(m.timeout) * time.Second
+
+		log.Debugf("- Http timeout: %s", timeout)
+
 		options := &getter.Options{
 			HttpClient: &http.Client{
-				Timeout: time.Duration(m.timeout) * time.Second,
+				Timeout: timeout,
 			},
 			WorkingDirectory: m.SourceDir,
 		}
@@ -70,6 +83,8 @@ func (m *meta) processArgs(args []string) error {
 	{
 		m.Engine = terraform.NewEngine()
 	}
+
+	log.Debug("")
 
 	return nil
 }
@@ -144,9 +159,6 @@ func splitSource(src string) (string, string, error) {
 			pwd = rootPath
 			src = "."
 		}
-
-		// log.Debugf("New source directory: %v", pwd)
-		// log.Debugf("New source: %v", src)
 	}
 
 	return src, pwd, nil

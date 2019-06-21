@@ -5,6 +5,8 @@ import (
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/spf13/cobra"
+	"github.com/apex/log"
+	"github.com/fatih/color"
 )
 
 type initCmd struct {
@@ -46,6 +48,7 @@ func (ic *initCmd) run(args []string) error {
 		return err
 	}
 
+	log.Info(color.New(color.Bold).Sprint("Loading modules..."))
 	for _, source := range loaded {
 		module := source.Config.Module
 		moduleDir := dir.Module(ic.TempDir, source.File)
@@ -53,6 +56,10 @@ func (ic *initCmd) run(args []string) error {
 		if err := ic.Getter.Get(module.Source, moduleDir, module.Version); err != nil {
 			return err
 		}
+	}
+
+	for _, source := range loaded {
+		moduleDir := dir.Module(ic.TempDir, source.File)
 
 		// 	// if err := source.CreateOverrides(); err != nil {
 		// 	// 	return err

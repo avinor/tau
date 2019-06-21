@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-getter"
-	log "github.com/sirupsen/logrus"
+	"github.com/apex/log"
 )
 
 // Options for initialization
@@ -64,7 +64,7 @@ func (c *Client) Get(src, dst string, version *string) error {
 		src = fmt.Sprintf("%s?registryVersion=%s", src, *version)
 	}
 
-	log.Debugf("Getting sources from %v", src)
+	log.Infof("- %v", src)
 
 	client := &getter.Client{
 		Ctx:  ctx,
