@@ -30,10 +30,10 @@ func newPlanCmd() *cobra.Command {
 }
 
 func (pc *planCmd) run(args []string) error {
-	_, err := utils.GetSourceArg(args)
-	if err != nil {
-		return err
-	}
+	// _, err := utils.GetSourceArg(args)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// loader, err := config.Load(source, &config.LoadOptions{})
 	// if err != nil {

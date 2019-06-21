@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/shell"
 	"github.com/spf13/cobra"
 )
 
@@ -42,44 +40,44 @@ func newInitCmd() *cobra.Command {
 }
 
 func (ic *initCmd) run(args []string) error {
-	source, err := utils.GetSourceArg(args)
-	if err != nil {
-		return err
-	}
+	// source, err := utils.GetSourceArg(args)
+	// if err != nil {
+	// 	return err
+	// }
 
-	client := config.New(source, &config.Options{
-		LoadSources:  true,
-		CleanTempDir: true,
-	})
+	// client := config.New(source, &config.Options{
+	// 	LoadSources:  true,
+	// 	CleanTempDir: true,
+	// })
 
-	loaded, err := client.Load(source, nil)
-	if err != nil {
-		return err
-	}
+	// loaded, err := client.Load(source, nil)
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, source := range loaded {
-		modClient := sources.New(&sources.Options{})
-		if err := modClient.Get(source.Config.Module.Source, source.ModuleDirectory(), source.Config.Module.Version); err != nil {
-			return err
-		}
+	// for _, source := range loaded {
+	// 	modClient := sources.New(&sources.Options{})
+	// 	if err := modClient.Get(source.Config.Module.Source, source.ModuleDirectory(), source.Config.Module.Version); err != nil {
+	// 		return err
+	// 	}
 
-		options := &shell.Options{
-			WorkingDirectory: source.ModuleDirectory(),
-		}
+	// 	options := &shell.Options{
+	// 		WorkingDirectory: source.ModuleDirectory(),
+	// 	}
 
-		// if err := source.CreateOverrides(); err != nil {
-		// 	return err
-		// }
+	// 	// if err := source.CreateOverrides(); err != nil {
+	// 	// 	return err
+	// 	// }
 
-		extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
-		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
-			return err
-		}
+	// 	extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
+	// 	if err := shell.Execute("terraform", options, extraArgs...); err != nil {
+	// 		return err
+	// 	}
 
-		// if err := source.CreateInputVariables(); err != nil {
-		// 	return err
-		// }
-	}
+	// 	// if err := source.CreateInputVariables(); err != nil {
+	// 	// 	return err
+	// 	// }
+	// }
 
 	return nil
 }
