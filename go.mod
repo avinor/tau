@@ -3,6 +3,7 @@ module github.com/avinor/tau
 go 1.12
 
 require (
+	github.com/apex/log v1.1.0
 	github.com/aws/aws-sdk-go v1.19.18
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-cmd/cmd v1.0.4

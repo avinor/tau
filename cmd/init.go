@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/spf13/cobra"
 )
 
@@ -61,9 +62,7 @@ func (ic *initCmd) run(args []string) error {
 		// 	// 	return err
 		// 	// }
 
-		options := &shell.Options{
-			WorkingDirectory: moduleDir,
-		}
+		options := shell.NewOptions().WithWorkingDirectory(moduleDir).WithStdout(new(processors.Log))
 
 		extraArgs := append([]string{"init"}, getExtraArgs(args, "-backend-config", "-from-module")...)
 		if err := shell.Execute("terraform", options, extraArgs...); err != nil {

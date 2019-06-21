@@ -4,13 +4,7 @@ import (
 	"time"
 
 	"github.com/go-cmd/cmd"
-	log "github.com/sirupsen/logrus"
 )
-
-// Options for shell command
-type Options struct {
-	WorkingDirectory string
-}
 
 // Execute a shell command
 func Execute(command string, options *Options, args ...string) error {
@@ -34,9 +28,9 @@ func Execute(command string, options *Options, args ...string) error {
 		for {
 			select {
 			case line := <-execCmd.Stdout:
-				log.Info(line)
+				options.ProcessStdout(line)
 			case line := <-execCmd.Stderr:
-				log.Error(line)
+				options.ProcessStderr(line)
 			}
 		}
 	}()

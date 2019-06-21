@@ -33,10 +33,10 @@ type Backend interface {
 type Engine struct {
 	Version string
 
-	compatibility VersionCompatibility
-	generator     Generator
-	processor     Processor
-	backend       Backend
+	Compatibility VersionCompatibility
+	Generator     Generator
+	Processor     Processor
+	Backend       Backend
 }
 
 // NewEngine creates a terraform engine for the currently installed terraform version
@@ -65,10 +65,10 @@ func NewEngine() *Engine {
 
 	return &Engine{
 		Version:       version,
-		compatibility: compatibility,
-		generator:     generator,
-		processor:     processor,
-		backend:       backend,
+		Compatibility: compatibility,
+		Generator:     generator,
+		Processor:     processor,
+		Backend:       backend,
 	}
 }
 
