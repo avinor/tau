@@ -3,6 +3,7 @@ module github.com/avinor/tau
 go 1.12
 
 require (
+	github.com/aws/aws-sdk-go v1.19.18
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-cmd/cmd v1.0.4
 	github.com/go-errors/errors v1.0.1
@@ -14,5 +15,6 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.4
+	github.com/spf13/pflag v1.0.3
 	github.com/zclconf/go-cty v0.0.0-20190516203816-4fecf87372ec
 )

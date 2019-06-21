@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/shell"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +13,7 @@ const (
 )
 
 type initCmd struct {
-	Meta
+	meta
 
 	maxDependencyDepth int
 }
@@ -34,50 +36,44 @@ func newInitCmd() *cobra.Command {
 	}
 
 	f := initCmd.Flags()
-	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies")
+	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 2, "defines max dependency depth when traversing dependencies")
+
+	ic.addMetaFlags(f)
 
 	return initCmd
 }
 
 func (ic *initCmd) run(args []string) error {
-	// source, err := utils.GetSourceArg(args)
-	// if err != nil {
-	// 	return err
-	// }
+	loaded, err := ic.Loader.Load(ic.SourceFile, nil)
+	if err != nil {
+		return err
+	}
 
-	// client := config.New(source, &config.Options{
-	// 	LoadSources:  true,
-	// 	CleanTempDir: true,
-	// })
+	for _, source := range loaded {
+		module := source.Config.Module
+		moduleDir := dir.Module(ic.TempDir, source.File)
 
-	// loaded, err := client.Load(source, nil)
-	// if err != nil {
-	// 	return err
-	// }
+		if err := ic.Getter.Get(module.Source, moduleDir, module.Version); err != nil {
+			return err
+		}
 
-	// for _, source := range loaded {
-	// 	modClient := sources.New(&sources.Options{})
-	// 	if err := modClient.Get(source.Config.Module.Source, source.ModuleDirectory(), source.Config.Module.Version); err != nil {
-	// 		return err
-	// 	}
+		// 	// if err := source.CreateOverrides(); err != nil {
+		// 	// 	return err
+		// 	// }
 
-	// 	options := &shell.Options{
-	// 		WorkingDirectory: source.ModuleDirectory(),
-	// 	}
+		options := &shell.Options{
+			WorkingDirectory: moduleDir,
+		}
 
-	// 	// if err := source.CreateOverrides(); err != nil {
-	// 	// 	return err
-	// 	// }
+		extraArgs := append([]string{"init"}, getExtraArgs(args, "-backend-config", "-from-module")...)
+		if err := shell.Execute("terraform", options, extraArgs...); err != nil {
+			return err
+		}
 
-	// 	extraArgs := append([]string{"init"}, utils.GetExtraArgs(args, "-backend-config", "-from-module")...)
-	// 	if err := shell.Execute("terraform", options, extraArgs...); err != nil {
-	// 		return err
-	// 	}
-
-	// 	// if err := source.CreateInputVariables(); err != nil {
-	// 	// 	return err
-	// 	// }
-	// }
+		// 	// if err := source.CreateInputVariables(); err != nil {
+		// 	// 	return err
+		// 	// }
+	}
 
 	return nil
 }

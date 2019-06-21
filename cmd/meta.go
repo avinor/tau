@@ -1,23 +1,34 @@
 package cmd
 
 import (
-	"path"
+	"net/http"
 	"os"
-	"github.com/avinor/tau/pkg/dir"
-	"github.com/avinor/tau/pkg/config"
-	"github.com/go-errors/errors"
+	"path"
 	"strings"
-	"github.com/hashicorp/go-getter"
+	"time"
+
+	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/getter"
+	"github.com/avinor/tau/pkg/terraform"
+	"github.com/go-errors/errors"
+	gogetter "github.com/hashicorp/go-getter"
+	"github.com/spf13/pflag"
 )
 
-type Meta struct {
+type meta struct {
+	timeout int
+
+	Getter *getter.Client
 	Loader *config.Loader
-	TempDir string
-	SourceDir string
+	Engine *terraform.Engine
+
+	TempDir    string
+	SourceDir  string
 	SourceFile string
 }
 
-func (m *Meta) initMeta(args []string) error {
+func (m *meta) initMeta(args []string) error {
 	{
 		src, err := getSourceArg(args)
 		if err != nil {
@@ -36,15 +47,35 @@ func (m *Meta) initMeta(args []string) error {
 	m.TempDir = dir.TempDir(dir.Working, m.SourceFile)
 
 	{
+		options := &getter.Options{
+			HttpClient: &http.Client{
+				Timeout: time.Duration(m.timeout) * time.Second,
+			},
+			WorkingDirectory: m.SourceDir,
+		}
+
+		m.Getter = getter.New(options)
+	}
+
+	{
 		options := &config.Options{
 			WorkingDirectory: dir.Working,
-			TempDirectory: m.TempDir,
+			TempDirectory:    m.TempDir,
+			Getter:           m.Getter,
 		}
 
 		m.Loader = config.NewLoader(options)
 	}
 
+	{
+		m.Engine = terraform.NewEngine()
+	}
+
 	return nil
+}
+
+func (m *meta) addMetaFlags(f *pflag.FlagSet) {
+	f.IntVar(&m.timeout, "timeout", 10, "timeout for http client when retrieving sources")
 }
 
 // getSourceArg finds argument that does not start with dash (-)
@@ -91,9 +122,9 @@ func getExtraArgs(args []string, invalidArgs ...string) []string {
 
 // Split the source directory into working directory and source directory
 func splitSource(src string) (string, string, error) {
-	pwd := ""
+	pwd := dir.Working
 
-	getterSource, err := getter.Detect(src, dir.Working, getter.Detectors)
+	getterSource, err := gogetter.Detect(src, dir.Working, gogetter.Detectors)
 	if err != nil {
 		return "", "", errors.Errorf("Failed to detect source")
 	}

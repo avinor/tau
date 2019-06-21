@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/avinor/tau/pkg/dir"
-	"github.com/avinor/tau/pkg/getter"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/getter"
 
 	"github.com/go-errors/errors"
 )
@@ -14,13 +15,14 @@ import (
 type Loader struct {
 	options *Options
 	loaded  map[string]*Source
-	getter *getter.Client
+	getter  *getter.Client
 }
 
 // Options when loading modules
 type Options struct {
 	WorkingDirectory string
-	TempDirectory string
+	TempDirectory    string
+	Getter           *getter.Client
 }
 
 // NewLoader creates a new loader client
@@ -28,16 +30,15 @@ func NewLoader(options *Options) *Loader {
 	if options.WorkingDirectory == "" {
 		options.WorkingDirectory = dir.Working
 	}
-	
-	// if options.SourceDirectory == "" {
-	// 	options.SourceDirectory = options.WorkingDirectory
-	// }
-	
 
+	if options.Getter == nil {
+		options.Getter = getter.New(nil)
+	}
 
 	return &Loader{
-		loaded:  map[string]*Source{},
 		options: options,
+		loaded:  map[string]*Source{},
+		getter:  options.Getter,
 	}
 }
 

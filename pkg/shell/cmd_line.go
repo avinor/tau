@@ -2,15 +2,22 @@ package shell
 
 import (
 	"time"
+
 	"github.com/go-cmd/cmd"
 	log "github.com/sirupsen/logrus"
 )
 
+// Options for shell command
 type Options struct {
 	WorkingDirectory string
 }
 
+// Execute a shell command
 func Execute(command string, options *Options, args ...string) error {
+	if options == nil {
+		options = &Options{}
+	}
+
 	// Disable output buffering, enable streaming
 	cmdOptions := cmd.Options{
 		Buffered:  false,
