@@ -1,7 +1,7 @@
 package dir
 
 import (
-	"log"
+	"github.com/apex/log"
 	"path/filepath"
 	"github.com/avinor/tau/pkg/strings"
 	"os"
@@ -37,12 +37,12 @@ func TempDir(pwd, src string) string {
 
 // Module generates a module directory
 func Module(tempDir, module string) string {
-	return joinAndCreate(tempDir, ModulePath, filepath.Base(module))
+	return join(tempDir, ModulePath, filepath.Base(module))
 }
 
 // Source generates a source directory
 func Source(tempDir, source string) string {
-	return joinAndCreate(tempDir, SourcePath, filepath.Base(source))
+	return join(tempDir, SourcePath, filepath.Base(source))
 }
 
 // Dependency generates a dependency directory
@@ -50,7 +50,7 @@ func Dependency(tempDir, dep string) string {
 	return joinAndCreate(tempDir, SourcePath, dep)
 }
 
-func joinAndCreate(dir, part, folder string) string {
+func join(dir, part, folder string) string {
 	if dir == "" {
 		dir = Working
 	}
@@ -59,11 +59,16 @@ func joinAndCreate(dir, part, folder string) string {
 		log.Fatal("Part directory must be set")
 	}
 
-	if folder == "" {
-		log.Fatal("Folder directory must be set")
+	if folder == "" || folder == "." {
+		folder = "root"
 	}
 
 	path := filepath.Join(dir, part, folder)
+	return path
+}
+
+func joinAndCreate(dir, part, folder string) string {
+	path := join(dir, part, folder)
 	ensureDirectoryExists(path)
 
 	return path
@@ -72,7 +77,7 @@ func joinAndCreate(dir, part, folder string) string {
 func ensureDirectoryExists(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			log.Fatal(err)
+			log.Fatalf("%v", err)
 		}
 	}
 }

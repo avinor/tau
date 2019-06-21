@@ -14,8 +14,7 @@ import (
 )
 
 func main() {
-	handler := cli.Default
-	log.SetHandler(handler)
+	log.SetHandler(cli.Default)
 	stdlog.SetOutput(new(getter.LogParser))
 
 	if err := cmd.NewRootCmd().Execute(); err != nil {
