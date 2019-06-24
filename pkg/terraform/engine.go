@@ -9,6 +9,7 @@ import (
 	"github.com/avinor/tau/pkg/config"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
 	"github.com/fatih/color"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -25,14 +26,9 @@ type Generator interface {
 	GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error)
 }
 
-// Processor for processing sources or terraform config
+// Processor for processing terraform config or output
 type Processor interface {
-	ProcessOutput(output []byte) (map[string]cty.Value, error)
-}
-
-// Backend processes backend config
-type Backend interface {
-	ProcessBackendConfig(source *config.Source) (map[string]cty.Value, error)
+	ProcessBackendBody(body hcl.Body) (map[string]cty.Value, error)
 }
 
 // Engine to process
@@ -42,7 +38,6 @@ type Engine struct {
 	Compatibility VersionCompatibility
 	Generator     Generator
 	Processor     Processor
-	Backend       Backend
 }
 
 // NewEngine creates a terraform engine for the currently installed terraform version
@@ -60,7 +55,6 @@ func NewEngine() *Engine {
 	var compatibility VersionCompatibility
 	var generator Generator
 	var processor Processor
-	var backend Backend
 
 	switch version {
 	case "0.12":
@@ -68,7 +62,6 @@ func NewEngine() *Engine {
 		compatibility = v012Engine
 		generator = v012Engine
 		processor = v012Engine
-		backend = v012Engine
 	default:
 		log.Fatal(color.RedString("Unsupported terraform version!"))
 	}
@@ -78,7 +71,6 @@ func NewEngine() *Engine {
 		Compatibility: compatibility,
 		Generator:     generator,
 		Processor:     processor,
-		Backend:       backend,
 	}
 }
 
@@ -101,21 +93,25 @@ func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
 	return ioutil.WriteFile(file, content, os.ModePerm)
 }
 
-func (e *Engine) CreateValues(source *config.Source, deps string, dest string) error {
+func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[string]cty.Value, error) {
 	content, create, err := e.Generator.GenerateDependencies(source)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !create {
-		return nil
+		return nil, nil
 	}
 
-	file := filepath.Join(deps, "main.tf")
+	file := filepath.Join(dest, "main.tf")
 	if err := ioutil.WriteFile(file, content, os.ModePerm); err != nil {
-		return err
+		return nil, err
 	}
 
+	return nil, nil
+}
+
+func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {
 	return nil
 }

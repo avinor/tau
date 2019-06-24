@@ -65,12 +65,34 @@ func (ic *initCmd) run(args []string) error {
 			return err
 		}
 	}
+	log.Info("")
 
+	log.Info(color.New(color.Bold).Sprint("Resolving dependencies..."))
+	for _, source := range loaded {
+		if source.Config.Inputs == nil {
+			continue
+		}
+
+		moduleDir := dir.Module(ic.TempDir, source.Name)
+		depsDir := dir.Dependency(ic.TempDir, source.Name)
+
+		vars, err := ic.Engine.ResolveDependencies(source, depsDir)
+		if err != nil {
+			return err
+		}
+
+		if len(vars) == 0 {
+			continue
+		}
+
+		if err := ic.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
+			return err
+		}
+	}
 	log.Info("")
 
 	for _, source := range loaded {
 		moduleDir := dir.Module(ic.TempDir, source.Name)
-		depsDir := dir.Dependency(ic.TempDir, source.Name)
 
 		if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
 			return err
@@ -84,10 +106,6 @@ func (ic *initCmd) run(args []string) error {
 
 		extraArgs := getExtraArgs(args, ic.Engine.Compatibility.GetInvalidArgs("init")...)
 		if err := terraform.Execute(options, "init", extraArgs...); err != nil {
-			return err
-		}
-
-		if err := ic.Engine.CreateValues(source, depsDir, moduleDir); err != nil {
 			return err
 		}
 	}

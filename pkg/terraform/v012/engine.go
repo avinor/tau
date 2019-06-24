@@ -5,7 +5,6 @@ import (
 )
 
 type Engine struct {
-	Backend
 	Compatibility
 	Generator
 	Processor
@@ -14,16 +13,17 @@ type Engine struct {
 func NewEngine() *Engine {
 	context := lang.EvalContext()
 
-	backend := Backend{
+	processor := Processor{
 		ctx: context,
 	}
 
 	return &Engine{
-		Backend:       backend,
 		Compatibility: Compatibility{},
 		Generator: Generator{
-			backend: &backend,
+			ctx:       context,
+			processor: &processor,
+			resolver:  &Resolver{},
 		},
-		Processor: Processor{},
+		Processor: processor,
 	}
 }

@@ -1,9 +1,12 @@
 package v012
 
 import (
+	"encoding/base64"
+
 	"github.com/avinor/tau/pkg/config"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
+	"github.com/hashicorp/hcl2/hcl"
 	hcl2 "github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclwrite"
@@ -11,7 +14,9 @@ import (
 )
 
 type Generator struct {
-	backend *Backend
+	ctx       *hcl.EvalContext
+	processor *Processor
+	resolver  *Resolver
 }
 
 func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, error) {
@@ -26,7 +31,7 @@ func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, erro
 	backendBlock := tfBody.AppendNewBlock("backend", []string{source.Config.Backend.Type})
 	backendBody := backendBlock.Body()
 
-	values, err := g.backend.ProcessBackendConfig(source)
+	values, err := g.processor.ProcessBackendBody(source.Config.Backend.Config)
 	if err != nil {
 		return nil, false, err
 	}
@@ -41,6 +46,15 @@ func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, erro
 func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, error) {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
+
+	trav, err := g.resolver.ResolveInputExpressions(source)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(trav) == 0 {
+		return nil, false, nil
+	}
 
 	if len(source.Config.Datas) == 0 && len(source.Config.Dependencies) == 0 {
 		return nil, false, nil
@@ -85,7 +99,26 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 		rootBody.AppendBlock(block)
 	}
 
-	return f.Bytes(), true, nil
+	for _, t := range trav {
+		// For some reason this does not work.. using workaround under instead to convert
+		// to a hclwrite.Expression and then to token
+		// tokens := hclwrite.TokensForTraversal(t)
+
+		expr := hclwrite.NewExpressionAbsTraversal(t)
+		tokens := expr.BuildTokens(nil)
+		outputName := base64.RawStdEncoding.EncodeToString(tokens.Bytes())
+
+		block := hclwrite.NewBlock("output", []string{outputName})
+		blockBody := block.Body()
+
+		blockBody.SetAttributeTraversal("value", t)
+
+		rootBody.AppendBlock(block)
+	}
+
+	formatted := hclwrite.Format(f.Bytes())
+
+	return formatted, true, nil
 }
 
 func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error) {
@@ -98,7 +131,7 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 
 	for _, attr := range body.Attributes {
 		value := cty.Value{}
-		diags := gohcl.DecodeExpression(attr.Expr, g.backend.ctx, &value)
+		diags := gohcl.DecodeExpression(attr.Expr, g.ctx, &value)
 
 		if diags.HasErrors() {
 			return nil, diags
@@ -123,7 +156,7 @@ func (g *Generator) generateRemoteBackendBlock(name, backend string, body hcl2.B
 	block := hclwrite.NewBlock("data", []string{"terraform_remote_state", name})
 	blockBody := block.Body()
 
-	vals, err := g.backend.processBackendBody(body)
+	vals, err := g.processor.ProcessBackendBody(body)
 	if err != nil {
 		return nil, err
 	}
