@@ -1,6 +1,10 @@
 package terraform
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
@@ -78,10 +82,25 @@ func NewEngine() *Engine {
 	}
 }
 
-func (e *Engine) CreateOverrides(source *config.Source) error {
-	return nil
+func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
+	log.Info(color.New(color.Bold).Sprint("Creating overrides..."))
+	log.Info("")
+
+	content, create, err := e.Generator.GenerateOverrides(source)
+
+	if err != nil {
+		return err
+	}
+
+	if !create {
+		return nil
+	}
+
+	file := filepath.Join(dest, "tau_override.tf")
+
+	return ioutil.WriteFile(file, content, os.ModePerm)
 }
 
-func (e *Engine) CreateValues(source *config.Source) error {
+func (e *Engine) CreateValues(source *config.Source, deps string, dest string) error {
 	return nil
 }
