@@ -21,7 +21,7 @@ type VersionCompatibility interface {
 // Generator for generating terraform assets
 type Generator interface {
 	GenerateOverrides(source *config.Source) ([]byte, bool, error)
-	GenerateDependencies(source *config.Source) ([]byte, error)
+	GenerateDependencies(source *config.Source) ([]byte, bool, error)
 	GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error)
 }
 
@@ -102,5 +102,20 @@ func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
 }
 
 func (e *Engine) CreateValues(source *config.Source, deps string, dest string) error {
+	content, create, err := e.Generator.GenerateDependencies(source)
+
+	if err != nil {
+		return err
+	}
+
+	if !create {
+		return nil
+	}
+
+	file := filepath.Join(deps, "main.tf")
+	if err := ioutil.WriteFile(file, content, os.ModePerm); err != nil {
+		return err
+	}
+
 	return nil
 }
