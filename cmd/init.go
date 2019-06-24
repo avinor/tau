@@ -56,15 +56,23 @@ func (ic *initCmd) run(args []string) error {
 		module := source.Config.Module
 		moduleDir := dir.Module(ic.TempDir, source.File)
 
+		if module == nil {
+			log.WithField("file", source.File).Fatal("No module defined in source")
+			continue
+		}
+
 		if err := ic.Getter.Get(module.Source, moduleDir, module.Version); err != nil {
 			return err
 		}
 	}
 
+	log.Info("")
+
 	for _, source := range loaded {
 		moduleDir := dir.Module(ic.TempDir, source.File)
+		depsDir := dir.Dependency(ic.TempDir, source.File)
 
-		if err := ic.Engine.CreateOverrides(source); err != nil {
+		if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
 			return err
 		}
 
@@ -74,12 +82,12 @@ func (ic *initCmd) run(args []string) error {
 			Stderr:           shell.Processors(new(processors.Log)),
 		}
 
-		extraArgs := getExtraArgs(args, "-backend-config", "-from-module")
+		extraArgs := getExtraArgs(args, ic.Engine.Compatibility.GetInvalidArgs("init")...)
 		if err := terraform.Execute(options, "init", extraArgs...); err != nil {
 			return err
 		}
 
-		if err := ic.Engine.CreateValues(source); err != nil {
+		if err := ic.Engine.CreateValues(source, depsDir, moduleDir); err != nil {
 			return err
 		}
 	}
