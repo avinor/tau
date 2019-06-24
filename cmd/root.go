@@ -34,7 +34,6 @@ func NewRootCmd() *cobra.Command {
 	p.StringVar(&workingDir, "working-directory", "", "working directory (default to current directory)")
 
 	rootCmd.AddCommand(newInitCmd())
-	//rootCmd.AddCommand(newPlanCmd())
 
 	for _, cmd := range validCommands {
 		if cmd.PassThrough {

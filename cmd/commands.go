@@ -6,31 +6,27 @@ type Command struct {
 	ShortDescription string
 	LongDescription  string
 	Example          string
-	PassThrough bool
+	PassThrough      bool
 }
 
 var (
-	validCommands map[string]Command
-)
-
-func init() {
 	validCommands = map[string]Command{
 		"apply": Command{
-			Use: "apply",
+			Use:              "apply",
 			ShortDescription: "Builds or changes infrastructure",
-			LongDescription: "Builds or changes infrastructure",
-			PassThrough: true,
+			LongDescription:  "Builds or changes infrastructure",
+			PassThrough:      true,
 		},
 		"init": Command{
-			Use: "init",
+			Use:              "init",
 			ShortDescription: "Initialize a Terraform working directory",
-			LongDescription: "Initialize a Terraform working directory",
+			LongDescription:  "Initialize a Terraform working directory",
 		},
 		"plan": Command{
-			Use: "plan",
+			Use:              "plan",
 			ShortDescription: "Generate and show an execution plan",
-			LongDescription: "Generate and show an execution plan",
-			PassThrough: true,
+			LongDescription:  "Generate and show an execution plan",
+			PassThrough:      true,
 		},
 	}
-}
+)

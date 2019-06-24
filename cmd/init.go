@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/spf13/cobra"
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/terraform"
 	"github.com/fatih/color"
+	"github.com/spf13/cobra"
 )
 
 type initCmd struct {
@@ -15,15 +16,17 @@ type initCmd struct {
 	maxDependencyDepth int
 }
 
+var (
+	initCommand = validCommands["init"]
+)
+
 func newInitCmd() *cobra.Command {
 	ic := &initCmd{}
 
-	command := validCommands["init"]
-
 	initCmd := &cobra.Command{
-		Use:   command.Use,
-		Short: command.ShortDescription,
-		Long:  command.LongDescription,
+		Use:   initCommand.Use,
+		Short: initCommand.ShortDescription,
+		Long:  initCommand.LongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ic.processArgs(args); err != nil {
@@ -61,9 +64,9 @@ func (ic *initCmd) run(args []string) error {
 	for _, source := range loaded {
 		moduleDir := dir.Module(ic.TempDir, source.File)
 
-		// 	// if err := source.CreateOverrides(); err != nil {
-		// 	// 	return err
-		// 	// }
+		if err := ic.Engine.CreateOverrides(source); err != nil {
+			return err
+		}
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
@@ -71,14 +74,14 @@ func (ic *initCmd) run(args []string) error {
 			Stderr:           shell.Processors(new(processors.Log)),
 		}
 
-		extraArgs := append([]string{"init"}, getExtraArgs(args, "-backend-config", "-from-module")...)
-		if err := shell.Execute(options, "terraform", extraArgs...); err != nil {
+		extraArgs := getExtraArgs(args, "-backend-config", "-from-module")
+		if err := terraform.Execute(options, "init", extraArgs...); err != nil {
 			return err
 		}
 
-		// 	// if err := source.CreateInputVariables(); err != nil {
-		// 	// 	return err
-		// 	// }
+		if err := ic.Engine.CreateValues(source); err != nil {
+			return err
+		}
 	}
 
 	return nil

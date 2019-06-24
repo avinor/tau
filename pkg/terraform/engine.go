@@ -1,12 +1,10 @@
 package terraform
 
 import (
-	"regexp"
-
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/shell"
-	"github.com/avinor/tau/pkg/shell/processors"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
+	"github.com/fatih/color"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -43,17 +41,17 @@ type Engine struct {
 	Backend       Backend
 }
 
-const (
-	versionPattern = "Terraform v(\\d+.\\d+)"
-)
-
-var (
-	versionRegex = regexp.MustCompile(versionPattern)
-)
-
 // NewEngine creates a terraform engine for the currently installed terraform version
 func NewEngine() *Engine {
+
 	version := version()
+
+	if version == "" {
+		log.Fatal(color.RedString("Could not identify terraform version. Make sure terraform is in PATH."))
+	}
+
+	log.Info(color.New(color.Bold).Sprintf("Terraform version: %s", version))
+	log.Info("")
 
 	var compatibility VersionCompatibility
 	var generator Generator
@@ -68,7 +66,7 @@ func NewEngine() *Engine {
 		processor = v012Engine
 		backend = v012Engine
 	default:
-
+		log.Fatal(color.RedString("Unsupported terraform version!"))
 	}
 
 	return &Engine{
@@ -80,23 +78,10 @@ func NewEngine() *Engine {
 	}
 }
 
-func version() string {
-	buffer := &processors.Buffer{}
+func (e *Engine) CreateOverrides(source *config.Source) error {
+	return nil
+}
 
-	options := &shell.Options{
-		Stdout: shell.Processors(buffer),
-		Stderr: shell.Processors(buffer),
-	}
-
-	if err := shell.Execute(options, "terraform", "version"); err != nil {
-		return ""
-	}
-
-	matches := versionRegex.FindAllStringSubmatch(buffer.Stdout(), -1)
-
-	if len(matches) < 1 && len(matches[0]) < 2 {
-		return ""
-	}
-
-	return matches[0][1]
+func (e *Engine) CreateValues(source *config.Source) error {
+	return nil
 }

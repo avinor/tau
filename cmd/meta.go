@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/terraform"
+	"github.com/fatih/color"
 	"github.com/go-errors/errors"
 	gogetter "github.com/hashicorp/go-getter"
 	"github.com/spf13/pflag"
-	"github.com/apex/log"
-	"github.com/fatih/color"
 )
 
 type meta struct {
@@ -80,11 +80,11 @@ func (m *meta) processArgs(args []string) error {
 		m.Loader = config.NewLoader(options)
 	}
 
+	log.Debug("")
+
 	{
 		m.Engine = terraform.NewEngine()
 	}
-
-	log.Debug("")
 
 	return nil
 }
