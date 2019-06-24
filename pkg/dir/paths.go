@@ -36,18 +36,18 @@ func TempDir(pwd, src string) string {
 }
 
 // Module generates a module directory
-func Module(tempDir, module string) string {
-	return join(tempDir, ModulePath, filepath.Base(module))
+func Module(tempDir, name string) string {
+	return join(tempDir, ModulePath, name)
 }
 
 // Source generates a source directory
-func Source(tempDir, source string) string {
-	return join(tempDir, SourcePath, filepath.Base(source))
+func Source(tempDir, name string) string {
+	return join(tempDir, SourcePath, name)
 }
 
 // Dependency generates a dependency directory
-func Dependency(tempDir, dep string) string {
-	return joinAndCreate(tempDir, SourcePath, dep)
+func Dependency(tempDir, name string) string {
+	return joinAndCreate(tempDir, DependencyPath, name)
 }
 
 func join(dir, part, folder string) string {
@@ -76,6 +76,8 @@ func joinAndCreate(dir, part, folder string) string {
 
 func ensureDirectoryExists(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.WithField("path", path).Debug("Creating directory")
+
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			log.Fatalf("%v", err)
 		}

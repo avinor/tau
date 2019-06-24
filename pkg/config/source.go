@@ -3,12 +3,14 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/avinor/tau/pkg/strings"
 )
 
 // Source for one file loaded
 type Source struct {
+	Name string
 	File         string
 	Content      []byte
 	ContentHash  string
@@ -32,7 +34,10 @@ func NewSource(file string) (*Source, error) {
 		return nil, err
 	}
 
+	name := filepath.Base(file)
+
 	return &Source{
+		Name: name,
 		File:         file,
 		Content:      b,
 		ContentHash:  strings.HashFromBytes(b),

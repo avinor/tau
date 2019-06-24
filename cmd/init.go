@@ -54,10 +54,10 @@ func (ic *initCmd) run(args []string) error {
 	log.Info(color.New(color.Bold).Sprint("Loading modules..."))
 	for _, source := range loaded {
 		module := source.Config.Module
-		moduleDir := dir.Module(ic.TempDir, source.File)
+		moduleDir := dir.Module(ic.TempDir, source.Name)
 
 		if module == nil {
-			log.WithField("file", source.File).Fatal("No module defined in source")
+			log.WithField("file", source.Name).Fatal("No module defined in source")
 			continue
 		}
 
@@ -69,8 +69,8 @@ func (ic *initCmd) run(args []string) error {
 	log.Info("")
 
 	for _, source := range loaded {
-		moduleDir := dir.Module(ic.TempDir, source.File)
-		depsDir := dir.Dependency(ic.TempDir, source.File)
+		moduleDir := dir.Module(ic.TempDir, source.Name)
+		depsDir := dir.Dependency(ic.TempDir, source.Name)
 
 		if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
 			return err
