@@ -5,10 +5,15 @@ import (
 )
 
 type Log struct {
+	Debug bool
 }
 
 func (l *Log) WriteStdout(line string) {
-	log.Info(line)
+	if l.Debug {
+		log.Debug(line)
+	} else {
+		log.Info(line)
+	}
 }
 
 func (l *Log) WriteStderr(line string) {
