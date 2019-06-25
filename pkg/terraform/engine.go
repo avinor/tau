@@ -7,6 +7,8 @@ import (
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/shell/processors"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
 	"github.com/fatih/color"
 	"github.com/hashicorp/hcl2/hcl"
@@ -29,6 +31,7 @@ type Generator interface {
 // Processor for processing terraform config or output
 type Processor interface {
 	ProcessBackendBody(body hcl.Body) (map[string]cty.Value, error)
+	ProcessOutput(output []byte) (map[string]cty.Value, error)
 }
 
 // Engine to process
@@ -109,7 +112,36 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		return nil, err
 	}
 
-	return nil, nil
+	debugLog := &processors.Log{
+		Debug: true,
+	}
+
+	options := &shell.Options{
+		Stdout: shell.Processors(debugLog),
+		Stderr: shell.Processors(debugLog),
+	}
+
+	if err := Execute(options, "init"); err != nil {
+		return nil, err
+	}
+
+	if err := Execute(options, "apply"); err != nil {
+		return nil, err
+	}
+
+	buffer := &processors.Buffer{}
+	options.Stdout = shell.Processors(buffer)
+
+	if err := Execute(options, "output", "-json"); err != nil {
+		return nil, err
+	}
+
+	vals, err := e.Processor.ProcessOutput([]byte(buffer.Stdout()))
+	if err != nil {
+		return nil, err
+	}
+
+	return vals, nil
 }
 
 func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {

@@ -17,10 +17,11 @@ var (
 
 func version() string {
 	buffer := &processors.Buffer{}
+	logp := &processors.Log{}
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),
-		Stderr: shell.Processors(buffer),
+		Stderr: shell.Processors(logp),
 	}
 
 	if err := Execute(options, "version"); err != nil {

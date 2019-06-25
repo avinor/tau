@@ -21,3 +21,7 @@ func (p *Processor) ProcessBackendBody(body hcl2.Body) (map[string]cty.Value, er
 
 	return values, nil
 }
+
+func (p *Processor) ProcessOutput(output []byte) (map[string]cty.Value, error) {
+	return nil, nil
+}
