@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/terraform/lang"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
+	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclwrite"
@@ -129,7 +131,23 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 }
 
 func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error) {
-	return nil, nil
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+
+	ctx := lang.ChildEvalContext(g.ctx, data)
+
+	values := map[string]cty.Value{}
+	diags := gohcl2.DecodeBody(source.Config.Inputs.Config, ctx, &values)
+
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	for name, value := range values {
+		rootBody.SetAttributeValue(name, value)
+	}
+
+	return f.Bytes(), nil
 }
 
 func (g *Generator) generateHclWriterBlock(typeName string, labels []string, body *hclsyntax.Body) (*hclwrite.Block, error) {

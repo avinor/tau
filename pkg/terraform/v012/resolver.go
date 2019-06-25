@@ -2,8 +2,10 @@ package v012
 
 import (
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/strings"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
+	hcljson "github.com/hashicorp/hcl2/hcl/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -34,5 +36,26 @@ func (r *Resolver) ResolveInputExpressions(source *config.Source) ([]hcl.Travers
 }
 
 func (r *Resolver) ResolveStateOutput(output []byte) (map[string]cty.Value, error) {
-	return nil, nil
+	values := map[string]cty.Value{}
+
+	file, diags := hcljson.Parse(output, strings.SecureRandomAlphaString(16))
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	attrs, diag := file.Body.JustAttributes()
+	if diag.HasErrors() {
+		return nil, diag
+	}
+
+	for name, attr := range attrs {
+		value, vdiag := attr.Expr.Value(nil)
+		if vdiag.HasErrors() {
+			return nil, vdiag
+		}
+
+		values[name] = value
+	}
+
+	return values, nil
 }

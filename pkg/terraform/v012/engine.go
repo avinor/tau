@@ -15,20 +15,24 @@ func NewEngine() *Engine {
 	context := lang.EvalContext()
 
 	executor := Executor{}
+	resolver := Resolver{}
 
 	processor := Processor{
 		ctx:      context,
 		executor: &executor,
+		resolver: &resolver,
+	}
+
+	generator := Generator{
+		ctx:       context,
+		processor: &processor,
+		resolver:  &resolver,
 	}
 
 	return &Engine{
 		Compatibility: Compatibility{},
-		Generator: Generator{
-			ctx:       context,
-			processor: &processor,
-			resolver:  &Resolver{},
-		},
-		Processor: processor,
-		Executor:  executor,
+		Generator:     generator,
+		Processor:     processor,
+		Executor:      executor,
 	}
 }

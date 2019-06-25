@@ -124,5 +124,13 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 }
 
 func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {
-	return nil
+	content, err := e.Generator.GenerateVariables(source, variables)
+
+	if err != nil {
+		return err
+	}
+
+	file := filepath.Join(dest, "terraform.tfvars")
+
+	return ioutil.WriteFile(file, content, os.ModePerm)
 }
