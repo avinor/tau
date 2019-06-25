@@ -7,7 +7,6 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
-	hcl2 "github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
@@ -83,15 +82,12 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 			return nil, false, errors.Errorf("Dependency backend type and override backend type must match")
 		}
 
-		bodies := []hcl2.Body{depsource.Config.Backend.Config}
-
+		var depBackend hcl.Body
 		if dep.Backend != nil {
-			bodies = append(bodies, dep.Backend.Config)
+			depBackend = dep.Backend.Config
 		}
 
-		mergedBody := hcl2.MergeBodies(bodies)
-
-		block, err := g.generateRemoteBackendBlock(dep.Name, depsource.Config.Backend.Type, mergedBody)
+		block, err := g.generateRemoteBackendBlock(dep.Name, depsource.Config.Backend.Type, depsource.Config.Backend.Config, depBackend)
 		if err != nil {
 			return nil, false, err
 		}
@@ -107,6 +103,17 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 		expr := hclwrite.NewExpressionAbsTraversal(t)
 		tokens := expr.BuildTokens(nil)
 		outputName := base64.RawStdEncoding.EncodeToString(tokens.Bytes())
+
+		// Need to "rewrite" root for dependencies
+		if t.RootName() == "dependency" {
+			split := t.SimpleSplit()
+			root := hcl.TraverseRoot{
+				Name: "data.terraform_remote_state",
+			}
+			t = hcl.TraversalJoin([]hcl.Traverser{root}, split.Rel)
+		}
+
+		expr.RenameVariablePrefix([]string{"dependency"}, []string{"remote.state"})
 
 		block := hclwrite.NewBlock("output", []string{outputName})
 		blockBody := block.Body()
@@ -152,17 +159,28 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 	return block, nil
 }
 
-func (g *Generator) generateRemoteBackendBlock(name, backend string, body hcl2.Body) (*hclwrite.Block, error) {
+func (g *Generator) generateRemoteBackendBlock(name, backend string, bodies ...hcl.Body) (*hclwrite.Block, error) {
 	block := hclwrite.NewBlock("data", []string{"terraform_remote_state", name})
 	blockBody := block.Body()
 
-	vals, err := g.processor.ProcessBackendBody(body)
-	if err != nil {
-		return nil, err
+	values := map[string]cty.Value{}
+	for _, body := range bodies {
+		if body == nil {
+			continue
+		}
+
+		vals, err := g.processor.ProcessBackendBody(body)
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range vals {
+			values[k] = v
+		}
 	}
 
 	blockBody.SetAttributeValue("backend", cty.StringVal(backend))
-	blockBody.SetAttributeValue("config", cty.MapVal(vals))
+	blockBody.SetAttributeValue("config", cty.MapVal(values))
 
 	return block, nil
 }
