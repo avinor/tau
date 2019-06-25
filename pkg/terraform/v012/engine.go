@@ -8,13 +8,17 @@ type Engine struct {
 	Compatibility
 	Generator
 	Processor
+	Executor
 }
 
 func NewEngine() *Engine {
 	context := lang.EvalContext()
 
+	executor := Executor{}
+
 	processor := Processor{
-		ctx: context,
+		ctx:      context,
+		executor: &executor,
 	}
 
 	return &Engine{
@@ -25,5 +29,6 @@ func NewEngine() *Engine {
 			resolver:  &Resolver{},
 		},
 		Processor: processor,
+		Executor:  executor,
 	}
 }

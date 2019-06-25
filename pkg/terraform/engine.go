@@ -8,7 +8,6 @@ import (
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/shell"
-	"github.com/avinor/tau/pkg/shell/processors"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
 	"github.com/fatih/color"
 	"github.com/hashicorp/hcl2/hcl"
@@ -31,7 +30,12 @@ type Generator interface {
 // Processor for processing terraform config or output
 type Processor interface {
 	ProcessBackendBody(body hcl.Body) (map[string]cty.Value, error)
-	ProcessOutput(output []byte) (map[string]cty.Value, error)
+	ProcessDependencies(dest string) (map[string]cty.Value, error)
+}
+
+// Executor executes terraform commands
+type Executor interface {
+	Execute(options *shell.Options, command string, args ...string) error
 }
 
 // Engine to process
@@ -41,6 +45,7 @@ type Engine struct {
 	Compatibility VersionCompatibility
 	Generator     Generator
 	Processor     Processor
+	Executor      Executor
 }
 
 // NewEngine creates a terraform engine for the currently installed terraform version
@@ -58,6 +63,7 @@ func NewEngine() *Engine {
 	var compatibility VersionCompatibility
 	var generator Generator
 	var processor Processor
+	var executor Executor
 
 	switch version {
 	case "0.12":
@@ -65,6 +71,7 @@ func NewEngine() *Engine {
 		compatibility = v012Engine
 		generator = v012Engine
 		processor = v012Engine
+		executor = v012Engine
 	default:
 		log.Fatal(color.RedString("Unsupported terraform version!"))
 	}
@@ -74,6 +81,7 @@ func NewEngine() *Engine {
 		Compatibility: compatibility,
 		Generator:     generator,
 		Processor:     processor,
+		Executor:      executor,
 	}
 }
 
@@ -112,36 +120,7 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		return nil, err
 	}
 
-	debugLog := &processors.Log{
-		Debug: true,
-	}
-
-	options := &shell.Options{
-		Stdout: shell.Processors(debugLog),
-		Stderr: shell.Processors(debugLog),
-	}
-
-	if err := Execute(options, "init"); err != nil {
-		return nil, err
-	}
-
-	if err := Execute(options, "apply"); err != nil {
-		return nil, err
-	}
-
-	buffer := &processors.Buffer{}
-	options.Stdout = shell.Processors(buffer)
-
-	if err := Execute(options, "output", "-json"); err != nil {
-		return nil, err
-	}
-
-	vals, err := e.Processor.ProcessOutput([]byte(buffer.Stdout()))
-	if err != nil {
-		return nil, err
-	}
-
-	return vals, nil
+	return e.Processor.ProcessDependencies(dest)
 }
 
 func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {

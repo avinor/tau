@@ -24,7 +24,7 @@ func version() string {
 		Stderr: shell.Processors(logp),
 	}
 
-	if err := Execute(options, "version"); err != nil {
+	if err := shell.Execute(options, "terraform", "version"); err != nil {
 		return ""
 	}
 

@@ -5,7 +5,6 @@ import (
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/avinor/tau/pkg/terraform"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -105,7 +104,7 @@ func (ic *initCmd) run(args []string) error {
 		}
 
 		extraArgs := getExtraArgs(args, ic.Engine.Compatibility.GetInvalidArgs("init")...)
-		if err := terraform.Execute(options, "init", extraArgs...); err != nil {
+		if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
 			return err
 		}
 	}
