@@ -11,8 +11,6 @@ type Config struct {
 	Backend      *Backend     `hcl:"backend,block"`
 	Module       *Module      `hcl:"module,block"`
 	Inputs       *Inputs      `hcl:"inputs,block"`
-
-	Remaining hcl2.Body `hcl:",remain"`
 }
 
 // Data sources to read from
@@ -48,12 +46,4 @@ type Module struct {
 // Inputs that are converted to terraform.tfvars for module
 type Inputs struct {
 	Config hcl2.Body `hcl:",remain"`
-}
-
-// Output from a module
-type Output struct {
-	Name string `hcl:"name,label"`
-
-	ValueExpr   hcl2.Expression `hcl:"value,attr"`
-	Description *string         `hcl:"description,attr"`
 }
