@@ -29,10 +29,11 @@ func (p *Processor) ProcessDependencies(dest string) (map[string]cty.Value, erro
 	debugLog := &processors.Log{
 		Debug: true,
 	}
+	errorLog := &processors.Log{}
 
 	options := &shell.Options{
 		Stdout:           shell.Processors(debugLog),
-		Stderr:           shell.Processors(debugLog),
+		Stderr:           shell.Processors(errorLog),
 		WorkingDirectory: dest,
 	}
 

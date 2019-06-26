@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-cmd/cmd"
+	"github.com/go-errors/errors"
 )
 
 // Execute a shell command
@@ -41,7 +42,15 @@ func Execute(options *Options, command string, args ...string) error {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	return status.Error
+	if status.Error != nil {
+		return status.Error
+	}
+
+	if status.Exit != 0 {
+		return errors.Errorf("%s command exited with exit code %v", command, status.Exit)
+	}
+
+	return nil
 }
 
 func processLine(processors []OutputProcessor, line string) {
