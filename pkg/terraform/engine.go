@@ -120,7 +120,14 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		return nil, err
 	}
 
-	return e.Processor.ProcessDependencies(dest)
+	test, err := e.Processor.ProcessDependencies(dest)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Warnf("%v", test)
+
+	return test, nil
 }
 
 func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {

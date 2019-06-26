@@ -28,6 +28,8 @@ func newInitCmd() *cobra.Command {
 		Long:  initCommand.LongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+
 			if err := ic.processArgs(args); err != nil {
 				return err
 			}
