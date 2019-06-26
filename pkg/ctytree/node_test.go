@@ -25,7 +25,7 @@ func TestCreateTest(t *testing.T) {
 								Children: map[string]*Node{
 									"outputs": &Node{
 										Children: map[string]*Node{
-											"value": &Node{
+											"id": &Node{
 												Value: cty.StringVal("value"),
 											},
 										},
@@ -39,6 +39,12 @@ func TestCreateTest(t *testing.T) {
 		},
 	}
 
+	prettyConfig := &pretty.Config{
+		Compact:           true,
+		IncludeUnexported: true,
+		PrintStringers:    true,
+	}
+
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
 			tree := CreateTree(test.values)
@@ -46,8 +52,8 @@ func TestCreateTest(t *testing.T) {
 			if same, err := compareTree(tree, test.tree); !same {
 				t.Errorf("created and expected trees do not match: %s\ngot:\n%s\nexpected:\n%s",
 					err,
-					pretty.Sprint(tree),
-					pretty.Sprint(test.tree))
+					prettyConfig.Sprint(tree),
+					prettyConfig.Sprint(test.tree))
 			}
 		})
 	}

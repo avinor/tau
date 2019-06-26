@@ -51,10 +51,6 @@ func (n Node) ToCtyMap() map[string]cty.Value {
 
 // getNodePath creates the path defined and returns the node for path
 func (n *Node) getNodePath(path string) *Node {
-	if strings.Index(path, ".") < 0 {
-		return n
-	}
-
 	split := strings.Split(path, ".")
 	nextPathPart := split[0]
 
@@ -62,6 +58,10 @@ func (n *Node) getNodePath(path string) *Node {
 		n.Children[nextPathPart] = &Node{
 			Children: map[string]*Node{},
 		}
+	}
+
+	if strings.Index(path, ".") < 0 {
+		return n.Children[nextPathPart]
 	}
 
 	return n.Children[nextPathPart].getNodePath(strings.Join(split[1:], "."))

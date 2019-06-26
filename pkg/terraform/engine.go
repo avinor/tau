@@ -125,8 +125,6 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		return nil, err
 	}
 
-	log.Warnf("%v", test)
-
 	return test, nil
 }
 
