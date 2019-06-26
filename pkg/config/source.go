@@ -10,12 +10,12 @@ import (
 
 // Source for one file loaded
 type Source struct {
-	Name         string
+	Name         string `hcl:"name,label"`
+	ContentHash  string `hcl:"hash,attr"`
 	File         string
 	Content      []byte
-	ContentHash  string
-	Dependencies map[string]*Source
 	Config       *Config
+	Dependencies map[string]*Source
 }
 
 // NewSource creates a new source from a file

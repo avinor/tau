@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
@@ -111,5 +112,5 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	return nil
+	return config.SaveSourcesFile(loaded, ic.TempDir)
 }

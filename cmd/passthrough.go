@@ -17,6 +17,8 @@ func newPtCmd(command Command) *cobra.Command {
 		Long:  command.LongDescription,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+
 			if err := pt.processArgs(args); err != nil {
 				return err
 			}

@@ -70,16 +70,6 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 	return sources, nil
 }
 
-// LoadTempDir loads sources from temp dir. Temp dir already has to be initialized
-func (l *Loader) LoadSources() ([]*Source, error) {
-	return nil, nil
-}
-
-// Save loaded sources in temp directory
-func (l *Loader) SaveSources(sources []*Source) error {
-	return nil
-}
-
 func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
 	dst := dir.Source(l.options.TempDirectory, src)
 
