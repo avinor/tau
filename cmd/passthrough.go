@@ -25,15 +25,19 @@ func newPtCmd(name string, command Command) *cobra.Command {
 		Short: command.ShortDescription,
 		Long:  command.LongDescription,
 		Args:  cobra.MinimumNArgs(1),
+		DisableFlagsInUseLine: true,
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-
 			if err := pt.processArgs(args); err != nil {
 				return err
 			}
 
 			return pt.run(args)
 		},
+	}
+
+	if pt.command.Example != "" {
+		ptCmd.Example = pt.command.Example
 	}
 
 	f := ptCmd.Flags()

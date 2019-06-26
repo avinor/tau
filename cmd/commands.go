@@ -23,7 +23,11 @@ var (
 		"plan": Command{
 			Use:              "plan SOURCE [terraform options]",
 			ShortDescription: "Generate and show an execution plan",
-			LongDescription:  templates.LongDesc("Generate and show an execution plan"),
+			LongDescription:  templates.LongDesc(
+				`Generate and show an execution plan for one or more modules.
+				
+				All arguments that are not handled by tau will be forwarded to terraform.
+				`),
 		},
 	}
 )
