@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -47,10 +49,14 @@ func newPtCmd(name string, command Command) *cobra.Command {
 }
 
 func (pt *ptCmd) run(args []string) error {
+	log.Info(color.New(color.Bold).Sprint("Loading initialized sources..."))
+
 	loaded, err := config.LoadSourcesFile(pt.TempDir)
 	if err != nil {
 		return err
 	}
+
+	log.Info("")
 
 	for _, source := range loaded {
 		moduleDir := dir.Module(pt.TempDir, source.Name)
@@ -60,6 +66,8 @@ func (pt *ptCmd) run(args []string) error {
 			Stdout:           shell.Processors(new(processors.Log)),
 			Stderr:           shell.Processors(new(processors.Log)),
 		}
+
+		log.Info("-----------------------------------------")
 
 		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
 		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {

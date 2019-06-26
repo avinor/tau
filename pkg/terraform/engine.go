@@ -58,8 +58,8 @@ func NewEngine() *Engine {
 		log.Fatal(color.RedString("Could not identify terraform version. Make sure terraform is in PATH."))
 	}
 
-	log.Info(color.New(color.Bold).Sprintf("Terraform version: %s", version))
-	log.Info("")
+	log.Debug(color.New(color.Bold).Sprintf("Terraform version: %s", version))
+	log.Debug("")
 
 	var compatibility VersionCompatibility
 	var generator Generator
@@ -87,8 +87,7 @@ func NewEngine() *Engine {
 }
 
 func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
-	log.Info(color.New(color.Bold).Sprint("Creating overrides..."))
-	log.Info("")
+	log.Debug(color.New(color.Bold).Sprint("Creating overrides..."))
 
 	content, create, err := e.Generator.GenerateOverrides(source)
 

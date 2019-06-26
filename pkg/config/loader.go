@@ -57,8 +57,6 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 		return nil, err
 	}
 
-	log.Info("")
-	log.Info(color.New(color.Bold).Sprint("Loading dependencies..."))
 	if err := l.loadDependencies(sources, 0); err != nil {
 		return nil, err
 	}

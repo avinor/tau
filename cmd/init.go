@@ -122,6 +122,8 @@ func (ic *initCmd) run(args []string) error {
 			Stderr:           shell.Processors(new(processors.Log)),
 		}
 
+		log.Info("-----------------------------------------")
+
 		extraArgs := getExtraArgs(args, ic.Engine.Compatibility.GetInvalidArgs("init")...)
 		if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
 			return err

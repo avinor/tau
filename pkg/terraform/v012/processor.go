@@ -1,6 +1,9 @@
 package v012
 
 import (
+	"path/filepath"
+
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
@@ -37,10 +40,14 @@ func (p *Processor) ProcessDependencies(dest string) (map[string]cty.Value, erro
 		WorkingDirectory: dest,
 	}
 
+	base := filepath.Base(dest)
+
+	log.Infof("- Running terraform init on %s", base)
 	if err := p.executor.Execute(options, "init"); err != nil {
 		return nil, err
 	}
 
+	log.Infof("- Running terraform apply on %s", base)
 	if err := p.executor.Execute(options, "apply"); err != nil {
 		return nil, err
 	}
@@ -48,6 +55,7 @@ func (p *Processor) ProcessDependencies(dest string) (map[string]cty.Value, erro
 	buffer := &processors.Buffer{}
 	options.Stdout = shell.Processors(buffer)
 
+	log.Infof("- Reading output from %s", base)
 	if err := p.executor.Execute(options, "output", "-json"); err != nil {
 		return nil, err
 	}
