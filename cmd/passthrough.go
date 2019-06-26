@@ -10,11 +10,13 @@ import (
 
 type ptCmd struct {
 	meta
+	name string
 	command Command
 }
 
-func newPtCmd(command Command) *cobra.Command {
+func newPtCmd(name string, command Command) *cobra.Command {
 	pt := &ptCmd{
+		name: name,
 		command: command,
 	}
 
@@ -55,8 +57,8 @@ func (pt *ptCmd) run(args []string) error {
 			Stderr:           shell.Processors(new(processors.Log)),
 		}
 
-		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.command.Use)...)
-		if err := pt.Engine.Executor.Execute(options, pt.command.Use, extraArgs...); err != nil {
+		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.command.Name)...)
+		if err := pt.Engine.Executor.Execute(options, pt.command.Name, extraArgs...); err != nil {
 			return err
 		}
 	}
