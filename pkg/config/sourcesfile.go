@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hclwrite"
 )
@@ -20,6 +21,10 @@ const (
 // LoadTempDir loads sources from temp dir. Temp dir already has to be initialized
 func LoadSourcesFile(tempdir string) ([]*Source, error) {
 	file := filepath.Join(tempdir, tauFileName)
+
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return nil, errors.Errorf("Temporary tau file does not exist")
+	}
 
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
