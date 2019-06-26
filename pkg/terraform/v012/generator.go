@@ -1,7 +1,6 @@
 package v012
 
 import (
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/terraform/lang"
 	"github.com/go-errors/errors"
@@ -124,9 +123,7 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 		rootBody.AppendBlock(block)
 	}
 
-	formatted := hclwrite.Format(f.Bytes())
-
-	return formatted, true, nil
+	return f.Bytes(), true, nil
 }
 
 func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error) {
@@ -134,10 +131,6 @@ func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty
 	rootBody := f.Body()
 
 	ctx := lang.ChildEvalContext(g.ctx, data)
-	for k := range data {
-		log.Warnf("%v", k)
-	}
-
 	values := map[string]cty.Value{}
 	diags := gohcl2.DecodeBody(source.Config.Inputs.Config, ctx, &values)
 

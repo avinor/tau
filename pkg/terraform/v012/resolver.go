@@ -1,10 +1,8 @@
 package v012
 
 import (
-	stdstr "strings"
-
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/ctytree"
 	"github.com/avinor/tau/pkg/strings"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
@@ -61,47 +59,5 @@ func (r *Resolver) ResolveStateOutput(output []byte) (map[string]cty.Value, erro
 		values[name] = value
 	}
 
-	return convertFlatMapToObjects(values)
-}
-
-func convertFlatMapToObjects(values map[string]cty.Value) (map[string]cty.Value, error) {
-	type node struct {
-		name     string
-		children []node
-	}
-
-	objMap := map[string][]string{}
-
-	for name := range values {
-		split := stdstr.Split(name, ".")
-
-		for ii := len(split) - 1; ii > 0; ii-- {
-			partname := stdstr.Join(split[0:ii], ".")
-			nextname := stdstr.Join(split[0:ii+1], ".")
-
-			if _, ok := objMap[partname]; !ok {
-				objMap[partname] = []string{}
-			}
-
-			objMap[partname] = append(objMap[partname], nextname)
-		}
-	}
-
-	for k, v := range objMap {
-		log.Warnf("%s => %s", k, v)
-	}
-
-	return values, nil
-}
-
-func getRootElements(values map[string]cty.Value) (root map[string]cty.Value) {
-	for name, value := range values {
-		if stdstr.Index(name, ".") >= 0 {
-			continue
-		}
-
-		root[name] = value
-	}
-
-	return root
+	return ctytree.CreateTree(values).ToCtyMap(), nil
 }
