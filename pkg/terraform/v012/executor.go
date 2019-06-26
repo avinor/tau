@@ -2,7 +2,7 @@ package v012
 
 import "github.com/avinor/tau/pkg/shell"
 
-type Executor struct {}
+type Executor struct{}
 
 // Execute wraps shell.Execute to execute terraform commands
 func (e *Executor) Execute(options *shell.Options, command string, args ...string) error {

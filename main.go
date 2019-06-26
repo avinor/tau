@@ -4,12 +4,12 @@
 package main
 
 import (
-	"os"
 	stdlog "log"
+	"os"
 
-	"github.com/avinor/tau/cmd"
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/cli"
+	"github.com/avinor/tau/cmd"
 	"github.com/avinor/tau/pkg/getter"
 )
 

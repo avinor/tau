@@ -1,8 +1,8 @@
 package getter
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform/registry"

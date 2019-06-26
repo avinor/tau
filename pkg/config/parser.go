@@ -15,7 +15,7 @@ func init() {
 
 // Parse file and return the complete Config
 func Parse(content []byte, filename string) (*Config, error) {
-	f, diags :=	parser.ParseHCL(content, filename)
+	f, diags := parser.ParseHCL(content, filename)
 	if diags.HasErrors() {
 		return nil, diags
 	}

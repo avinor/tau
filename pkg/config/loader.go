@@ -8,9 +8,9 @@ import (
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/getter"
 
-	"github.com/go-errors/errors"
 	"github.com/apex/log"
 	"github.com/fatih/color"
+	"github.com/go-errors/errors"
 )
 
 // Loader client for loading sources
@@ -71,12 +71,12 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 }
 
 // LoadTempDir loads sources from temp dir. Temp dir already has to be initialized
-func (l *Loader) LoadTempDir() ([]*Source, error) {
+func (l *Loader) LoadSources() ([]*Source, error) {
 	return nil, nil
 }
 
 // Save loaded sources in temp directory
-func (l *Loader) Save(sources []*Source) error {
+func (l *Loader) SaveSources(sources []*Source) error {
 	return nil
 }
 

@@ -2,9 +2,9 @@ package dir
 
 import (
 	"github.com/apex/log"
-	"path/filepath"
 	"github.com/avinor/tau/pkg/strings"
 	"os"
+	"path/filepath"
 )
 
 const (
@@ -31,7 +31,7 @@ func TempDir(pwd, src string) string {
 	if src == "" {
 		src = strings.SecureRandomAlphaString(16)
 	}
-	
+
 	return joinAndCreate(pwd, TauPath, strings.Hash(src))
 }
 

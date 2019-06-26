@@ -10,7 +10,7 @@ import (
 
 // Source for one file loaded
 type Source struct {
-	Name string
+	Name         string
 	File         string
 	Content      []byte
 	ContentHash  string
@@ -37,7 +37,7 @@ func NewSource(file string) (*Source, error) {
 	name := filepath.Base(file)
 
 	return &Source{
-		Name: name,
+		Name:         name,
 		File:         file,
 		Content:      b,
 		ContentHash:  strings.HashFromBytes(b),

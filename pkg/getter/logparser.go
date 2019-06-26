@@ -1,12 +1,12 @@
 package getter
 
 import (
-	"regexp"
 	"github.com/apex/log"
+	"regexp"
 )
 
 // LogParser parse the registry log messages
-type LogParser struct {}
+type LogParser struct{}
 
 const (
 	logPattern = "\\[(\\w+)\\] (.*)"

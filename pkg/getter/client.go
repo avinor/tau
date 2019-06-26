@@ -1,27 +1,27 @@
 package getter
 
 import (
-	"github.com/avinor/tau/pkg/dir"
+	"context"
 	"fmt"
+	"github.com/avinor/tau/pkg/dir"
 	"net/http"
 	"time"
-	"context"
 
-	"github.com/hashicorp/go-getter"
 	"github.com/apex/log"
+	"github.com/hashicorp/go-getter"
 )
 
 // Options for initialization
 type Options struct {
-	HttpClient *http.Client
+	HttpClient       *http.Client
 	WorkingDirectory string
 }
 
 // Client to retrieve sources
 type Client struct {
 	httpClient *http.Client
-	pwd string
-	detectors []getter.Detector
+	pwd        string
+	detectors  []getter.Detector
 }
 
 const (
@@ -50,8 +50,8 @@ func New(options *Options) *Client {
 
 	return &Client{
 		httpClient: options.HttpClient,
-		pwd : options.WorkingDirectory,
-		detectors: append([]getter.Detector{registryDetector}, getter.Detectors...),
+		pwd:        options.WorkingDirectory,
+		detectors:  append([]getter.Detector{registryDetector}, getter.Detectors...),
 	}
 }
 
@@ -67,11 +67,11 @@ func (c *Client) Get(src, dst string, version *string) error {
 	log.Infof("- %v", src)
 
 	client := &getter.Client{
-		Ctx:  ctx,
-		Src:  src,
-		Dst:  dst,
-		Pwd:  c.pwd,
-		Mode: getter.ClientModeAny,
+		Ctx:       ctx,
+		Src:       src,
+		Dst:       dst,
+		Pwd:       c.pwd,
+		Mode:      getter.ClientModeAny,
 		Detectors: c.detectors,
 	}
 
