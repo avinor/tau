@@ -33,6 +33,10 @@ type meta struct {
 func (m *meta) processArgs(args []string) error {
 	log.Debug(color.New(color.Bold).Sprint("Processing arguments..."))
 
+	if workingDir == "" {
+		workingDir = dir.Working
+	}
+
 	{
 		src, err := getSourceArg(args)
 		if err != nil {
@@ -51,7 +55,7 @@ func (m *meta) processArgs(args []string) error {
 		log.Debugf("- Source dir: %s", m.SourceDir)
 	}
 
-	m.TempDir = dir.TempDir(dir.Working, m.SourceFile)
+	m.TempDir = dir.TempDir(workingDir, m.SourceFile)
 
 	log.Debugf("- Temp dir: %s", m.TempDir)
 
