@@ -23,7 +23,7 @@ var (
 		"plan": Command{
 			Use:              "plan SOURCE [terraform options]",
 			ShortDescription: "Generate and show an execution plan",
-			LongDescription:  templates.LongDesc(
+			LongDescription: templates.LongDesc(
 				`Generate and show an execution plan for one or more modules.
 				`),
 		},

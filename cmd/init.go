@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"github.com/apex/log"
+	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/avinor/tau/internal/templates"
 )
 
 type initCmd struct {
@@ -39,13 +39,13 @@ func newInitCmd() *cobra.Command {
 	ic := &initCmd{}
 
 	initCmd := &cobra.Command{
-		Use:   "init SOURCE [terraform options]",
-		Short: "Initialize a Tau working directory",
-		Long:  initLong,
-		Example: initExample,
-		Args:  cobra.MinimumNArgs(1),
+		Use:                   "init SOURCE [terraform options]",
+		Short:                 "Initialize a tau working directory",
+		Long:                  initLong,
+		Example:               initExample,
+		Args:                  cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
-		SilenceUsage: true,
+		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ic.processArgs(args); err != nil {
 				return err

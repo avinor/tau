@@ -10,23 +10,23 @@ import (
 
 type ptCmd struct {
 	meta
-	name string
+	name    string
 	command Command
 }
 
 func newPtCmd(name string, command Command) *cobra.Command {
 	pt := &ptCmd{
-		name: name,
+		name:    name,
 		command: command,
 	}
 
 	ptCmd := &cobra.Command{
-		Use:   command.Use,
-		Short: command.ShortDescription,
-		Long:  command.LongDescription,
-		Args:  cobra.MinimumNArgs(1),
+		Use:                   command.Use,
+		Short:                 command.ShortDescription,
+		Long:                  command.LongDescription,
+		Args:                  cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
-		SilenceUsage: true,
+		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := pt.processArgs(args); err != nil {
 				return err

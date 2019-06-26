@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/apex/log"
-	"github.com/avinor/tau/internal/handler/simpletext"
 	"github.com/avinor/tau/cmd"
+	"github.com/avinor/tau/internal/handler/simpletext"
 	"github.com/avinor/tau/pkg/getter"
 )
 
