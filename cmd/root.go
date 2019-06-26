@@ -3,12 +3,16 @@ package cmd
 import (
 	"github.com/apex/log"
 	"github.com/spf13/cobra"
+	"github.com/avinor/tau/internal/templates"
 )
 
-const (
-	rootName             = "tau"
-	rootShortDescription = "TAU (Terraform Avinor Utility) manages terraform deployments"
-	rootLongDescription  = "TAU (Terraform Avinor Utility) manages terraform deployments"
+var (
+	rootLong = templates.LongDesc(`TAU is a thin wrapper on top of terraform to manage module deployments.
+		It can deploy either a single module or all modules in a folder, taking into consideration the
+		dependencies between modules.
+
+		All arguments that are not handled by tau will be forwarded to terraform.
+		`)
 )
 
 var (
@@ -19,9 +23,9 @@ var (
 // NewRootCmd returns the root command for TAU.
 func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   rootName,
-		Short: rootShortDescription,
-		Long:  rootLongDescription,
+		Use:   "tau",
+		Short: "TAU (Terraform Avinor Utility) manages terraform deployments",
+		Long:  rootLong,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if debug {
 				log.SetLevel(log.DebugLevel)

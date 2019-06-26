@@ -21,8 +21,6 @@ var (
 	initLong = templates.LongDesc(`Initialize tau working folder based on SOURCE argument.
 		SOURCE can either be a single file or a folder. If it is a folder it will initialize
 		all modules in the folder, ordering them by dependencies.
-
-		All arguments that are not handled by tau will be forwarded to terraform.
 		`)
 
 	initExample = templates.Examples(`
