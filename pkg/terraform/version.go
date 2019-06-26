@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	versionPattern = "Terraform v(\\d+.\\d+)"
+	versionPattern = "Terraform v(.*)"
 )
 
 var (
@@ -30,7 +30,7 @@ func Version() string {
 
 	matches := versionRegex.FindAllStringSubmatch(buffer.Stdout(), -1)
 
-	if len(matches) < 1 && len(matches[0]) < 2 {
+	if len(matches) < 1 || len(matches[0]) < 2 {
 		return ""
 	}
 

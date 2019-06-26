@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
@@ -65,8 +66,8 @@ func NewEngine() *Engine {
 	var processor Processor
 	var executor Executor
 
-	switch version {
-	case "0.12":
+	switch {
+	case strings.HasPrefix(version, "0.12"):
 		v012Engine := v012.NewEngine()
 		compatibility = v012Engine
 		generator = v012Engine
