@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/hcl2 v0.0.0-20190515223218-4b22149b7cef
 	github.com/hashicorp/terraform v0.12.2
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
-	github.com/mattn/go-colorable v0.1.2 // indirect
+	github.com/mattn/go-colorable v0.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.4
 	github.com/spf13/pflag v1.0.3
