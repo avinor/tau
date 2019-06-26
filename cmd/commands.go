@@ -1,32 +1,29 @@
 package cmd
 
+import (
+	"github.com/avinor/tau/internal/templates"
+)
+
 // Command that is available
 type Command struct {
 	Use              string
 	ShortDescription string
 	LongDescription  string
 	Example          string
-	PassThrough      bool
 }
 
 var (
 	validCommands = map[string]Command{
-		"apply": Command{
-			Use:              "apply",
-			ShortDescription: "Builds or changes infrastructure",
-			LongDescription:  "Builds or changes infrastructure",
-			PassThrough:      true,
-		},
-		"init": Command{
-			Use:              "init",
-			ShortDescription: "Initialize a Terraform working directory",
-			LongDescription:  "Initialize a Terraform working directory",
-		},
+		// "apply": Command{
+		// 	Use:              "apply",
+		// 	ShortDescription: "Builds or changes infrastructure",
+		// 	LongDescription:  "Builds or changes infrastructure",
+		// 	PassThrough:      true,
+		// },
 		"plan": Command{
-			Use:              "plan",
+			Use:              "plan SOURCE [terraform options]",
 			ShortDescription: "Generate and show an execution plan",
-			LongDescription:  "Generate and show an execution plan",
-			PassThrough:      true,
+			LongDescription:  templates.LongDesc("Generate and show an execution plan"),
 		},
 	}
 )

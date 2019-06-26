@@ -8,6 +8,7 @@ import (
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"github.com/avinor/tau/internal/templates"
 )
 
 type initCmd struct {
@@ -17,20 +18,37 @@ type initCmd struct {
 }
 
 var (
-	initCommand = validCommands["init"]
+	initLong = templates.LongDesc(`Initialize tau working folder based on SOURCE argument.
+		SOURCE can either be a single file or a folder. If it is a folder it will initialize
+		all modules in the folder, ordering them by dependencies.
+
+		All arguments that are not handled by tau will be forwarded to terraform.
+		`)
+
+	initExample = templates.Examples(`
+		# Initialize a single module
+		tau init module.hcl
+
+		# Initialize a folder
+		tau init folder
+
+		# Initialize a module and send additional argument to terraform
+		tau init module.hcl -input=false
+	`)
 )
 
 func newInitCmd() *cobra.Command {
 	ic := &initCmd{}
 
 	initCmd := &cobra.Command{
-		Use:   initCommand.Use,
-		Short: initCommand.ShortDescription,
-		Long:  initCommand.LongDescription,
+		Use:   "init SOURCE [terraform options]",
+		Short: "Initialize a Tau working directory",
+		Long:  initLong,
+		Example: initExample,
 		Args:  cobra.MinimumNArgs(1),
+		DisableFlagsInUseLine: true,
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-
 			if err := ic.processArgs(args); err != nil {
 				return err
 			}

@@ -57,8 +57,8 @@ func (pt *ptCmd) run(args []string) error {
 			Stderr:           shell.Processors(new(processors.Log)),
 		}
 
-		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.command.Name)...)
-		if err := pt.Engine.Executor.Execute(options, pt.command.Name, extraArgs...); err != nil {
+		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
+		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
 			return err
 		}
 	}
