@@ -51,7 +51,7 @@ type Engine struct {
 // NewEngine creates a terraform engine for the currently installed terraform version
 func NewEngine() *Engine {
 
-	version := version()
+	version := Version()
 
 	if version == "" {
 		log.Fatal(color.RedString("Could not identify terraform version. Make sure terraform is in PATH."))

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/apex/log"
-	"github.com/spf13/cobra"
 	"github.com/avinor/tau/internal/templates"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -38,6 +38,7 @@ func NewRootCmd() *cobra.Command {
 	p.StringVar(&workingDir, "working-directory", "", "working directory (default to current directory)")
 
 	rootCmd.AddCommand(newInitCmd())
+	rootCmd.AddCommand(newVersionCmd())
 
 	for name, cmd := range validCommands {
 		rootCmd.AddCommand(newPtCmd(name, cmd))

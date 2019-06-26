@@ -15,7 +15,7 @@ var (
 	versionRegex = regexp.MustCompile(versionPattern)
 )
 
-func version() string {
+func Version() string {
 	buffer := &processors.Buffer{}
 	logp := &processors.Log{}
 
