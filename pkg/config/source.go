@@ -29,8 +29,8 @@ func NewSource(file string) (*Source, error) {
 		return nil, err
 	}
 
-	config, err := Parse(b, file)
-	if err != nil {
+	config := &Config{}
+	if err := Parse(b, file, config); err != nil {
 		return nil, err
 	}
 

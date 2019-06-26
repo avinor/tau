@@ -14,17 +14,15 @@ func init() {
 }
 
 // Parse file and return the complete Config
-func Parse(content []byte, filename string) (*Config, error) {
+func Parse(content []byte, filename string, val interface{}) error {
 	f, diags := parser.ParseHCL(content, filename)
 	if diags.HasErrors() {
-		return nil, diags
+		return diags
 	}
 
-	config := &Config{}
-
-	if diags := gohcl2.DecodeBody(f.Body, nil, config); diags.HasErrors() {
-		return nil, diags
+	if diags := gohcl2.DecodeBody(f.Body, nil, val); diags.HasErrors() {
+		return diags
 	}
 
-	return config, nil
+	return nil
 }

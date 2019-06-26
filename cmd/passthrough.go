@@ -1,15 +1,22 @@
 package cmd
 
 import (
+	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/spf13/cobra"
 )
 
 type ptCmd struct {
 	meta
+	command Command
 }
 
 func newPtCmd(command Command) *cobra.Command {
-	pt := &ptCmd{}
+	pt := &ptCmd{
+		command: command,
+	}
 
 	ptCmd := &cobra.Command{
 		Use:   command.Use,
@@ -27,30 +34,32 @@ func newPtCmd(command Command) *cobra.Command {
 		},
 	}
 
+	f := ptCmd.Flags()
+	pt.addMetaFlags(f)
+
 	return ptCmd
 }
 
 func (pt *ptCmd) run(args []string) error {
-	// _, err := utils.GetSourceArg(args)
-	// if err != nil {
-	// 	return err
-	// }
+	loaded, err := config.LoadSourcesFile(pt.TempDir)
+	if err != nil {
+		return err
+	}
 
-	// loader, err := config.Load(source, &config.LoadOptions{})
-	// if err != nil {
-	// 	return err
-	// }
+	for _, source := range loaded {
+		moduleDir := dir.Module(pt.TempDir, source.Name)
 
-	// for _, source := range loader.Sources {
-	// 	extraArgs := utils.GetExtraArgs(args, "-backend-config")
-	// 	options := &shell.Options{
-	// 		WorkingDirectory: source.ModuleDirectory(),
-	// 	}
+		options := &shell.Options{
+			WorkingDirectory: moduleDir,
+			Stdout:           shell.Processors(new(processors.Log)),
+			Stderr:           shell.Processors(new(processors.Log)),
+		}
 
-	// 	if err := shell.Execute("terraform", options, extraArgs...); err != nil {
-	// 		return err
-	// 	}
-	// }
+		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.command.Use)...)
+		if err := pt.Engine.Executor.Execute(options, pt.command.Use, extraArgs...); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

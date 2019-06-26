@@ -13,9 +13,25 @@ type SourceFile struct {
 	Sources []*Source `hcl:"source,block"`
 }
 
+const (
+	tauFileName = "tau.hcl"
+)
+
 // LoadTempDir loads sources from temp dir. Temp dir already has to be initialized
-func LoadSourcesFile() ([]*Source, error) {
-	return nil, nil
+func LoadSourcesFile(tempdir string) ([]*Source, error) {
+	file := filepath.Join(tempdir, tauFileName)
+
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	sf := &SourceFile{}
+	if err := Parse(b, file, sf); err != nil {
+		return nil, err
+	}
+
+	return sf.Sources, nil
 }
 
 // Save loaded sources in temp directory
@@ -29,7 +45,7 @@ func SaveSourcesFile(sources []*Source, tempdir string) error {
 
 	gohcl.EncodeIntoBody(sf, body)
 
-	file := filepath.Join(tempdir, "tau.hcl")
+	file := filepath.Join(tempdir, tauFileName)
 
 	return ioutil.WriteFile(file, f.Bytes(), os.ModePerm)
 }
