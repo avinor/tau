@@ -27,5 +27,12 @@ var (
 				`Generate and show an execution plan for one or more modules.
 				`),
 		},
+		"output": Command{
+			Use:              "output SOURCE [terraform options]",
+			ShortDescription: "Read an output from a state file",
+			LongDescription: templates.LongDesc(
+				`Read an output from the state file for module deployed.
+				`),
+		},
 	}
 )
