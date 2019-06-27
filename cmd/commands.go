@@ -4,7 +4,7 @@ import (
 	"github.com/avinor/tau/internal/templates"
 )
 
-// Command that is available
+// Command description for a command that should just be passed through to terraform
 type Command struct {
 	Use              string
 	ShortDescription string

@@ -29,9 +29,7 @@ func (r *Resolver) ResolveInputExpressions(source *config.Source) ([]hcl.Travers
 			continue
 		}
 
-		for _, t := range vars {
-			trav = append(trav, t)
-		}
+		trav = append(trav, vars...)
 	}
 
 	return trav, nil

@@ -60,7 +60,7 @@ func (n *Node) getNodePath(path string) *Node {
 		}
 	}
 
-	if strings.Index(path, ".") < 0 {
+	if !strings.Contains(path, ".") {
 		return n.Children[nextPathPart]
 	}
 
