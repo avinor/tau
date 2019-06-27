@@ -20,14 +20,14 @@ var (
 		// 	LongDescription:  "Builds or changes infrastructure",
 		// 	PassThrough:      true,
 		// },
-		"plan": Command{
+		"plan": {
 			Use:              "plan SOURCE [terraform options]",
 			ShortDescription: "Generate and show an execution plan",
 			LongDescription: templates.LongDesc(
 				`Generate and show an execution plan for one or more modules.
 				`),
 		},
-		"output": Command{
+		"output": {
 			Use:              "output SOURCE [terraform options]",
 			ShortDescription: "Read an output from a state file",
 			LongDescription: templates.LongDesc(

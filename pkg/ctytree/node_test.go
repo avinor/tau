@@ -19,13 +19,13 @@ func TestCreateTest(t *testing.T) {
 			},
 			&Node{
 				Children: map[string]*Node{
-					"dependency": &Node{
+					"dependency": {
 						Children: map[string]*Node{
-							"test": &Node{
+							"test": {
 								Children: map[string]*Node{
-									"outputs": &Node{
+									"outputs": {
 										Children: map[string]*Node{
-											"id": &Node{
+											"id": {
 												Value: cty.StringVal("value"),
 											},
 										},
