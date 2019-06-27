@@ -23,7 +23,7 @@ func LoadSourcesFile(tempdir string) ([]*Source, error) {
 	file := filepath.Join(tempdir, tauFileName)
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return nil, errors.Errorf("Temporary tau file does not exist")
+		return nil, errors.Errorf("Temporary tau file does not exist. Make sure init is run first.")
 	}
 
 	b, err := ioutil.ReadFile(file)
