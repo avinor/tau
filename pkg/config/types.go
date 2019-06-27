@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Datas        []Data       `hcl:"data,block"`
 	Dependencies []Dependency `hcl:"dependency,block"`
+	Hooks        []Hook       `hcl:"hook,block"`
 	Environment  *Environment `hcl:"environment_variables,block"`
 	Backend      *Backend     `hcl:"backend,block"`
 	Module       *Module      `hcl:"module,block"`
@@ -39,6 +40,20 @@ type Dependency struct {
 	Version *string `hcl:"version,attr"`
 
 	Backend *Backend `hcl:"backend,block"`
+}
+
+// Hook describes a hook that should be run at specific time during deployment.
+// Can be used to set environment variables or prepare environment before deployment
+//
+// TriggerOn decides at which event this hook should trigger. On event command specified
+// in Command will run. If read_output is set to true it will try to parse the output
+// from command (stdout) as key=value pairs and add them to list of environment
+// variables that are sent to terraform commands
+type Hook struct {
+	Type       string          `hcl:"type,label"`
+	TriggerOn  hcl2.Expression `hcl:"trigger_on,attr"`
+	Command    string          `hcl:"command,attr"`
+	ReadOutput *bool           `hcl:"read_output,attr"`
 }
 
 // Backend for remote state storage. This will be added to an override file before running terraform
