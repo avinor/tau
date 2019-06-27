@@ -37,6 +37,94 @@ func TestCreateTest(t *testing.T) {
 				},
 			},
 		},
+		{
+			map[string]cty.Value{
+				"dependency.test.outputs.id":   cty.StringVal("value"),
+				"dependency.test.outputs.vnet": cty.StringVal("value2"),
+				"dependency.test.outputs.hub":  cty.StringVal("value3"),
+				"dependency.test.outputs.last": cty.StringVal("value4"),
+			},
+			&Node{
+				Children: map[string]*Node{
+					"dependency": {
+						Children: map[string]*Node{
+							"test": {
+								Children: map[string]*Node{
+									"outputs": {
+										Children: map[string]*Node{
+											"id": {
+												Value: cty.StringVal("value"),
+											},
+											"vnet": {
+												Value: cty.StringVal("value2"),
+											},
+											"hub": {
+												Value: cty.StringVal("value3"),
+											},
+											"last": {
+												Value: cty.StringVal("value4"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			map[string]cty.Value{
+				"id":   cty.StringVal("value"),
+				"test": cty.StringVal("value2"),
+			},
+			&Node{
+				Children: map[string]*Node{
+					"id": {
+						Value: cty.StringVal("value"),
+					},
+					"test": {
+						Value: cty.StringVal("value2"),
+					},
+				},
+			},
+		},
+		{
+			map[string]cty.Value{
+				"dependency.test.outputs.id":  cty.StringVal("value"),
+				"dependency.hub.outputs.vnet": cty.StringVal("value2"),
+			},
+			&Node{
+				Children: map[string]*Node{
+					"dependency": {
+						Children: map[string]*Node{
+							"test": {
+								Children: map[string]*Node{
+									"outputs": {
+										Children: map[string]*Node{
+											"id": {
+												Value: cty.StringVal("value"),
+											},
+										},
+									},
+								},
+							},
+							"hub": {
+								Children: map[string]*Node{
+									"outputs": {
+										Children: map[string]*Node{
+											"vnet": {
+												Value: cty.StringVal("value2"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	prettyConfig := &pretty.Config{
