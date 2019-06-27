@@ -99,10 +99,6 @@ func (ic *initCmd) run(args []string) error {
 			return err
 		}
 
-		if len(vars) == 0 {
-			continue
-		}
-
 		if err := ic.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
 			return err
 		}
