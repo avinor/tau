@@ -3,9 +3,10 @@ package getter
 import (
 	"context"
 	"fmt"
-	"github.com/avinor/tau/pkg/dir"
 	"net/http"
 	"time"
+
+	"github.com/avinor/tau/pkg/dir"
 
 	"github.com/apex/log"
 	"github.com/hashicorp/go-getter"
@@ -13,7 +14,7 @@ import (
 
 // Options for initialization
 type Options struct {
-	HttpClient       *http.Client
+	HttpClient       *http.Client //nolint:golint
 	WorkingDirectory string
 }
 

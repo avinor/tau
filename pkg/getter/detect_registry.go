@@ -31,7 +31,7 @@ func (d *RegistryDetector) Detect(src, _ string) (string, bool, error) {
 func (d *RegistryDetector) DetectRegistry(src string) (string, bool, error) {
 	parts := strings.Split(src, "?registryVersion=")
 	if len(parts) < 2 {
-		return "", false, fmt.Errorf("Source not a valid registry path")
+		return "", false, fmt.Errorf("source not a valid registry path")
 	}
 
 	pkg := parts[0]
