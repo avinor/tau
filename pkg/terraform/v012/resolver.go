@@ -1,13 +1,14 @@
 package v012
 
 import (
+	"encoding/json"
+
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/ctytree"
-	"github.com/avinor/tau/pkg/strings"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
-	hcljson "github.com/hashicorp/hcl2/hcl/json"
 	"github.com/zclconf/go-cty/cty"
+	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
 type Resolver struct {
@@ -37,26 +38,29 @@ func (r *Resolver) ResolveInputExpressions(source *config.Source) ([]hcl.Travers
 }
 
 func (r *Resolver) ResolveStateOutput(output []byte) (map[string]cty.Value, error) {
+	type OutputMeta struct {
+		Sensitive bool            `json:"sensitive"`
+		Type      json.RawMessage `json:"type"`
+		Value     json.RawMessage `json:"value"`
+	}
+	outputs := map[string]OutputMeta{}
 	values := map[string]cty.Value{}
 
-	file, diags := hcljson.Parse(output, strings.SecureRandomAlphaString(16))
-	if diags.HasErrors() {
-		return nil, diags
+	if err := json.Unmarshal(output, &outputs); err != nil {
+		return nil, err
 	}
 
-	attrs, diag := file.Body.JustAttributes()
-	if diag.HasErrors() {
-		return nil, diag
-	}
-
-	for name, attr := range attrs {
-		value, vdiag := attr.Expr.Value(nil)
-		if vdiag.HasErrors() {
-			return nil, vdiag
+	for name, meta := range outputs {
+		ctyType, err := ctyjson.UnmarshalType(meta.Type)
+		if err != nil {
+			return nil, err
 		}
-
+		ctyValue, err := ctyjson.Unmarshal(meta.Value, ctyType)
+		if err != nil {
+			return nil, err
+		}
 		name = decodeName(name)
-		values[name] = value
+		values[name] = ctyValue
 	}
 
 	return ctytree.CreateTree(values).ToCtyMap(), nil
