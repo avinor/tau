@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
@@ -59,7 +59,7 @@ func (pt *ptCmd) run(args []string) error {
 	log.Info("")
 
 	for _, source := range loaded {
-		moduleDir := dir.Module(pt.TempDir, source.Name)
+		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,

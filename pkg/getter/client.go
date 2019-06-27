@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/avinor/tau/pkg/dir"
-
 	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/paths"
 	"github.com/hashicorp/go-getter"
 )
 
@@ -42,7 +41,7 @@ func New(options *Options) *Client {
 	}
 
 	if options.WorkingDirectory == "" {
-		options.WorkingDirectory = dir.Working
+		options.WorkingDirectory = paths.WorkingDir
 	}
 
 	registryDetector := &RegistryDetector{

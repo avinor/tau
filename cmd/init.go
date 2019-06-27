@@ -4,7 +4,7 @@ import (
 	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/dir"
+	"github.com/avinor/tau/pkg/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
@@ -69,7 +69,7 @@ func (ic *initCmd) run(args []string) error {
 	if ic.purge {
 		log.Debug("Purging temporary folder")
 		log.Debug("")
-		dir.Remove(ic.TempDir)
+		paths.Remove(ic.TempDir)
 	}
 
 	ic.Loader.MaxDepth = ic.maxDependencyDepth
@@ -82,7 +82,7 @@ func (ic *initCmd) run(args []string) error {
 	log.Info(color.New(color.Bold).Sprint("Loading modules..."))
 	for _, source := range loaded {
 		module := source.Config.Module
-		moduleDir := dir.Module(ic.TempDir, source.Name)
+		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
 
 		if module == nil {
 			log.WithField("file", source.Name).Fatal("No module defined in source")
@@ -101,8 +101,8 @@ func (ic *initCmd) run(args []string) error {
 			continue
 		}
 
-		moduleDir := dir.Module(ic.TempDir, source.Name)
-		depsDir := dir.Dependency(ic.TempDir, source.Name)
+		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
+		depsDir := paths.DependencyDir(ic.TempDir, source.Name)
 
 		vars, err := ic.Engine.ResolveDependencies(source, depsDir)
 		if err != nil {
@@ -116,7 +116,7 @@ func (ic *initCmd) run(args []string) error {
 	log.Info("")
 
 	for _, source := range loaded {
-		moduleDir := dir.Module(ic.TempDir, source.Name)
+		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
 
 		if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
 			return err

@@ -9,8 +9,8 @@ import (
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/getter"
+	"github.com/avinor/tau/pkg/paths"
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/fatih/color"
 	"github.com/go-errors/errors"
@@ -34,7 +34,7 @@ func (m *meta) processArgs(args []string) error {
 	log.Debug(color.New(color.Bold).Sprint("Processing arguments..."))
 
 	if workingDir == "" {
-		workingDir = dir.Working
+		workingDir = paths.WorkingDir
 	}
 
 	{
@@ -55,7 +55,7 @@ func (m *meta) processArgs(args []string) error {
 		log.Debugf("- Source dir: %s", m.SourceDir)
 	}
 
-	m.TempDir = dir.TempDir(workingDir, m.SourceFile)
+	m.TempDir = paths.TempDir(workingDir, m.SourceFile)
 
 	log.Debugf("- Temp dir: %s", m.TempDir)
 
@@ -76,7 +76,7 @@ func (m *meta) processArgs(args []string) error {
 
 	{
 		options := &config.Options{
-			WorkingDirectory: dir.Working,
+			WorkingDirectory: paths.WorkingDir,
 			TempDirectory:    m.TempDir,
 			Getter:           m.Getter,
 		}
@@ -141,9 +141,9 @@ func getExtraArgs(args []string, invalidArgs ...string) []string {
 
 // Split the source directory into working directory and source directory
 func splitSource(src string) (string, string, error) {
-	pwd := dir.Working
+	pwd := paths.WorkingDir
 
-	getterSource, err := gogetter.Detect(src, dir.Working, gogetter.Detectors)
+	getterSource, err := gogetter.Detect(src, paths.WorkingDir, gogetter.Detectors)
 	if err != nil {
 		return "", "", errors.Errorf("Failed to detect source")
 	}

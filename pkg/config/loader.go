@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/avinor/tau/pkg/dir"
 	"github.com/avinor/tau/pkg/getter"
+	"github.com/avinor/tau/pkg/paths"
 
 	"github.com/apex/log"
 	"github.com/fatih/color"
@@ -32,7 +32,7 @@ type Options struct {
 // NewLoader creates a new loader client
 func NewLoader(options *Options) *Loader {
 	if options.WorkingDirectory == "" {
-		options.WorkingDirectory = dir.Working
+		options.WorkingDirectory = paths.WorkingDir
 	}
 
 	if options.Getter == nil {
@@ -72,7 +72,7 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 }
 
 func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
-	dst := dir.Source(l.options.TempDirectory, src)
+	dst := paths.SourceDir(l.options.TempDirectory, src)
 
 	if err := l.getter.Get(src, dst, version); err != nil {
 		return nil, err
