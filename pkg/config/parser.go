@@ -1,8 +1,12 @@
 package config
 
 import (
+	"log"
+
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
+	"github.com/hashicorp/hcl2/hcl"
 	hcl2parse "github.com/hashicorp/hcl2/hclparse"
+	"github.com/zclconf/go-cty/cty"
 )
 
 var (
@@ -25,4 +29,15 @@ func Parse(content []byte, filename string, val interface{}) error {
 	}
 
 	return nil
+}
+
+func ParseBody(body hcl.Body) map[string]cty.Value {
+	values := map[string]cty.Value{}
+	diags := gohcl2.DecodeBody(body, nil, &values)
+
+	if diags.HasErrors() {
+		log.Fatalf("could not parse hcl body: %s", diags)
+	}
+
+	return values
 }

@@ -1,8 +1,10 @@
 package shell
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/apex/log"
 	"github.com/go-cmd/cmd"
 	"github.com/go-errors/errors"
 )
@@ -22,6 +24,14 @@ func Execute(options *Options, command string, args ...string) error {
 	execCmd := cmd.NewCmdOptions(cmdOptions, command, args...)
 	if options.WorkingDirectory != "" {
 		execCmd.Dir = options.WorkingDirectory
+	}
+
+	if len(options.Env) > 0 {
+		for k, v := range options.Env {
+			variable := fmt.Sprintf("%s=%s", k, v)
+			log.Debugf("- Added env variable: %s", variable)
+			execCmd.Env = append(execCmd.Env, variable)
+		}
 	}
 
 	// Print STDOUT and STDERR lines streaming from Cmd

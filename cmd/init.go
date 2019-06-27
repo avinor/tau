@@ -15,6 +15,7 @@ type initCmd struct {
 	meta
 
 	maxDependencyDepth int
+	purge              bool
 }
 
 var (
@@ -56,7 +57,8 @@ func newInitCmd() *cobra.Command {
 	}
 
 	f := initCmd.Flags()
-	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 2, "defines max dependency depth when traversing dependencies")
+	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
+	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
 
 	ic.addMetaFlags(f)
 
@@ -64,6 +66,14 @@ func newInitCmd() *cobra.Command {
 }
 
 func (ic *initCmd) run(args []string) error {
+	if ic.purge {
+		log.Debug("Purging temporary folder")
+		log.Debug("")
+		dir.Remove(ic.TempDir)
+	}
+
+	ic.Loader.MaxDepth = ic.maxDependencyDepth
+
 	loaded, err := ic.Loader.Load(ic.SourceFile, nil)
 	if err != nil {
 		return err
@@ -116,6 +126,7 @@ func (ic *initCmd) run(args []string) error {
 			WorkingDirectory: moduleDir,
 			Stdout:           shell.Processors(new(processors.Log)),
 			Stderr:           shell.Processors(new(processors.Log)),
+			Env:              source.Env,
 		}
 
 		log.Info("------------------------------------------------------------------------")

@@ -15,6 +15,8 @@ import (
 
 // Loader client for loading sources
 type Loader struct {
+	MaxDepth int
+
 	options *Options
 	loaded  map[string]*Source
 	getter  *getter.Client
@@ -38,9 +40,10 @@ func NewLoader(options *Options) *Loader {
 	}
 
 	return &Loader{
-		options: options,
-		loaded:  map[string]*Source{},
-		getter:  options.Getter,
+		MaxDepth: 1,
+		options:  options,
+		loaded:   map[string]*Source{},
+		getter:   options.Getter,
 	}
 }
 
@@ -82,7 +85,7 @@ func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
 
 	sources := []*Source{}
 	for _, file := range files {
-		source, err := NewSource(file)
+		source, err := NewSourceFromFile(file)
 		if err != nil {
 			return nil, err
 		}
@@ -95,6 +98,10 @@ func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
 
 func (l *Loader) loadDependencies(sources []*Source, depth int) error {
 	remaining := []*Source{}
+
+	if depth >= l.MaxDepth {
+		return nil
+	}
 
 	for _, source := range sources {
 		if _, ok := l.loaded[source.ContentHash]; !ok {

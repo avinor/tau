@@ -5,6 +5,7 @@ type Options struct {
 	WorkingDirectory string
 	Stdout           []OutputProcessor
 	Stderr           []OutputProcessor
+	Env              map[string]string
 }
 
 type OutputProcessor interface {

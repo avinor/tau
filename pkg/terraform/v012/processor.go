@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
@@ -28,7 +29,7 @@ func (p *Processor) ProcessBackendBody(body hcl.Body) (map[string]cty.Value, err
 	return values, nil
 }
 
-func (p *Processor) ProcessDependencies(dest string) (map[string]cty.Value, error) {
+func (p *Processor) ProcessDependencies(source *config.Source, dest string) (map[string]cty.Value, error) {
 	debugLog := &processors.Log{
 		Debug: true,
 	}
@@ -38,6 +39,7 @@ func (p *Processor) ProcessDependencies(dest string) (map[string]cty.Value, erro
 		Stdout:           shell.Processors(debugLog),
 		Stderr:           shell.Processors(errorLog),
 		WorkingDirectory: dest,
+		Env:              source.Env,
 	}
 
 	base := filepath.Base(dest)

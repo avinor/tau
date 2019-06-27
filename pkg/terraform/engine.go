@@ -31,7 +31,7 @@ type Generator interface {
 // Processor for processing terraform config or output
 type Processor interface {
 	ProcessBackendBody(body hcl.Body) (map[string]cty.Value, error)
-	ProcessDependencies(dest string) (map[string]cty.Value, error)
+	ProcessDependencies(source *config.Source, dest string) (map[string]cty.Value, error)
 }
 
 // Executor executes terraform commands
@@ -120,7 +120,7 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		return nil, err
 	}
 
-	return e.Processor.ProcessDependencies(dest)
+	return e.Processor.ProcessDependencies(source, dest)
 }
 
 func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {

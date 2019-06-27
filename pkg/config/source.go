@@ -15,11 +15,38 @@ type Source struct {
 	File         string
 	Content      []byte
 	Config       *Config
+	Env          map[string]string
 	Dependencies map[string]*Source
 }
 
 // NewSource creates a new source from a file
-func NewSource(file string) (*Source, error) {
+func NewSource(file string, content []byte) (*Source, error) {
+	config := &Config{}
+	if err := Parse(content, file, config); err != nil {
+		return nil, err
+	}
+
+	name := filepath.Base(file)
+
+	env := map[string]string{}
+	if config.Environment != nil {
+		for k, v := range ParseBody(config.Environment.Config) {
+			env[k] = v.AsString()
+		}
+	}
+
+	return &Source{
+		Name:         name,
+		File:         file,
+		Content:      content,
+		ContentHash:  strings.HashFromBytes(content),
+		Config:       config,
+		Env:          env,
+		Dependencies: map[string]*Source{},
+	}, nil
+}
+
+func NewSourceFromFile(file string) (*Source, error) {
 	if _, err := os.Stat(file); err != nil {
 		return nil, err
 	}
@@ -29,19 +56,5 @@ func NewSource(file string) (*Source, error) {
 		return nil, err
 	}
 
-	config := &Config{}
-	if err := Parse(b, file, config); err != nil {
-		return nil, err
-	}
-
-	name := filepath.Base(file)
-
-	return &Source{
-		Name:         name,
-		File:         file,
-		Content:      b,
-		ContentHash:  strings.HashFromBytes(b),
-		Config:       config,
-		Dependencies: map[string]*Source{},
-	}, nil
+	return NewSource(file, b)
 }

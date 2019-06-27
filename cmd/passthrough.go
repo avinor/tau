@@ -65,6 +65,7 @@ func (pt *ptCmd) run(args []string) error {
 			WorkingDirectory: moduleDir,
 			Stdout:           shell.Processors(new(processors.Log)),
 			Stderr:           shell.Processors(new(processors.Log)),
+			Env:              source.Env,
 		}
 
 		log.Info("------------------------------------------------------------------------")
