@@ -15,8 +15,20 @@ import (
 )
 
 var (
-	modulePattern = regexp.MustCompile(".*(\\.hcl|\\.tau)")
-	autoPattern   = regexp.MustCompile(".*(\\.hcl|\\.tau)")
+	moduleRegexp = regexp.MustCompile("(?i).*(\\.hcl|\\.tau)$")
+	autoRegexp   = regexp.MustCompile("(?i).*_auto(\\.hcl|\\.tau)")
+
+	// moduleMatchFunc for checking if a filename match module pattern. Since regexp
+	// does not support look ahead this function makes sure to also check that it does
+	// not contain _auto keyword
+	moduleMatchFunc = func(str string) bool {
+		return moduleRegexp.MatchString(str) && !strings.Contains(str, "_auto")
+	}
+
+	// autoMatchFunc checks that the filename is an auto import file (contains _auto)
+	autoMatchFunc = func(str string) bool {
+		return autoRegexp.MatchString(str)
+	}
 )
 
 // Loader client for loading sources
@@ -84,7 +96,7 @@ func (l *Loader) loadFromPath(path string) ([]*Source, error) {
 
 	log.Infof("- loading %s", filepath.Base(path))
 
-	files, err := findModuleFiles(path)
+	files, err := findFiles(path, moduleMatchFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -140,47 +152,9 @@ func (l *Loader) loadDependencies(sources []*Source, depth int) error {
 	return nil
 }
 
-// findModuleFiles searches in dst for files matching *.hcl or *.tau, or if dst is a single
-// file it will just return that as result. Will exclude any files matching _auto as those should
-// not be loaded as module sources.
-func findModuleFiles(dst string) ([]string, error) {
-
-	fi, err := os.Stat(dst)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !fi.IsDir() {
-		return []string{dst}, nil
-	}
-
-	matches := []string{}
-	for _, ext := range []string{"*.hcl", "*.tau"} {
-		m, err := filepath.Glob(filepath.Join(dst, ext))
-		if err != nil {
-			return nil, err
-		}
-
-		for _, match := range m {
-			fi, err := os.Stat(match)
-
-			if err != nil {
-				return nil, err
-			}
-
-			if !fi.IsDir() && !strings.Contains(fi.Name(), "_auto") {
-				matches = append(matches, match)
-			}
-		}
-	}
-
-	log.Debugf("Found %v template file(s): %v", len(matches), matches)
-
-	return matches, nil
-}
-
-func findFiles(path, pattern string) ([]string, error) {
+// findFiles searches in path for files matching against a custom matching function. For all files
+// that match, and are not directories, it will return as result.
+func findFiles(path string, matchFunc func(string) bool) ([]string, error) {
 	fi, err := os.Stat(path)
 
 	if err != nil {
@@ -188,31 +162,33 @@ func findFiles(path, pattern string) ([]string, error) {
 	}
 
 	if !fi.IsDir() {
-		match, err := regexp.MatchString(fi.Name(), pattern)
-
-		if err != nil {
-			return nil, err
-		} else if match {
+		if matchFunc(fi.Name()) {
 			return []string{path}, nil
 		}
-
 		return nil, nil
 	}
 
-	matches, err := filepath.Glob(filepath.Join(path, "*"))
+	files, err := filepath.Glob(filepath.Join(path, "*"))
 	if err != nil {
 		return nil, err
 	}
 
-	for _, match := range matches {
-		fi, err := os.Stat(match)
+	matches := []string{}
+	for _, file := range files {
+		if matchFunc(file) {
+			fi, err := os.Stat(file)
 
-		if err != nil {
-			return nil, err
-		}
+			if err != nil {
+				return nil, err
+			}
 
-		if !fi.IsDir() && !strings.Contains(fi.Name(), "_auto") {
-			matches = append(matches, match)
+			if !fi.IsDir() {
+				matches = append(matches, file)
+			}
 		}
 	}
+
+	log.Debugf("Found %v template file(s): %v", len(matches), matches)
+
+	return matches, nil
 }
