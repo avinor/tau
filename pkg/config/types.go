@@ -66,18 +66,22 @@ type Backend struct {
 	Config hcl2.Body `hcl:",remain"`
 }
 
-// Module defining module to create
+// Module to import and deploy. Uses go-getter to download source, so supports git repos, http(s)
+// sources etc. If version is defined it will assume it is a terraform registry source and try
+// to download from registry.
 type Module struct {
 	Source  string  `hcl:"source,attr"`
 	Version *string `hcl:"version,attr"`
 }
 
-// Environment variables
+// Environment variables that should be added to the shell commands run (specfifically terraform).
+// Define variables using attributes, blocks not supported
 type Environment struct {
 	Config hcl2.Body `hcl:",remain"`
 }
 
-// Inputs that are converted to terraform.tfvars for module
+// Inputs that are sent to module for deployment. Config is converted to a map of attributes.
+// Supports all functions supported by terraform.
 type Inputs struct {
 	Config hcl2.Body `hcl:",remain"`
 }
