@@ -81,7 +81,7 @@ func (l *Loader) Load(path string) ([]*Source, error) {
 		return nil, err
 	}
 
-	sort.Sort(ByDependencies(sources))
+	sortSources(sources)
 
 	log.Info("")
 
@@ -191,4 +191,27 @@ func findFiles(path string, matchFunc func(string) bool) ([]string, error) {
 	log.Debugf("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
+}
+
+// sortSources sorts the sources in order of dependencies.
+func sortSources(sources []*Source) {
+	sort.SliceStable(sources, func(i, j int) bool {
+		return lessCompareSources(sources[i], sources[j])
+	})
+}
+
+// lessCompareSources takes 2 sources and compare them to see if j is less than
+// i. It runs recursively to check dependencies of dependency against i. Otherwise
+// it will sort them incorrectly
+//
+// If there is no dependency that it can sort by it sorts alphabetically on name.
+// This is just to get a consistent order of all elements.
+func lessCompareSources(i, j *Source) bool {
+	for _, dep := range j.Dependencies {
+		if dep == i || lessCompareSources(i, dep) {
+			return true
+		}
+	}
+
+	return i.Name < j.Name
 }

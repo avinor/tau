@@ -16,7 +16,8 @@ func init() {
 	parser = hcl2parse.NewParser()
 }
 
-// Parse file and return the complete Config
+// Parse file content into interface val. It will not read the filename from disk
+// so filename argument can be anything, but it will not try to load same file twice.
 func Parse(content []byte, filename string, val interface{}) error {
 	f, diags := parser.ParseHCL(content, filename)
 	if diags.HasErrors() {
@@ -30,6 +31,7 @@ func Parse(content []byte, filename string, val interface{}) error {
 	return nil
 }
 
+// ParseBody parses the hcl.Body into a value map.
 func ParseBody(body hcl.Body) (map[string]cty.Value, error) {
 	values := map[string]cty.Value{}
 	diags := gohcl2.DecodeBody(body, hclcontext.Default, &values)
