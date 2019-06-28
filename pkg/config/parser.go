@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 
+	"github.com/avinor/tau/pkg/hclcontext"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	hcl2parse "github.com/hashicorp/hcl2/hclparse"
@@ -24,7 +25,7 @@ func Parse(content []byte, filename string, val interface{}) error {
 		return diags
 	}
 
-	if diags := gohcl2.DecodeBody(f.Body, nil, val); diags.HasErrors() {
+	if diags := gohcl2.DecodeBody(f.Body, hclcontext.Default, val); diags.HasErrors() {
 		return diags
 	}
 
@@ -33,7 +34,7 @@ func Parse(content []byte, filename string, val interface{}) error {
 
 func ParseBody(body hcl.Body) map[string]cty.Value {
 	values := map[string]cty.Value{}
-	diags := gohcl2.DecodeBody(body, nil, &values)
+	diags := gohcl2.DecodeBody(body, hclcontext.Default, &values)
 
 	if diags.HasErrors() {
 		log.Fatalf("could not parse hcl body: %s", diags)

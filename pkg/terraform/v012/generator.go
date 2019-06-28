@@ -2,7 +2,7 @@ package v012
 
 import (
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/terraform/lang"
+	"github.com/avinor/tau/pkg/hclcontext"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
@@ -13,7 +13,6 @@ import (
 )
 
 type Generator struct {
-	ctx       *hcl.EvalContext
 	processor *Processor
 	resolver  *Resolver
 }
@@ -130,7 +129,7 @@ func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
-	ctx := lang.ChildEvalContext(g.ctx, data)
+	ctx := hclcontext.WithVariables(data)
 	values := map[string]cty.Value{}
 	diags := gohcl2.DecodeBody(source.Config.Inputs.Config, ctx, &values)
 
@@ -151,7 +150,7 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 
 	for _, attr := range body.Attributes {
 		value := cty.Value{}
-		diags := gohcl.DecodeExpression(attr.Expr, g.ctx, &value)
+		diags := gohcl.DecodeExpression(attr.Expr, hclcontext.Default, &value)
 
 		if diags.HasErrors() {
 			return nil, diags

@@ -1,4 +1,4 @@
-package lang
+package hclcontext
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/zclconf/go-cty/cty/function"
 )
 
-// EnvFunc gets an environment variable
+// EnvFunc gets an environment variable, if env variable is not found it will return blank string
 var EnvFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{

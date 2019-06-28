@@ -5,6 +5,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/hclcontext"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
@@ -13,14 +14,13 @@ import (
 )
 
 type Processor struct {
-	ctx      *hcl.EvalContext
 	executor *Executor
 	resolver *Resolver
 }
 
 func (p *Processor) ProcessBackendBody(body hcl.Body) (map[string]cty.Value, error) {
 	values := map[string]cty.Value{}
-	diags := gohcl2.DecodeBody(body, p.ctx, &values)
+	diags := gohcl2.DecodeBody(body, hclcontext.Default, &values)
 
 	if diags.HasErrors() {
 		return nil, diags
