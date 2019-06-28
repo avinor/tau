@@ -15,9 +15,6 @@ const (
 	// ModulePath is directory where modules are downloaded
 	ModulePath = "module"
 
-	// SourcePath directory to download / copy sources
-	SourcePath = "source"
-
 	// DependencyPath directory where to process dependencies
 	DependencyPath = "dep"
 )
@@ -25,6 +22,15 @@ const (
 // Remove the directory and all its subdirectories
 func Remove(path string) {
 	os.RemoveAll(path)
+}
+
+// Abs returns the absolute path for file, based on
+func Abs(pwd, path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+
+	return filepath.Join(pwd, path)
 }
 
 // TempDir generates a temporary directory for src using pwd as base directory.
@@ -42,13 +48,6 @@ func TempDir(pwd, src string) string {
 // directory.
 func ModuleDir(tempDir, name string) string {
 	return join(tempDir, ModulePath, name, false)
-}
-
-// SourceDir returns the directory where source should be stored. It will not
-// create the directory as that has to be done by go-getter that is using this
-// directory.
-func SourceDir(tempDir, name string) string {
-	return join(tempDir, SourcePath, name, false)
 }
 
 // DependencyDir creates and return the directory for dependencies.

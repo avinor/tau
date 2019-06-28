@@ -3,9 +3,10 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strings"
 
-	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/paths"
 
 	"github.com/apex/log"
@@ -13,14 +14,14 @@ import (
 	"github.com/go-errors/errors"
 )
 
+var (
+	modulePattern = regexp.MustCompile(".*(\\.hcl|\\.tau)")
+	autoPattern   = regexp.MustCompile(".*(\\.hcl|\\.tau)")
+)
+
 // Loader client for loading sources
 type Loader struct {
-	// MaxDepth to search for dependencies. Should be enough with 1.
-	MaxDepth int
-
 	options *Options
-	loaded  map[string]*Source
-	getter  *getter.Client
 }
 
 // Options when loading modules. If TempDirectory is not set it will create a random
@@ -29,7 +30,9 @@ type Loader struct {
 type Options struct {
 	WorkingDirectory string
 	TempDirectory    string
-	Getter           *getter.Client
+
+	// MaxDepth to search for dependencies. Should be enough with 1.
+	MaxDepth int
 }
 
 // NewLoader creates a new loader client
@@ -42,28 +45,22 @@ func NewLoader(options *Options) *Loader {
 		options.TempDirectory = paths.TempDir(paths.WorkingDir, "")
 	}
 
-	if options.Getter == nil {
-		options.Getter = getter.New(nil)
-	}
-
 	return &Loader{
-		MaxDepth: 1,
-		options:  options,
-		loaded:   map[string]*Source{},
-		getter:   options.Getter,
+		options: options,
 	}
 }
 
-// Load all sources from source directory (src) and return a list of sources loaded.
-// If version is set it will try to load source from terraform registry
-func (l *Loader) Load(src string, version *string) ([]*Source, error) {
-	if src == "" {
-		return nil, errors.Errorf("Source is empty")
+// Load sources from path and return list of all Sources found at path. Path can either
+// be a single file or a directory, in which case it will load all files found in
+// directory.
+func (l *Loader) Load(path string) ([]*Source, error) {
+	if path == "" {
+		return nil, errors.Errorf("source path is empty")
 	}
 
 	log.Info(color.New(color.Bold).Sprint("Loading sources..."))
 
-	sources, err := l.loadSource(src, nil)
+	sources, err := l.loadFromPath(path)
 	if err != nil {
 		return nil, err
 	}
@@ -79,21 +76,22 @@ func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 	return sources, nil
 }
 
-func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
-	dst := paths.SourceDir(l.options.TempDirectory, src)
+// loadFromPath loads all source files matching path pattern and returns the Source
+// structs for sources. It does not load dependencies, call loadDependencies on return
+// value to load the dependency tree.
+func (l *Loader) loadFromPath(path string) ([]*Source, error) {
+	path = paths.Abs(l.options.WorkingDirectory, path)
 
-	if err := l.getter.Get(src, dst, version); err != nil {
-		return nil, err
-	}
+	log.Infof("- loading %s", filepath.Base(path))
 
-	files, err := l.findModuleFiles(dst)
+	files, err := findModuleFiles(path)
 	if err != nil {
 		return nil, err
 	}
 
 	sources := []*Source{}
 	for _, file := range files {
-		source, err := NewSourceFromFile(file)
+		source, err := GetSourceFromFile(file)
 		if err != nil {
 			return nil, err
 		}
@@ -104,61 +102,60 @@ func (l *Loader) loadSource(src string, version *string) ([]*Source, error) {
 	return sources, nil
 }
 
+// loadDependencies searches all dependencies for source and recursively loads them into
+// sources dependency map. A dependency can only be a single file, it will fail if trying
+// to load a dependency that is a directory or resolves to multiple files.
 func (l *Loader) loadDependencies(sources []*Source, depth int) error {
-	remaining := []*Source{}
-
-	if depth >= l.MaxDepth {
+	if depth >= l.options.MaxDepth {
 		return nil
 	}
 
 	for _, source := range sources {
-		if _, ok := l.loaded[source.ContentHash]; !ok {
-			remaining = append(remaining, source)
-		}
-	}
+		dir := filepath.Dir(source.File)
 
-	for _, source := range remaining {
-		deps, err := l.loadModuleDependencies(source)
-		if err != nil {
-			return err
-		}
+		for _, dep := range source.Config.Dependencies {
+			path := filepath.Join(dir, dep.Source)
+			deps, err := l.loadFromPath(path)
 
-		if err := l.loadDependencies(deps, depth+1); err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+
+			if len(deps) > 1 {
+				return errors.Errorf("dependency must be a single file, cannot be directory")
+			}
+
+			if len(deps) == 0 {
+				continue
+			}
+
+			source.Dependencies[dep.Name] = deps[0]
+
+			if err := l.loadDependencies(deps, depth+1); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func (l *Loader) loadModuleDependencies(source *Source) ([]*Source, error) {
-	l.loaded[source.ContentHash] = source
-	deps := []*Source{}
+// findModuleFiles searches in dst for files matching *.hcl or *.tau, or if dst is a single
+// file it will just return that as result. Will exclude any files matching _auto as those should
+// not be loaded as module sources.
+func findModuleFiles(dst string) ([]string, error) {
 
-	for _, dep := range source.Config.Dependencies {
-		sources, err := l.loadSource(dep.Source, dep.Version)
-		if err != nil {
-			return nil, err
-		}
+	fi, err := os.Stat(dst)
 
-		for _, src := range sources {
-			if _, ok := l.loaded[src.ContentHash]; !ok {
-				deps = append(deps, src)
-			} else {
-				src = l.loaded[src.ContentHash]
-			}
-
-			source.Dependencies[dep.Name] = src
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	return deps, nil
-}
-
-func (l *Loader) findModuleFiles(dst string) ([]string, error) {
+	if !fi.IsDir() {
+		return []string{dst}, nil
+	}
 
 	matches := []string{}
-
 	for _, ext := range []string{"*.hcl", "*.tau"} {
 		m, err := filepath.Glob(filepath.Join(dst, ext))
 		if err != nil {
@@ -172,7 +169,7 @@ func (l *Loader) findModuleFiles(dst string) ([]string, error) {
 				return nil, err
 			}
 
-			if !fi.IsDir() {
+			if !fi.IsDir() && !strings.Contains(fi.Name(), "_auto") {
 				matches = append(matches, match)
 			}
 		}
@@ -183,6 +180,39 @@ func (l *Loader) findModuleFiles(dst string) ([]string, error) {
 	return matches, nil
 }
 
-func filterModuleFiles(files []string, filter string) []string {
-	return files
+func findFiles(path, pattern string) ([]string, error) {
+	fi, err := os.Stat(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !fi.IsDir() {
+		match, err := regexp.MatchString(fi.Name(), pattern)
+
+		if err != nil {
+			return nil, err
+		} else if match {
+			return []string{path}, nil
+		}
+
+		return nil, nil
+	}
+
+	matches, err := filepath.Glob(filepath.Join(path, "*"))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, match := range matches {
+		fi, err := os.Stat(match)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if !fi.IsDir() && !strings.Contains(fi.Name(), "_auto") {
+			matches = append(matches, match)
+		}
+	}
 }

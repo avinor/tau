@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
@@ -13,6 +17,9 @@ import (
 
 type initCmd struct {
 	meta
+
+	getter *getter.Client
+	loader *config.Loader
 
 	maxDependencyDepth int
 	purge              bool
@@ -44,13 +51,14 @@ func newInitCmd() *cobra.Command {
 		Short:                 "Initialize a tau working directory",
 		Long:                  initLong,
 		Example:               initExample,
-		Args:                  cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := ic.processArgs(args); err != nil {
 				return err
 			}
+
+			ic.init()
 
 			return ic.run(args)
 		},
@@ -60,9 +68,36 @@ func newInitCmd() *cobra.Command {
 	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
 
-	ic.addMetaFlags(f)
+	ic.addMetaFlags(initCmd)
 
 	return initCmd
+}
+
+func (ic *initCmd) init() {
+	{
+		timeout := time.Duration(ic.timeout) * time.Second
+
+		log.Debugf("- Http timeout: %s", timeout)
+
+		options := &getter.Options{
+			HttpClient: &http.Client{
+				Timeout: timeout,
+			},
+			WorkingDirectory: paths.WorkingDir,
+		}
+
+		ic.getter = getter.New(options)
+	}
+
+	{
+		options := &config.Options{
+			WorkingDirectory: paths.WorkingDir,
+			TempDirectory:    ic.TempDir,
+			MaxDepth:         ic.maxDependencyDepth,
+		}
+
+		ic.loader = config.NewLoader(options)
+	}
 }
 
 func (ic *initCmd) run(args []string) error {
@@ -72,9 +107,7 @@ func (ic *initCmd) run(args []string) error {
 		paths.Remove(ic.TempDir)
 	}
 
-	ic.Loader.MaxDepth = ic.maxDependencyDepth
-
-	loaded, err := ic.Loader.Load(ic.SourceFile, nil)
+	loaded, err := ic.loader.Load(ic.file)
 	if err != nil {
 		return err
 	}
@@ -89,7 +122,7 @@ func (ic *initCmd) run(args []string) error {
 			continue
 		}
 
-		if err := ic.Getter.Get(module.Source, moduleDir, module.Version); err != nil {
+		if err := ic.getter.Get(module.Source, moduleDir, module.Version); err != nil {
 			return err
 		}
 	}

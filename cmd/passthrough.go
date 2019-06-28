@@ -26,7 +26,6 @@ func newPtCmd(name string, command Command) *cobra.Command {
 		Use:                   command.Use,
 		Short:                 command.ShortDescription,
 		Long:                  command.LongDescription,
-		Args:                  cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -42,8 +41,7 @@ func newPtCmd(name string, command Command) *cobra.Command {
 		ptCmd.Example = pt.command.Example
 	}
 
-	f := ptCmd.Flags()
-	pt.addMetaFlags(f)
+	pt.addMetaFlags(ptCmd)
 
 	return ptCmd
 }

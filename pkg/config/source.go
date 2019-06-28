@@ -4,14 +4,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"github.com/avinor/tau/pkg/strings"
 )
 
-// Source for one file loaded
+var (
+	// loaded is a map of already loaded Sources. Will always be checked so same file is
+	// not loaded twice. Map key is absolute path of file
+	loaded = map[string]*Source{}
+)
+
+// Source information about one file loaded from disk. Includes hcl tag for name
+// because it is needed when saving SourceFile.
 type Source struct {
 	Name         string `hcl:"name,label"`
-	ContentHash  string `hcl:"hash,attr"`
 	File         string
 	Content      []byte
 	Config       *Config
@@ -19,7 +23,7 @@ type Source struct {
 	Dependencies map[string]*Source
 }
 
-// NewSource creates a new source from a file
+// NewSource creates a new source from a file and parse the configuration.
 func NewSource(file string, content []byte) (*Source, error) {
 	config := &Config{}
 	if err := Parse(content, file, config); err != nil {
@@ -30,7 +34,12 @@ func NewSource(file string, content []byte) (*Source, error) {
 
 	env := map[string]string{}
 	if config.Environment != nil {
-		for k, v := range ParseBody(config.Environment.Config) {
+		parsed, err := ParseBody(config.Environment.Config)
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range parsed {
 			env[k] = v.AsString()
 		}
 	}
@@ -39,14 +48,20 @@ func NewSource(file string, content []byte) (*Source, error) {
 		Name:         name,
 		File:         file,
 		Content:      content,
-		ContentHash:  strings.HashFromBytes(content),
 		Config:       config,
 		Env:          env,
 		Dependencies: map[string]*Source{},
 	}, nil
 }
 
-func NewSourceFromFile(file string) (*Source, error) {
+// GetSourceFromFile returns the Source for file (should be absolute path). If file exists
+// in cache it will return the cached item, otherwise it will create the Source and return
+// a pointer to new Source.
+func GetSourceFromFile(file string) (*Source, error) {
+	if _, already := loaded[file]; already {
+		return loaded[file], nil
+	}
+
 	if _, err := os.Stat(file); err != nil {
 		return nil, err
 	}
@@ -56,5 +71,20 @@ func NewSourceFromFile(file string) (*Source, error) {
 		return nil, err
 	}
 
-	return NewSource(file, b)
+	source, err := NewSource(file, b)
+	if err != nil {
+		return nil, err
+	}
+
+	loaded[file] = source
+	return source, nil
+}
+
+// IsAlreadyLoaded checks if file is already loaded and returns true if is is.
+func IsAlreadyLoaded(file string) bool {
+	if _, already := loaded[file]; already {
+		return true
+	}
+
+	return false
 }

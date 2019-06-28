@@ -34,10 +34,8 @@ type Data struct {
 // For instance it can be useful to override token attribute if current module and dependency module
 // use different token's for authentication
 type Dependency struct {
-	Name string `hcl:"name,label"`
-
-	Source  string  `hcl:"source,attr"`
-	Version *string `hcl:"version,attr"`
+	Name   string `hcl:"name,label"`
+	Source string `hcl:"source,attr"`
 
 	Backend *Backend `hcl:"backend,block"`
 }
