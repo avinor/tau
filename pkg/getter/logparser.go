@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/apex/log"
+	"github.com/go-errors/errors"
 )
 
 // LogParser parse the registry log messages. Since the registry client uses standard log
@@ -32,11 +33,19 @@ func (l LogParser) Write(p []byte) (n int, err error) {
 	}
 
 	message := matches[0][2]
+	strLevel := matches[0][1]
+	switch strLevel {
+	case "TRACE":
+		strLevel = "DEBUG"
+	case "ERR":
+		strLevel = "ERROR"
+	case "":
+		strLevel = "INFO"
+	}
 
-	level, err := log.ParseLevel(matches[0][1])
+	level, err := log.ParseLevel(strLevel)
 	if err != nil {
-		l.Logger.Warn(message)
-		return len(message), nil
+		return 0, err
 	}
 
 	switch level {
@@ -44,8 +53,14 @@ func (l LogParser) Write(p []byte) (n int, err error) {
 		l.Logger.Debug(message)
 	case log.InfoLevel:
 		l.Logger.Info(message)
-	default:
+	case log.WarnLevel:
 		l.Logger.Warn(message)
+	case log.ErrorLevel:
+		l.Logger.Error(message)
+	case log.FatalLevel:
+		l.Logger.Fatal(message)
+	default:
+		return 0, errors.Errorf("invalid log level")
 	}
 
 	return len(message), nil

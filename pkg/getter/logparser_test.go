@@ -3,8 +3,8 @@ package getter
 import (
 	"fmt"
 	stdlog "log"
-	"testing"
 	"sync"
+	"testing"
 
 	"github.com/apex/log"
 	"github.com/stretchr/testify/assert"
@@ -47,9 +47,14 @@ func TestLogParser(t *testing.T) {
 			"Test message",
 		},
 		{
+			"[SOMETHING] Test message",
+			log.InvalidLevel,
+			"",
+		},
+		{
 			"Test message",
-			log.InfoLevel,
-			"Test message",
+			log.InvalidLevel,
+			"",
 		},
 	}
 
@@ -65,6 +70,7 @@ func TestLogParser(t *testing.T) {
 			mux.Lock()
 			defer mux.Unlock()
 
+			testLogger.Reset()
 			stdlog.Printf(test.Message)
 
 			assert.Equal(t, test.ExpectLevel, testLogger.level)
@@ -77,6 +83,8 @@ type testLogger struct {
 	level   log.Level
 	message string
 }
+
+func (l *testLogger) Reset() { l.level = log.InvalidLevel; l.message = "" }
 
 func (l *testLogger) WithFields(fields log.Fielder) *log.Entry           { return nil }
 func (l *testLogger) WithField(key string, value interface{}) *log.Entry { return nil }
