@@ -77,3 +77,8 @@ func (c *Client) Get(src, dst string, version *string) error {
 
 	return client.Get()
 }
+
+// Detect is a wrapper on go-getter detect and will return the location for source
+func (c *Client) Detect(src string) (string, error) {
+	return getter.Detect(src, c.pwd, c.detectors)
+}

@@ -16,6 +16,8 @@ type RegistryDetector struct {
 	httpClient *http.Client
 }
 
+// Detect implements the Detector interface and will check if this source is a terraform registry
+// source. If src contains ?registryVersion parameter it will assume it is a registry source.
 func (d *RegistryDetector) Detect(src, _ string) (string, bool, error) {
 	if len(src) == 0 {
 		return "", false, nil
@@ -28,6 +30,7 @@ func (d *RegistryDetector) Detect(src, _ string) (string, bool, error) {
 	return "", false, nil
 }
 
+// DetectRegistry tries to locate the download location for terraform registry source
 func (d *RegistryDetector) DetectRegistry(src string) (string, bool, error) {
 	parts := strings.Split(src, "?registryVersion=")
 	if len(parts) < 2 {

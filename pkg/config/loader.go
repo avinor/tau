@@ -15,6 +15,7 @@ import (
 
 // Loader client for loading sources
 type Loader struct {
+	// MaxDepth to search for dependencies. Should be enough with 1.
 	MaxDepth int
 
 	options *Options
@@ -22,7 +23,9 @@ type Loader struct {
 	getter  *getter.Client
 }
 
-// Options when loading modules
+// Options when loading modules. If TempDirectory is not set it will create a random
+// temporary directory. This is not adviced as it will create a new temporary directory
+// for every call to load.
 type Options struct {
 	WorkingDirectory string
 	TempDirectory    string
@@ -33,6 +36,10 @@ type Options struct {
 func NewLoader(options *Options) *Loader {
 	if options.WorkingDirectory == "" {
 		options.WorkingDirectory = paths.WorkingDir
+	}
+
+	if options.TempDirectory == "" {
+		options.TempDirectory = paths.TempDir(paths.WorkingDir, "")
 	}
 
 	if options.Getter == nil {
@@ -47,7 +54,8 @@ func NewLoader(options *Options) *Loader {
 	}
 }
 
-// Load all sources from src
+// Load all sources from source directory (src) and return a list of sources loaded.
+// If version is set it will try to load source from terraform registry
 func (l *Loader) Load(src string, version *string) ([]*Source, error) {
 	if src == "" {
 		return nil, errors.Errorf("Source is empty")
@@ -170,7 +178,11 @@ func (l *Loader) findModuleFiles(dst string) ([]string, error) {
 		}
 	}
 
-	// log.Debugf("Found %v template file(s): %v", len(matches), matches)
+	log.Debugf("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
+}
+
+func filterModuleFiles(files []string, filter string) []string {
+	return files
 }

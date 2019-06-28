@@ -15,7 +15,9 @@ import (
 
 func main() {
 	log.SetHandler(simpletext.Default)
-	stdlog.SetOutput(new(getter.LogParser))
+	stdlog.SetOutput(&getter.LogParser{
+		Logger: log.Log,
+	})
 
 	if err := cmd.NewRootCmd().Execute(); err != nil {
 		os.Exit(1)

@@ -14,7 +14,6 @@ import (
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/fatih/color"
 	"github.com/go-errors/errors"
-	gogetter "github.com/hashicorp/go-getter"
 	"github.com/spf13/pflag"
 )
 
@@ -142,8 +141,9 @@ func getExtraArgs(args []string, invalidArgs ...string) []string {
 // Split the source directory into working directory and source directory
 func splitSource(src string) (string, string, error) {
 	pwd := paths.WorkingDir
+	client := getter.New(nil)
 
-	getterSource, err := gogetter.Detect(src, paths.WorkingDir, gogetter.Detectors)
+	getterSource, err := client.Detect(src)
 	if err != nil {
 		return "", "", errors.Errorf("Failed to detect source")
 	}
