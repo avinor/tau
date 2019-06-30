@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/avinor/tau/pkg/hclcontext"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	hcl2parse "github.com/hashicorp/hcl2/hclparse"
@@ -29,8 +28,8 @@ func ParseFile(source *SourceFile) (*hcl.File, error) {
 }
 
 // ParseBody parses the hcl.Body into a value map.
-func ParseBody(body hcl.Body, val interface{}) error {
-	diags := gohcl2.DecodeBody(body, hclcontext.Default, val)
+func ParseBody(body hcl.Body, context *hcl.EvalContext, val interface{}) error {
+	diags := gohcl2.DecodeBody(body, context, val)
 
 	if diags.HasErrors() {
 		return diags

@@ -6,8 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/avinor/tau/pkg/hclcontext"
+
 	"github.com/apex/log"
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/zclconf/go-cty/cty"
 )
 
 var (
@@ -51,17 +54,7 @@ func GetSourceFile(file string) (*SourceFile, error) {
 // Config returns the configuration struct for SourceFile. It will parse the content
 // of file.
 func (sf *SourceFile) Config() (*Config, error) {
-	file, err := ParseFile(sf)
-	if err != nil {
-		return nil, err
-	}
-
-	config := &Config{}
-	if err := ParseBody(file.Body, config); err != nil {
-		return nil, err
-	}
-
-	return config, nil
+	return sf.configWithContext(sf.EvalContext())
 }
 
 // GetAutoImport returns a list of all files that should be auto imported together
@@ -111,6 +104,34 @@ func (sf *SourceFile) ConfigMergedWith(sources []*SourceFile) (*Config, error) {
 	}
 
 	return sf.mergeConfigs(configs), nil
+}
+
+// EvalContext returns hcl eval context for SourceFile. It will add a variable source.file
+// that is full path for file, and source.name that is base name of file
+func (sf *SourceFile) EvalContext() *hcl.EvalContext {
+	values := map[string]cty.Value{
+		"source": cty.ObjectVal(map[string]cty.Value{
+			"file": cty.StringVal(sf.File),
+			"name": cty.StringVal(filepath.Base(sf.File)),
+		}),
+	}
+
+	return hclcontext.WithVariables(hclcontext.Default, values)
+}
+
+// configWithContext returns the parsed context using a custom evalcontext
+func (sf *SourceFile) configWithContext(context *hcl.EvalContext) (*Config, error) {
+	file, err := ParseFile(sf)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &Config{}
+	if err := ParseBody(file.Body, context, config); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
 
 // mergeConfig takes each element and merge them together. Instead of merging entire file

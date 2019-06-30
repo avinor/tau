@@ -24,11 +24,11 @@ func NewContext() *hcl.EvalContext {
 	}
 }
 
-// WithVariables returns a new child context of default with variables added
+// WithVariables returns a new child context with variables added.
 // If requiring a new scope that defines additional variables this should be used and not
 // add variables to Default or parent scope as they would be available to all.
-func WithVariables(vars map[string]cty.Value) *hcl.EvalContext {
-	child := Default.NewChild()
+func WithVariables(context *hcl.EvalContext, vars map[string]cty.Value) *hcl.EvalContext {
+	child := context.NewChild()
 	child.Variables = vars
 
 	return child

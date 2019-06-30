@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/avinor/tau/pkg/hclcontext"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hclwrite"
@@ -44,7 +45,7 @@ func LoadCheckpoint(tempdir string) ([]*Source, error) {
 	}
 
 	cp := &Checkpoint{}
-	if err := ParseBody(f.Body, cp); err != nil {
+	if err := ParseBody(f.Body, hclcontext.Default, cp); err != nil {
 		return nil, err
 	}
 

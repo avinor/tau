@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-errors/errors"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -72,7 +73,7 @@ func newSource(source *SourceFile) (*Source, error) {
 		return nil, err
 	}
 
-	env, err := parseEnvironmentVariables(config)
+	env, err := parseEnvironmentVariables(config, source.EvalContext())
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +89,13 @@ func newSource(source *SourceFile) (*Source, error) {
 
 // parseEnvironmentVariables parses the config and returns all the environment variables
 // defined in config.
-func parseEnvironmentVariables(config *Config) (map[string]string, error) {
+func parseEnvironmentVariables(config *Config, context *hcl.EvalContext) (map[string]string, error) {
 	if config != nil && config.Environment == nil {
 		return nil, nil
 	}
 
 	values := map[string]cty.Value{}
-	if err := ParseBody(config.Environment.Config, &values); err != nil {
+	if err := ParseBody(config.Environment.Config, context, &values); err != nil {
 		return nil, err
 	}
 

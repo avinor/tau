@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/avinor/tau/pkg/hclcontext"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -206,7 +207,7 @@ func TestMergeData(t *testing.T) {
 					Name:   data.Name,
 					Config: map[string]string{},
 				}
-				err := ParseBody(data.Config, &expect.Config)
+				err := ParseBody(data.Config, hclcontext.Default, &expect.Config)
 				assert.NoError(t, err)
 				expects = append(expects, expect)
 			}
@@ -252,7 +253,7 @@ func TestMergeInputs(t *testing.T) {
 			assert.NoError(t, err)
 
 			expects := map[string]string{}
-			err = ParseBody(config.Inputs.Config, &expects)
+			err = ParseBody(config.Inputs.Config, hclcontext.Default, &expects)
 			if test.Err {
 				assert.Error(t, err)
 				return

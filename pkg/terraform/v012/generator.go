@@ -129,7 +129,7 @@ func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
-	ctx := hclcontext.WithVariables(data)
+	ctx := hclcontext.WithVariables(source.EvalContext(), data)
 	values := map[string]cty.Value{}
 	diags := gohcl2.DecodeBody(source.Config.Inputs.Config, ctx, &values)
 
