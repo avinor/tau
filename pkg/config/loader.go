@@ -86,8 +86,6 @@ func (l *Loader) Load(path string) ([]*Source, error) {
 
 	sortSources(sources)
 
-	log.Info("")
-
 	return sources, nil
 }
 

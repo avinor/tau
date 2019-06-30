@@ -56,6 +56,13 @@ func (pt *ptCmd) run(args []string) error {
 
 	log.Info("")
 
+	if len(loaded) == 0 {
+		log.Warn("No sources found")
+		return nil
+	}
+
+	log.Info("")
+
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
 

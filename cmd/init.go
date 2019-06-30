@@ -112,6 +112,13 @@ func (ic *initCmd) run(args []string) error {
 		return err
 	}
 
+	log.Info("")
+
+	if len(loaded) == 0 {
+		log.Warn("No sources found in path")
+		return nil
+	}
+
 	log.Info(color.New(color.Bold).Sprint("Loading modules..."))
 	for _, source := range loaded {
 		module := source.Config.Module
