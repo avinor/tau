@@ -43,9 +43,7 @@ func (m *meta) processArgs(args []string) error {
 func (m *meta) addMetaFlags(cmd *cobra.Command) {
 	f := cmd.Flags()
 	f.IntVar(&m.timeout, "timeout", 10, "timeout for http client when retrieving sources")
-	f.StringVarP(&m.file, "file", "f", "", "file or directory to run configuration for")
-
-	cmd.MarkFlagRequired("file")
+	f.StringVarP(&m.file, "file", "f", ".", "file or directory to run configuration for")
 }
 
 // getExtraArgs returns all arguments starting with dash (-), but filters out invalid arguments

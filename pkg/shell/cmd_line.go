@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/apex/log"
@@ -25,6 +26,8 @@ func Execute(options *Options, command string, args ...string) error {
 	if options.WorkingDirectory != "" {
 		execCmd.Dir = options.WorkingDirectory
 	}
+
+	execCmd.Env = os.Environ()
 
 	if len(options.Env) > 0 {
 		for k, v := range options.Env {

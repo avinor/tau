@@ -30,7 +30,7 @@ type Generator interface {
 
 // Processor for processing terraform config or output
 type Processor interface {
-	ProcessBackendBody(body hcl.Body) (map[string]cty.Value, error)
+	ProcessBackendBody(body hcl.Body, context *hcl.EvalContext) (map[string]cty.Value, error)
 	ProcessDependencies(source *config.Source, dest string) (map[string]cty.Value, error)
 }
 

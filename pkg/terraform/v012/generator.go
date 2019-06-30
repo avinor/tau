@@ -29,7 +29,7 @@ func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, erro
 	backendBlock := tfBody.AppendNewBlock("backend", []string{source.Config.Backend.Type})
 	backendBody := backendBlock.Body()
 
-	values, err := g.processor.ProcessBackendBody(source.Config.Backend.Config)
+	values, err := g.processor.ProcessBackendBody(source.Config.Backend.Config, source.EvalContext())
 	if err != nil {
 		return nil, false, err
 	}
@@ -86,7 +86,7 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 			depBackend = dep.Backend.Config
 		}
 
-		block, err := g.generateRemoteBackendBlock(dep.Name, depsource.Config.Backend.Type, depsource.Config.Backend.Config, depBackend)
+		block, err := g.generateRemoteBackendBlock(depsource, dep.Name, depsource.Config.Backend.Type, depsource.Config.Backend.Config, depBackend)
 		if err != nil {
 			return nil, false, err
 		}
@@ -171,7 +171,7 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 	return block, nil
 }
 
-func (g *Generator) generateRemoteBackendBlock(name, backend string, bodies ...hcl.Body) (*hclwrite.Block, error) {
+func (g *Generator) generateRemoteBackendBlock(source *config.Source, name, backend string, bodies ...hcl.Body) (*hclwrite.Block, error) {
 	block := hclwrite.NewBlock("data", []string{"terraform_remote_state", name})
 	blockBody := block.Body()
 
@@ -181,7 +181,7 @@ func (g *Generator) generateRemoteBackendBlock(name, backend string, bodies ...h
 			continue
 		}
 
-		vals, err := g.processor.ProcessBackendBody(body)
+		vals, err := g.processor.ProcessBackendBody(body, source.EvalContext())
 		if err != nil {
 			return nil, err
 		}
