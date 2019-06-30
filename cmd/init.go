@@ -170,5 +170,5 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	return config.SaveSourcesFile(loaded, ic.TempDir)
+	return config.SaveCheckpoint(loaded, ic.TempDir)
 }

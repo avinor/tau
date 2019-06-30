@@ -1,12 +1,16 @@
 package config
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
+
+	"github.com/go-errors/errors"
+	"github.com/zclconf/go-cty/cty"
 )
 
 var (
+	// filePathMustBeAbsError is returned when a file path is relative
+	filePathMustBeAbsError = errors.Errorf("file path must be absolute")
+
 	// loaded is a map of already loaded Sources. Will always be checked so same file is
 	// not loaded twice. Map key is absolute path of file
 	loaded = map[string]*Source{}
@@ -15,63 +19,32 @@ var (
 // Source information about one file loaded from disk. Includes hcl tag for name
 // because it is needed when saving SourceFile.
 type Source struct {
+	SourceFile
+
 	Name         string `hcl:"name,label"`
-	File         string
-	Content      []byte
 	Config       *Config
 	Env          map[string]string
 	Dependencies map[string]*Source
-}
-
-// NewSource creates a new source from a file and parse the configuration.
-func NewSource(file string, content []byte) (*Source, error) {
-	config := &Config{}
-	if err := Parse(content, file, config); err != nil {
-		return nil, err
-	}
-
-	name := filepath.Base(file)
-
-	env := map[string]string{}
-	if config.Environment != nil {
-		parsed, err := ParseBody(config.Environment.Config)
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range parsed {
-			env[k] = v.AsString()
-		}
-	}
-
-	return &Source{
-		Name:         name,
-		File:         file,
-		Content:      content,
-		Config:       config,
-		Env:          env,
-		Dependencies: map[string]*Source{},
-	}, nil
 }
 
 // GetSourceFromFile returns the Source for file (should be absolute path). If file exists
 // in cache it will return the cached item, otherwise it will create the Source and return
 // a pointer to new Source.
 func GetSourceFromFile(file string) (*Source, error) {
-	if _, already := loaded[file]; already {
+	if isAlreadyLoaded(file) {
 		return loaded[file], nil
 	}
 
-	if _, err := os.Stat(file); err != nil {
-		return nil, err
+	if !filepath.IsAbs(file) {
+		return nil, filePathMustBeAbsError
 	}
 
-	b, err := ioutil.ReadFile(file)
+	sf, err := GetSourceFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	source, err := NewSource(file, b)
+	source, err := newSource(sf)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +53,68 @@ func GetSourceFromFile(file string) (*Source, error) {
 	return source, nil
 }
 
-// IsAlreadyLoaded checks if file is already loaded and returns true if is is.
-func IsAlreadyLoaded(file string) bool {
+// newSource creates a new Source struct from a SourceFile. It will parse the config,
+// merge together with auto files and read environment variables.
+func newSource(source *SourceFile) (*Source, error) {
+	name := filepath.Base(source.File)
+
+	auto, err := source.GetAutoImport()
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := source.ConfigMergedWith(auto)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateConfig(config); err != nil {
+		return nil, err
+	}
+
+	env, err := parseEnvironmentVariables(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Source{
+		SourceFile:   *source,
+		Name:         name,
+		Config:       config,
+		Env:          env,
+		Dependencies: map[string]*Source{},
+	}, nil
+}
+
+// parseEnvironmentVariables parses the config and returns all the environment variables
+// defined in config.
+func parseEnvironmentVariables(config *Config) (map[string]string, error) {
+	if config != nil && config.Environment == nil {
+		return nil, nil
+	}
+
+	values := map[string]cty.Value{}
+	if err := ParseBody(config.Environment.Config, &values); err != nil {
+		return nil, err
+	}
+
+	env := map[string]string{}
+	for key, value := range values {
+		env[key] = value.AsString()
+	}
+
+	return env, nil
+}
+
+// isAlreadyLoaded checks if file is already loaded and returns true if is is.
+func isAlreadyLoaded(file string) bool {
 	if _, already := loaded[file]; already {
 		return true
 	}
 
 	return false
+}
+
+func validateConfig(config *Config) error {
+	return nil
 }

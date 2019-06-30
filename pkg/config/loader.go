@@ -15,6 +15,9 @@ import (
 )
 
 var (
+	sourcePathNotFoundError   = errors.Errorf("source path not found")
+	dependencySingleFileError = errors.Errorf("dependency must be a single file, cannot be directory")
+
 	moduleRegexp = regexp.MustCompile("(?i).*(\\.hcl|\\.tau)$")
 	autoRegexp   = regexp.MustCompile("(?i).*_auto(\\.hcl|\\.tau)")
 
@@ -67,7 +70,7 @@ func NewLoader(options *Options) *Loader {
 // directory.
 func (l *Loader) Load(path string) ([]*Source, error) {
 	if path == "" {
-		return nil, errors.Errorf("source path is empty")
+		return nil, sourcePathNotFoundError
 	}
 
 	log.Info(color.New(color.Bold).Sprint("Loading sources..."))
@@ -93,8 +96,6 @@ func (l *Loader) Load(path string) ([]*Source, error) {
 // value to load the dependency tree.
 func (l *Loader) loadFromPath(path string) ([]*Source, error) {
 	path = paths.Abs(l.options.WorkingDirectory, path)
-
-	log.Infof("- loading %s", filepath.Base(path))
 
 	files, err := findFiles(path, moduleMatchFunc)
 	if err != nil {
@@ -123,7 +124,7 @@ func (l *Loader) loadDependencies(sources []*Source, depth int) error {
 	}
 
 	for _, source := range sources {
-		dir := filepath.Dir(source.File)
+		dir := filepath.Dir(source.SourceFile.File)
 
 		for _, dep := range source.Config.Dependencies {
 			path := filepath.Join(dir, dep.Source)
@@ -134,7 +135,7 @@ func (l *Loader) loadDependencies(sources []*Source, depth int) error {
 			}
 
 			if len(deps) > 1 {
-				return errors.Errorf("dependency must be a single file, cannot be directory")
+				return dependencySingleFileError
 			}
 
 			if len(deps) == 0 {

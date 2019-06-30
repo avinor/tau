@@ -49,7 +49,7 @@ func newPtCmd(name string, command Command) *cobra.Command {
 func (pt *ptCmd) run(args []string) error {
 	log.Info(color.New(color.Bold).Sprint("Loading initialized sources..."))
 
-	loaded, err := config.LoadSourcesFile(pt.TempDir)
+	loaded, err := config.LoadCheckpoint(pt.TempDir)
 	if err != nil {
 		return err
 	}

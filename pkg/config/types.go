@@ -26,7 +26,7 @@ type Data struct {
 }
 
 // Dependency towards another tau deployment. Source can either be a relative / absolute path
-// (start with . or / in that case) or can also be any file that can be retrieved with go-getter.
+// (start with . or / in that case) to a file or a directory.
 //
 // For each dependency it will create a remote_state data source to retrieve the values from
 // dependency. Backend configuration will be read from the dependency file. To override attributes
