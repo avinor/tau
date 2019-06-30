@@ -95,7 +95,7 @@ func (sf *SourceFile) ConfigMergedWith(sources []*SourceFile) (*Config, error) {
 	configs := []*Config{config}
 
 	for _, source := range sources {
-		config, err := source.Config()
+		config, err := source.configWithContext(sf.EvalContext())
 		if err != nil {
 			return nil, err
 		}
