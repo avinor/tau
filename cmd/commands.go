@@ -15,22 +15,22 @@ type Command struct {
 
 var (
 	validCommands = map[string]Command{
-		"apply": Command{
+		"apply": {
 			Use:              "apply [-f SOURCE]",
 			ShortDescription: "Builds or changes infrastructure",
 			LongDescription:  "Builds or changes infrastructure",
 		},
-		"destroy": Command{
+		"destroy": {
 			Use:              "destroy [-f SOURCE",
 			ShortDescription: "Destroy Tau-managed infrastructure",
 			LongDescription:  "Destroy Tau-managed infrastructure",
 		},
-		"get": Command{
+		"get": {
 			Use:              "get [-f SOURCE]",
 			ShortDescription: "Download and install modules for the configuration",
 			LongDescription:  "Download and install modules for the configuration",
 		},
-		"import": Command{
+		"import": {
 			Use:              "import -f SOURCE",
 			ShortDescription: "Import existing infrastructure into Terraform",
 			LongDescription:  "Import existing infrastructure into Terraform",
@@ -50,23 +50,23 @@ var (
 				`Generate and show an execution plan for one or more modules.
 				`),
 		},
-		"refresh": Command{
+		"refresh": {
 			Use:              "refresh [-f SOURCE]",
 			ShortDescription: "Update local state file against real resources",
 			LongDescription:  "Update local state file against real resources",
 		},
-		"show": Command{
+		"show": {
 			Use:              "show [-f SOURCE]",
 			ShortDescription: "Inspect Terraform state or plan",
 			LongDescription:  "Inspect Terraform state or plan",
 		},
-		"taint": Command{
+		"taint": {
 			Use:              "taint -f SOURCE",
 			ShortDescription: "Manually mark a resource for recreation",
 			LongDescription:  "Manually mark a resource for recreation",
 			SingleResource:   true,
 		},
-		"untaint": Command{
+		"untaint": {
 			Use:              "untaint -f SOURCE",
 			ShortDescription: "Manually unmark a resource as tainted",
 			LongDescription:  "Manually unmark a resource as tainted",
