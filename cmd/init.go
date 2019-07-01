@@ -35,8 +35,8 @@ var (
 		# Initialize a single module
 		tau init module.hcl
 
-		# Initialize a folder
-		tau init folder
+		# Initialize current folder
+		tau init
 
 		# Initialize a module and send additional argument to terraform
 		tau init module.hcl -input=false
@@ -47,7 +47,7 @@ func newInitCmd() *cobra.Command {
 	ic := &initCmd{}
 
 	initCmd := &cobra.Command{
-		Use:                   "init SOURCE [terraform options]",
+		Use:                   "init [-f SOURCE]",
 		Short:                 "Initialize a tau working directory",
 		Long:                  initLong,
 		Example:               initExample,

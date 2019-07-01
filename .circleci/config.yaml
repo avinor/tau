@@ -1,0 +1,60 @@
+version: 2
+
+defaults: &defaults
+  working_directory: /go/src/github.com/avinor/tau
+  docker:
+    - image: circleci/golang:1.12
+
+jobs:
+  build:
+    <<: *defaults
+
+    steps:
+      - checkout
+      - run:
+          name: Bootstrap build
+          command: make bootstrap
+      - run:
+          name: Building release binaries
+          command: make release
+      - persist_to_workspace:
+          root: .
+          paths:
+            - _dist
+
+  release:
+    <<: *defaults
+
+    steps:
+      - checkout
+      - run:
+          name: Run go get
+          command: go get github.com/tcnksm/ghr
+      - attach_workspace:
+          at: .
+      - run:
+          name: Upload artifacts to GitHub
+          command: |
+            GIT_TAG=`git describe --tags`
+            if [[ $GIT_TAG = *"-"* ]]; then
+              ghr -t $GITHUB_TOKEN --prerelease `git describe --tags` _dist/
+            else
+              ghr -t $GITHUB_TOKEN `git describe --tags` _dist/
+            fi
+workflows:
+  version: 2
+
+  build_and_release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/

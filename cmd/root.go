@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	rootLong = templates.LongDesc(`TAU is a thin wrapper on top of terraform to manage module deployments.
+	rootLong = templates.LongDesc(`Tau is a thin wrapper on top of terraform to manage module deployments.
 		It can deploy either a single module or all modules in a folder, taking into consideration the
 		dependencies between modules.
 
@@ -16,15 +16,16 @@ var (
 )
 
 var (
-	debug      bool
-	workingDir string
+	debug         bool
+	workingDir    string
+	terraformArgs []string
 )
 
 // NewRootCmd returns the root command for TAU.
 func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "tau",
-		Short: "TAU (Terraform Avinor Utility) manages terraform deployments",
+		Short: "Tau (Terraform Avinor Utility) manages terraform deployments",
 		Long:  rootLong,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if debug {
@@ -36,6 +37,7 @@ func NewRootCmd() *cobra.Command {
 	p := rootCmd.PersistentFlags()
 	p.BoolVar(&debug, "debug", false, "enable verbose debug logs")
 	p.StringVar(&workingDir, "working-directory", "", "working directory (default to current directory)")
+	p.StringArrayVarP(&terraformArgs, "args", "a", []string{}, "arguments to forward to terraform in key=value format")
 
 	rootCmd.AddCommand(newInitCmd())
 	rootCmd.AddCommand(newVersionCmd())

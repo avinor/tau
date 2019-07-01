@@ -41,6 +41,10 @@ func newPtCmd(name string, command Command) *cobra.Command {
 		ptCmd.Example = pt.command.Example
 	}
 
+	if pt.command.SingleResource {
+		ptCmd.MarkFlagRequired("file")
+	}
+
 	pt.addMetaFlags(ptCmd)
 
 	return ptCmd

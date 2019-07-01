@@ -10,7 +10,11 @@ import (
 var (
 	BuildVersion = "0.1.0"
 
+	BuildTag = "unset"
+
 	BuildSha = "unset"
+
+	GitTreeState = "unset"
 )
 
 type versionCmd struct {
