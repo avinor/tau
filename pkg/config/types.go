@@ -47,11 +47,17 @@ type Dependency struct {
 // in Command will run. If read_output is set to true it will try to parse the output
 // from command (stdout) as key=value pairs and add them to list of environment
 // variables that are sent to terraform commands
+//
+// To prevent same command from running multiple times it will assume that running same command
+// multiple times always produce same result and therefore cache output. To prevent this
+// set disable_cache = true. It will force the command to run for every source including hook
 type Hook struct {
-	Type      string `hcl:"type,label"`
-	TriggerOn string `hcl:"trigger_on,attr"`
-	Command   string `hcl:"command,attr"`
-	SetEnv    *bool  `hcl:"set_env,attr"`
+	Type         string   `hcl:"type,label"`
+	TriggerOn    string   `hcl:"trigger_on,attr"`
+	Command      string   `hcl:"command,attr"`
+	Arguments    []string `hcl:"args,attr"`
+	SetEnv       *bool    `hcl:"set_env,attr"`
+	DisableCache bool     `hcl:"disable_cache,attr"`
 }
 
 // Backend for remote state storage. This will be added to an override file before running terraform
