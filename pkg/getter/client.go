@@ -60,7 +60,7 @@ func (c *Client) Get(src, dst string, version *string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancel()
 
-	if version != nil {
+	if version != nil && *version != "" {
 		src = fmt.Sprintf("%s?registryVersion=%s", src, *version)
 	}
 

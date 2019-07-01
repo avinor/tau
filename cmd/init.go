@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/apex/log"
@@ -12,6 +13,7 @@ import (
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -23,9 +25,13 @@ type initCmd struct {
 
 	maxDependencyDepth int
 	purge              bool
+	source             string
+	sourceVersion      string
 }
 
 var (
+	sourceMustBeAFile = errors.Errorf("file cannot be a directory when source is overridden")
+
 	initLong = templates.LongDesc(`Initialize tau working folder based on SOURCE argument.
 		SOURCE can either be a single file or a folder. If it is a folder it will initialize
 		all modules in the folder, ordering them by dependencies.
@@ -54,6 +60,10 @@ func newInitCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := ic.meta.processArgs(args); err != nil {
+				return err
+			}
+
 			if err := ic.processArgs(args); err != nil {
 				return err
 			}
@@ -67,6 +77,8 @@ func newInitCmd() *cobra.Command {
 	f := initCmd.Flags()
 	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
+	f.StringVar(&ic.source, "source", "", "override module source location")
+	f.StringVar(&ic.sourceVersion, "source-version", "", "override module source version, only valid together with source override")
 
 	ic.addMetaFlags(initCmd)
 
@@ -100,6 +112,21 @@ func (ic *initCmd) init() {
 	}
 }
 
+func (ic *initCmd) processArgs(args []string) error {
+	if ic.source != "" {
+		fi, err := os.Stat(ic.file)
+		if err != nil {
+			return err
+		}
+
+		if fi.IsDir() {
+			return sourceMustBeAFile
+		}
+	}
+
+	return nil
+}
+
 func (ic *initCmd) run(args []string) error {
 	if ic.purge {
 		log.Debug("Purging temporary folder")
@@ -129,7 +156,15 @@ func (ic *initCmd) run(args []string) error {
 			continue
 		}
 
-		if err := ic.getter.Get(module.Source, moduleDir, module.Version); err != nil {
+		source := module.Source
+		version := module.Version
+
+		if ic.source != "" {
+			source = ic.source
+			version = &ic.sourceVersion
+		}
+
+		if err := ic.getter.Get(source, moduleDir, version); err != nil {
 			return err
 		}
 	}
