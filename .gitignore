@@ -15,3 +15,6 @@ examples/*_local.*
 # Project specific
 tau
 .tau
+
+# IDE
+.vscode
