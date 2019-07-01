@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -30,6 +31,8 @@ var (
 
 	// cache of all created commands
 	cache = map[string]*Command{}
+
+	outputRegexp = regexp.MustCompile("(?m:^\\s*\"?([^\"=\\s]*)\"?\\s*=\\s*\"?([^\"\\n]*)\"?$)")
 )
 
 // GetCommand creates a new command or return command from cache if it has already been
@@ -84,7 +87,7 @@ func (c *Command) ShouldRun(event string, command string) bool {
 	}
 
 	for _, cmd := range c.commands {
-		if cmd == event {
+		if cmd == command {
 			return true
 		}
 	}
@@ -131,7 +134,22 @@ func (c *Command) Run() error {
 
 // parseOutput as key=value. If a line cannot be parsed as key=value it will be ignored
 func parseOutput(output string) map[string]string {
-	return nil
+	matches := outputRegexp.FindAllStringSubmatch(output, -1)
+	values := map[string]string{}
+
+	if len(matches) == 0 {
+		return values
+	}
+
+	for _, match := range matches {
+		if len(match) < 3 {
+			continue
+		}
+
+		values[match[1]] = match[2]
+	}
+
+	return values
 }
 
 // getCacheKey returns a unique cache key for a given command with arguments. If disable_cache

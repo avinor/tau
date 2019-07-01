@@ -32,10 +32,11 @@ func Execute(options *Options, command string, args ...string) error {
 	if len(options.Env) > 0 {
 		for k, v := range options.Env {
 			variable := fmt.Sprintf("%s=%s", k, v)
-			log.Debugf("- Added env variable: %s", variable)
 			execCmd.Env = append(execCmd.Env, variable)
 		}
 	}
+
+	log.Debugf("environment variables: %#v", execCmd.Env)
 
 	// Print STDOUT and STDERR lines streaming from Cmd
 	go func() {

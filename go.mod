@@ -22,4 +22,5 @@ require (
 	github.com/zclconf/go-cty v0.0.0-20190516203816-4fecf87372ec
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	google.golang.org/appengine v1.5.0 // indirect
+	gotest.tools v2.2.0+incompatible // indirect
 )

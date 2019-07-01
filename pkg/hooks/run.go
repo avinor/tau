@@ -16,10 +16,8 @@ func Run(source *config.Source, event string, command string) error {
 			continue
 		}
 
-		if !cmd.HasRun {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
+		if err := cmd.Run(); err != nil {
+			return err
 		}
 
 		for key, value := range cmd.Output {
