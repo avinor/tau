@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
@@ -67,6 +68,14 @@ func (pt *ptCmd) run(args []string) error {
 
 	log.Info("")
 
+	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
+	for _, source := range loaded {
+		if err := hooks.Run(source, "prepare", pt.name); err != nil {
+			return err
+		}
+	}
+	log.Info("")
+
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
 
@@ -84,6 +93,14 @@ func (pt *ptCmd) run(args []string) error {
 			return err
 		}
 	}
+
+	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
+	for _, source := range loaded {
+		if err := hooks.Run(source, "finish", pt.name); err != nil {
+			return err
+		}
+	}
+	log.Info("")
 
 	return nil
 }

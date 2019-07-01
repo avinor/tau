@@ -52,12 +52,12 @@ type Dependency struct {
 // multiple times always produce same result and therefore cache output. To prevent this
 // set disable_cache = true. It will force the command to run for every source including hook
 type Hook struct {
-	Type         string   `hcl:"type,label"`
-	TriggerOn    string   `hcl:"trigger_on,attr"`
-	Command      string   `hcl:"command,attr"`
-	Arguments    []string `hcl:"args,attr"`
-	SetEnv       *bool    `hcl:"set_env,attr"`
-	DisableCache bool     `hcl:"disable_cache,attr"`
+	Type         string    `hcl:"type,label"`
+	TriggerOn    string    `hcl:"trigger_on,attr"`
+	Command      string    `hcl:"command,attr"`
+	Arguments    *[]string `hcl:"args,attr"`
+	SetEnv       *bool     `hcl:"set_env,attr"`
+	DisableCache *bool     `hcl:"disable_cache,attr"`
 }
 
 // Backend for remote state storage. This will be added to an override file before running terraform

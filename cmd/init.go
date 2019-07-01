@@ -9,6 +9,7 @@ import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/getter"
+	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
@@ -170,6 +171,14 @@ func (ic *initCmd) run(args []string) error {
 	}
 	log.Info("")
 
+	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
+	for _, source := range loaded {
+		if err := hooks.Run(source, "prepare", "init"); err != nil {
+			return err
+		}
+	}
+	log.Info("")
+
 	log.Info(color.New(color.Bold).Sprint("Resolving dependencies..."))
 	for _, source := range loaded {
 		if source.Config.Inputs == nil {
@@ -211,6 +220,14 @@ func (ic *initCmd) run(args []string) error {
 			return err
 		}
 	}
+
+	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
+	for _, source := range loaded {
+		if err := hooks.Run(source, "finish", "init"); err != nil {
+			return err
+		}
+	}
+	log.Info("")
 
 	return config.SaveCheckpoint(loaded, ic.TempDir)
 }
