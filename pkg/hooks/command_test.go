@@ -52,7 +52,7 @@ key=value
 test=success
 			`,
 			map[string]string{
-				"key": "value",
+				"key":  "value",
 				"test": "success",
 			},
 		},
@@ -62,7 +62,7 @@ test=success
 			test=success
 			`,
 			map[string]string{
-				"key": "value",
+				"key":  "value",
 				"test": "success",
 			},
 		},
@@ -74,10 +74,10 @@ test=success
 			not = "longer string with space"
 			`,
 			map[string]string{
-				"key": "value",
-				"test": "success",
+				"key":    "value",
+				"test":   "success",
 				"quoted": "value",
-				"not": "longer string with space",
+				"not":    "longer string with space",
 			},
 		},
 	}

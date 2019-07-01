@@ -107,7 +107,7 @@ func (sf *SourceFile) ConfigMergedWith(sources []*SourceFile) (*Config, error) {
 }
 
 // EvalContext returns hcl eval context for SourceFile. It will add a variable source.path
-// that is full path for file, source.name is the name of file without extension and 
+// that is full path for file, source.name is the name of file without extension and
 // source.filename is the name of file with extension
 func (sf *SourceFile) EvalContext() *hcl.EvalContext {
 	filename := filepath.Base(sf.File)
@@ -115,8 +115,8 @@ func (sf *SourceFile) EvalContext() *hcl.EvalContext {
 
 	values := map[string]cty.Value{
 		"source": cty.ObjectVal(map[string]cty.Value{
-			"path": cty.StringVal(sf.File),
-			"name": cty.StringVal(filename[0:len(filename)-len(ext)]),
+			"path":     cty.StringVal(sf.File),
+			"name":     cty.StringVal(filename[0 : len(filename)-len(ext)]),
 			"filename": cty.StringVal(filename),
 		}),
 	}

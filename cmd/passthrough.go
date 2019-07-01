@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/hooks"
@@ -11,6 +10,7 @@ import (
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
