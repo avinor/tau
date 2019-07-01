@@ -3,6 +3,7 @@ package v012
 import (
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/hclcontext"
+	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
@@ -15,6 +16,7 @@ import (
 type Generator struct {
 	processor *Processor
 	resolver  *Resolver
+	executor  *Executor
 }
 
 func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, error) {
@@ -41,10 +43,7 @@ func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, erro
 	return f.Bytes(), true, nil
 }
 
-func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, error) {
-	f := hclwrite.NewEmptyFile()
-	rootBody := f.Body()
-
+func (g *Generator) GenerateDependencies(source *config.Source) ([]def.DependencyProcesser, bool, error) {
 	trav, err := g.resolver.ResolveInputExpressions(source)
 	if err != nil {
 		return nil, false, err
@@ -58,13 +57,28 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 		return nil, false, nil
 	}
 
-	for _, data := range source.Config.Datas {
-		block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
-		if err != nil {
-			return nil, false, err
+	processors := []def.DependencyProcesser{}
+
+	if len(source.Config.Datas) != 0 {
+		dataProcessor := NewDependencyProcessor(source, g.executor, g.resolver)
+
+		for _, data := range source.Config.Datas {
+			block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
+			if err != nil {
+				return nil, false, err
+			}
+
+			dataProcessor.File.Body().AppendBlock(block)
 		}
 
-		rootBody.AppendBlock(block)
+		// Find variables with data source
+		for _, t := range trav {
+			if block := generateOutputTraversalBlock(t, "data", ""); block != nil {
+				dataProcessor.File.Body().AppendBlock(block)
+			}
+		}
+
+		processors = append(processors, dataProcessor)
 	}
 
 	for _, dep := range source.Config.Dependencies {
@@ -91,38 +105,20 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]byte, bool, e
 			return nil, false, err
 		}
 
-		rootBody.AppendBlock(block)
-	}
+		depProcessor := NewDependencyProcessor(depsource, g.executor, g.resolver)
+		depProcessor.File.Body().AppendBlock(block)
 
-	for _, t := range trav {
-		// For some reason this does not work.. using workaround under instead to convert
-		// to a hclwrite.Expression and then to token
-		// tokens := hclwrite.TokensForTraversal(t)
-
-		expr := hclwrite.NewExpressionAbsTraversal(t)
-		tokens := expr.BuildTokens(nil)
-		outputName := encodeName(tokens.Bytes())
-
-		// Need to "rewrite" root for dependencies
-		if t.RootName() == "dependency" {
-			split := t.SimpleSplit()
-			root := hcl.TraverseRoot{
-				Name: "data.terraform_remote_state",
+		// Find variables using this dependency
+		for _, t := range trav {
+			if block := generateOutputTraversalBlock(t, "dependency", dep.Name); block != nil {
+				depProcessor.File.Body().AppendBlock(block)
 			}
-			t = hcl.TraversalJoin([]hcl.Traverser{root}, split.Rel)
 		}
 
-		expr.RenameVariablePrefix([]string{"dependency"}, []string{"remote.state"})
-
-		block := hclwrite.NewBlock("output", []string{outputName})
-		blockBody := block.Body()
-
-		blockBody.SetAttributeTraversal("value", t)
-
-		rootBody.AppendBlock(block)
+		processors = append(processors, depProcessor)
 	}
 
-	return f.Bytes(), true, nil
+	return processors, true, nil
 }
 
 func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error) {
@@ -195,4 +191,40 @@ func (g *Generator) generateRemoteBackendBlock(source *config.Source, name, back
 	blockBody.SetAttributeValue("config", cty.MapVal(values))
 
 	return block, nil
+}
+
+func generateOutputTraversalBlock(t hcl.Traversal, rootname string, name string) *hclwrite.Block {
+	// For some reason this does not work.. using workaround under instead to convert
+	// to a hclwrite.Expression and then to token
+	// tokens := hclwrite.TokensForTraversal(t)
+
+	if t.RootName() != rootname {
+		return nil
+	}
+
+	expr := hclwrite.NewExpressionAbsTraversal(t)
+	tokens := expr.BuildTokens(nil)
+	outputName := encodeName(tokens.Bytes())
+
+	if name != "" {
+		if len(tokens) < 3 || string(tokens[2].Bytes) != name {
+			return nil
+		}
+	}
+
+	// Need to "rewrite" root for dependencies
+	if t.RootName() == "dependency" {
+		split := t.SimpleSplit()
+		root := hcl.TraverseRoot{
+			Name: "data.terraform_remote_state",
+		}
+		t = hcl.TraversalJoin([]hcl.Traverser{root}, split.Rel)
+	}
+
+	block := hclwrite.NewBlock("output", []string{outputName})
+	blockBody := block.Body()
+
+	blockBody.SetAttributeTraversal("value", t)
+
+	return block
 }

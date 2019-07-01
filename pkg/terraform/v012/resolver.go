@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/ctytree"
 	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
@@ -61,5 +60,5 @@ func (r *Resolver) ResolveStateOutput(output []byte) (map[string]cty.Value, erro
 		values[name] = ctyValue
 	}
 
-	return ctytree.CreateTree(values).ToCtyMap(), nil
+	return values, nil
 }

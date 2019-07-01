@@ -55,6 +55,17 @@ func DependencyDir(tempDir, name string) string {
 	return joinAndCreate(tempDir, DependencyPath, name)
 }
 
+// EnsureDirectoryExists makes sure the entire path exists, all parent folders too.
+func EnsureDirectoryExists(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.WithField("path", path).Debug("Creating directory")
+
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			log.Fatalf("%v", err)
+		}
+	}
+}
+
 // join all parts to a new directory path. If root dir is not set it will use
 // working directory. Part is required and will fail if not set.
 // If folder is not set or is "." it will use "root" as name. Check for "." is
@@ -87,18 +98,7 @@ func join(dir, part, folder string, shouldPanic bool) string {
 // joinAndCreate does same as join, but creates the directory if it does not exist
 func joinAndCreate(dir, part, folder string) string {
 	path := join(dir, part, folder, false)
-	ensureDirectoryExists(path)
+	EnsureDirectoryExists(path)
 
 	return path
-}
-
-// ensureDirectoryExists makes sure the entire path exists, all parent folders too.
-func ensureDirectoryExists(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.WithField("path", path).Debug("Creating directory")
-
-		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			log.Fatalf("%v", err)
-		}
-	}
 }

@@ -13,12 +13,12 @@ func NewEngine() *Engine {
 
 	processor := Processor{
 		executor: &executor,
-		resolver: &resolver,
 	}
 
 	generator := Generator{
 		processor: &processor,
 		resolver:  &resolver,
+		executor:  &executor,
 	}
 
 	return &Engine{
