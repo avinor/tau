@@ -229,5 +229,5 @@ func (ic *initCmd) run(args []string) error {
 	}
 	log.Info("")
 
-	return config.SaveCheckpoint(loaded, ic.TempDir)
+	return nil
 }

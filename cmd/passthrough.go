@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"os"
+
+	"github.com/pkg/errors"
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/hooks"
@@ -15,7 +18,13 @@ type ptCmd struct {
 	meta
 	name    string
 	command Command
+
+	loader *config.Loader
 }
+
+var (
+	moduleNotInitError = errors.Errorf("module is not initialized")
+)
 
 func newPtCmd(name string, command Command) *cobra.Command {
 	pt := &ptCmd{
@@ -34,6 +43,8 @@ func newPtCmd(name string, command Command) *cobra.Command {
 				return err
 			}
 
+			pt.init()
+
 			return pt.run(args)
 		},
 	}
@@ -51,10 +62,20 @@ func newPtCmd(name string, command Command) *cobra.Command {
 	return ptCmd
 }
 
-func (pt *ptCmd) run(args []string) error {
-	log.Info(color.New(color.Bold).Sprint("Loading initialized sources..."))
+func (pt *ptCmd) init() {
+	{
+		options := &config.Options{
+			WorkingDirectory: paths.WorkingDir,
+			TempDirectory:    pt.TempDir,
+			MaxDepth:         1,
+		}
 
-	loaded, err := config.LoadCheckpoint(pt.TempDir)
+		pt.loader = config.NewLoader(options)
+	}
+}
+
+func (pt *ptCmd) run(args []string) error {
+	loaded, err := pt.loader.Load(pt.file)
 	if err != nil {
 		return err
 	}
@@ -67,6 +88,15 @@ func (pt *ptCmd) run(args []string) error {
 	}
 
 	log.Info("")
+
+	// Verify all modules have been initialized
+	for _, source := range loaded {
+		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
+
+		if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
+			return moduleNotInitError
+		}
+	}
 
 	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
 	for _, source := range loaded {
