@@ -22,13 +22,15 @@ type Client struct {
 	httpClient *http.Client
 	pwd        string
 	detectors  []getter.Detector
+	getters    map[string]getter.Getter
 }
 
 const (
 	defaultTimeout = 10 * time.Second
 )
 
-// New creates a new getter client
+// New creates a new getter client. It configures all the detectors and getters itself to make
+// sure they are configured correctly.
 func New(options *Options) *Client {
 	if options == nil {
 		options = &Options{}
@@ -48,10 +50,35 @@ func New(options *Options) *Client {
 		httpClient: options.HttpClient,
 	}
 
+	detectors := []getter.Detector{
+		registryDetector,
+		new(getter.GitHubDetector),
+		new(getter.GitDetector),
+		new(getter.BitBucketDetector),
+		new(getter.S3Detector),
+		new(getter.GCSDetector),
+		new(getter.FileDetector),
+	}
+
+	httpGetter := &getter.HttpGetter{
+		Netrc: true,
+	}
+
+	getters := map[string]getter.Getter{
+		"file":  &getter.FileGetter{Copy: true},
+		"git":   new(getter.GitGetter),
+		"gcs":   new(getter.GCSGetter),
+		"hg":    new(getter.HgGetter),
+		"s3":    new(getter.S3Getter),
+		"http":  httpGetter,
+		"https": httpGetter,
+	}
+
 	return &Client{
 		httpClient: options.HttpClient,
 		pwd:        options.WorkingDirectory,
-		detectors:  append([]getter.Detector{registryDetector}, getter.Detectors...),
+		detectors:  detectors,
+		getters:    getters,
 	}
 }
 
@@ -73,6 +100,7 @@ func (c *Client) Get(src, dst string, version *string) error {
 		Pwd:       c.pwd,
 		Mode:      getter.ClientModeAny,
 		Detectors: c.detectors,
+		Getters:   c.getters,
 	}
 
 	return client.Get()

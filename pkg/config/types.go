@@ -48,10 +48,10 @@ type Dependency struct {
 // from command (stdout) as key=value pairs and add them to list of environment
 // variables that are sent to terraform commands
 type Hook struct {
-	Type      string          `hcl:"type,label"`
-	TriggerOn hcl2.Expression `hcl:"trigger_on,attr"`
-	Command   string          `hcl:"command,attr"`
-	SetEnv    *bool           `hcl:"set_env,attr"`
+	Type      string `hcl:"type,label"`
+	TriggerOn string `hcl:"trigger_on,attr"`
+	Command   string `hcl:"command,attr"`
+	SetEnv    *bool  `hcl:"set_env,attr"`
 }
 
 // Backend for remote state storage. This will be added to an override file before running terraform
