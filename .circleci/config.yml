@@ -1,13 +1,9 @@
 version: 2
 
-defaults: &defaults
-  working_directory: /go/src/github.com/avinor/tau
-  docker:
-    - image: circleci/golang:1.12
-
 jobs:
   build:
-    <<: *defaults
+    docker:
+    - image: circleci/golang:1.12
 
     steps:
       - checkout
@@ -26,7 +22,8 @@ jobs:
             - _dist
 
   release:
-    <<: *defaults
+    docker:
+    - image: circleci/golang:1.12
 
     steps:
       - checkout
@@ -44,6 +41,7 @@ jobs:
             else
               ghr -t $GITHUB_TOKEN `git describe --tags` _dist/
             fi
+            
 workflows:
   version: 2
 
