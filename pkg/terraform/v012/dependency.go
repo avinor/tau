@@ -20,9 +20,9 @@ type dependencyProcessor struct {
 	executor *Executor
 	resolver *Resolver
 
-	// unableToFindRemoteState is set to true if it gets this error when running terraform plan.
-	// This probably means that a dependency has not been run and needs to run first.
-	unableToFindRemoteState bool
+	// acceptApplyFailure should be set if its acceptable that apply fails. Should be set if
+	// no backend is found or unsupported attribute, most probably means a dependency is not deployed
+	acceptApplyFailure bool
 }
 
 func NewDependencyProcessor(source *config.Source, executor *Executor, resolver *Resolver) *dependencyProcessor {
@@ -71,7 +71,8 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 
 	log.Debugf("running terraform apply on %s", base)
 	if err := d.executor.Execute(options, "apply"); err != nil {
-		if d.unableToFindRemoteState {
+		// If it accepts failure then just exit with no error, but create = false
+		if d.acceptApplyFailure {
 			return nil, false, nil
 		}
 
@@ -96,11 +97,11 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 
 func (d *dependencyProcessor) Write(line string) bool {
 	if strings.Contains(line, "Unable to find remote state") {
-		d.unableToFindRemoteState = true
+		d.acceptApplyFailure = true
 	}
 
-	if d.unableToFindRemoteState == true {
-		return false
+	if strings.Contains(line, "Unsupported attribute") {
+		d.acceptApplyFailure = true
 	}
 
 	return true

@@ -26,8 +26,11 @@ func (c *Compatibility) GetValidCommands() []string {
 }
 
 func (c *Compatibility) GetInvalidArgs(command string) []string {
-	if command == "init" {
+	switch command {
+	case "init":
 		return []string{"-backend-config", "-from-module"}
+	case "plan":
+		return []string{"-detailed-exitcode", "-out"}
 	}
 
 	return []string{}

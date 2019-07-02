@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
@@ -129,7 +130,6 @@ func (pc *planCmd) run(args []string) error {
 		}
 
 		if !success {
-			log.Warnf("skipping module, could not resolve dependencies.")
 			continue
 		}
 
@@ -142,6 +142,11 @@ func (pc *planCmd) run(args []string) error {
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pc.TempDir, source.Name)
 
+		if !paths.IsFile(filepath.Join(moduleDir, "terraform.tfvars")) {
+			log.Warnf("cannot plan %s", source.Name)
+			continue
+		}
+
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
 			Stdout:           shell.Processors(&processors.Log{Level: log.InfoLevel}),
@@ -152,6 +157,7 @@ func (pc *planCmd) run(args []string) error {
 		log.Info("------------------------------------------------------------------------")
 
 		extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
+		extraArgs = append(extraArgs, "-out=tau.tfplan")
 		if err := pc.Engine.Executor.Execute(options, "plan", extraArgs...); err != nil {
 			return err
 		}
