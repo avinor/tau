@@ -115,6 +115,7 @@ func (pc *planCmd) run(args []string) error {
 	}
 	log.Info("")
 
+	showDepFailureInfo := false
 	log.Info(color.New(color.Bold).Sprint("Resolving dependencies..."))
 	for _, source := range loaded {
 		if source.Config.Inputs == nil {
@@ -130,6 +131,7 @@ func (pc *planCmd) run(args []string) error {
 		}
 
 		if !success {
+			showDepFailureInfo = true
 			continue
 		}
 
@@ -139,11 +141,18 @@ func (pc *planCmd) run(args []string) error {
 	}
 	log.Info("")
 
+	if showDepFailureInfo {
+		log.Info(color.GreenString("Some of the dependencies failed to resolve. This can be because dependency"))
+		log.Info(color.GreenString("have not been applied yet, and therefore it cannot read remote-state."))
+		log.Info(color.GreenString("It will continue to plan those modules that can be applied and skip failed."))
+		log.Info("")
+	}
+
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pc.TempDir, source.Name)
 
 		if !paths.IsFile(filepath.Join(moduleDir, "terraform.tfvars")) {
-			log.Warnf("cannot plan %s", source.Name)
+			log.Warnf(color.YellowString("Cannot plan %s", source.Name))
 			continue
 		}
 
@@ -162,6 +171,10 @@ func (pc *planCmd) run(args []string) error {
 			return err
 		}
 	}
+
+	log.Info("")
+	log.Info("------------------------------------------------------------------------")
+	log.Info("")
 
 	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
 	for _, source := range loaded {
