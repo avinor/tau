@@ -12,9 +12,9 @@ jobs:
           command: make bootstrap
       - run:
           name: Run tests
-          command: gotestsum --junitfile /tmp/test-results/unit-tests.xml
+          command: gotestsum --junitfile unit-tests.xml
       - store_test_results:
-          path: /tmp/test-results
+          path: .
       - run:
           name: Building release binaries
           command: make release
