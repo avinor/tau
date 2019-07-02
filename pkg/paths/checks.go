@@ -1,8 +1,8 @@
 package paths
 
 import (
-	"os"
 	"github.com/apex/log"
+	"os"
 )
 
 // IsDir returns true if path is a directory, will fail otherwise
