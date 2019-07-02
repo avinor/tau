@@ -19,9 +19,7 @@ var (
 // Version checks the current terraform version, returns empty string if not found
 func Version() string {
 	buffer := &processors.Buffer{}
-	logp := &processors.Log{
-		Level: log.ErrorLevel,
-	}
+	logp := &processors.Log{Level: log.ErrorLevel}
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),

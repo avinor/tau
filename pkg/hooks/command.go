@@ -106,9 +106,7 @@ func (c *Command) Run() error {
 	}
 
 	buffer := &processors.Buffer{}
-	logp := &processors.Log{
-		Level: log.ErrorLevel,
-	}
+	logp := &processors.Log{Level: log.ErrorLevel}
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),

@@ -2,6 +2,7 @@ package v012
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
@@ -18,6 +19,10 @@ type dependencyProcessor struct {
 
 	executor *Executor
 	resolver *Resolver
+
+	// unableToFindRemoteState is set to true if it gets this error when running terraform plan.
+	// This probably means that a dependency has not been run and needs to run first.
+	unableToFindRemoteState bool
 }
 
 func NewDependencyProcessor(source *config.Source, executor *Executor, resolver *Resolver) *dependencyProcessor {
@@ -41,12 +46,8 @@ func (d *dependencyProcessor) Content() []byte {
 }
 
 func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, error) {
-	debugLog := &processors.Log{
-		Level: log.DebugLevel,
-	}
-	errorLog := &processors.Log{
-		Level: log.ErrorLevel,
-	}
+	debugLog := &processors.Log{Level: log.DebugLevel}
+	errorLog := &processors.Log{Level: log.ErrorLevel}
 
 	if err := hooks.Run(d.Source, "prepare", "init"); err != nil {
 		return nil, false, err
@@ -54,7 +55,7 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 
 	options := &shell.Options{
 		Stdout:           shell.Processors(debugLog),
-		Stderr:           shell.Processors(errorLog),
+		Stderr:           shell.Processors(d, errorLog),
 		WorkingDirectory: dest,
 		Env:              d.Source.Env,
 	}
@@ -70,6 +71,10 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 
 	log.Debugf("running terraform apply on %s", base)
 	if err := d.executor.Execute(options, "apply"); err != nil {
+		if d.unableToFindRemoteState {
+			return nil, false, nil
+		}
+
 		return nil, false, err
 	}
 
@@ -87,4 +92,16 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 	}
 
 	return values, true, nil
+}
+
+func (d *dependencyProcessor) Write(line string) bool {
+	if strings.Contains(line, "Unable to find remote state") {
+		d.unableToFindRemoteState = true
+	}
+
+	if d.unableToFindRemoteState == true {
+		return false
+	}
+
+	return true
 }

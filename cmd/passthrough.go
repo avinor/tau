@@ -38,6 +38,7 @@ func newPtCmd(name string, command Command) *cobra.Command {
 		Long:                  command.LongDescription,
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
+		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := pt.processArgs(args); err != nil {
 				return err
@@ -111,7 +112,7 @@ func (pt *ptCmd) run(args []string) error {
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(&processors.Log{}),
+			Stdout:           shell.Processors(&processors.Log{Level: log.InfoLevel}),
 			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
 			Env:              source.Env,
 		}

@@ -54,6 +54,7 @@ func newPlanCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		SilenceErrors:         true,
+		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := pc.processArgs(args); err != nil {
 				return err
@@ -129,6 +130,7 @@ func (pc *planCmd) run(args []string) error {
 
 		if !success {
 			log.Warnf("skipping module, could not resolve dependencies.")
+			continue
 		}
 
 		if err := pc.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
@@ -142,7 +144,7 @@ func (pc *planCmd) run(args []string) error {
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(&processors.Log{}),
+			Stdout:           shell.Processors(&processors.Log{Level: log.InfoLevel}),
 			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
 			Env:              source.Env,
 		}
