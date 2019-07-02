@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/avinor/tau.svg?style=svg)](https://circleci.com/gh/avinor/tau)
 [![Go Report Card](https://goreportcard.com/badge/github.com/avinor/tau)](https://goreportcard.com/report/github.com/avinor/tau)
 [![GoDoc](https://godoc.org/github.com/avinor/tau?status.svg)](https://godoc.org/github.com/avinor/tau)
 
