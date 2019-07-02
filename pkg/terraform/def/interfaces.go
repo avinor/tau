@@ -11,7 +11,7 @@ import (
 type DependencyProcesser interface {
 	Name() string
 	Content() []byte
-	Process(dest string) (map[string]cty.Value, error)
+	Process(dest string) (map[string]cty.Value, bool, error)
 }
 
 // VersionCompatibility checks terraform executor for capabilities

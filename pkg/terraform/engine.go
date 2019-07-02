@@ -85,15 +85,20 @@ func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
 
 // ResolveDependencies processes the source file and generates terraform modules for each unique
 // source. For each source it will generate output arguments and return the merged values
-func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[string]cty.Value, error) {
+//
+// Bool return value indicates if it successfully resolved the dependency and should proceed to create
+// source. If it failed to resolve dependencies but error is nil, it should not proceed to create this
+// source, but should also not fail application. That generally means that it was a problem resolving
+// dependencies for this source only. Other sources can still be generated.
+func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[string]cty.Value, bool, error) {
 	processors, create, err := e.Generator.GenerateDependencies(source)
 
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if !create {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	values := map[string]cty.Value{}
@@ -104,12 +109,18 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 
 		file := filepath.Join(procDest, "main.tf")
 		if err := ioutil.WriteFile(file, proc.Content(), os.ModePerm); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
-		vals, err := proc.Process(procDest)
+		vals, create, err := proc.Process(procDest)
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+
+		// if not create then resolving dependency failed, but it should not result in an error.
+		// it should just skip this source
+		if !create {
+			return nil, false, nil
 		}
 
 		for key, value := range vals {
@@ -117,7 +128,7 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		}
 	}
 
-	return ctytree.CreateTree(values).ToCtyMap(), nil
+	return ctytree.CreateTree(values).ToCtyMap(), true, nil
 }
 
 // WriteInputVariables write the terraform.tfvars file into module folder. This file is the parsed and

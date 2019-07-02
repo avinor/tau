@@ -95,8 +95,6 @@ func (pc *planCmd) run(args []string) error {
 		return nil
 	}
 
-	log.Info("")
-
 	// Verify all modules have been initialized
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pc.TempDir, source.Name)
@@ -106,9 +104,34 @@ func (pc *planCmd) run(args []string) error {
 		}
 	}
 
+	// Execute prepare hook to make sure we are logged in etc.
 	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
 	for _, source := range loaded {
 		if err := hooks.Run(source, "prepare", "plan"); err != nil {
+			return err
+		}
+	}
+	log.Info("")
+
+	log.Info(color.New(color.Bold).Sprint("Resolving dependencies..."))
+	for _, source := range loaded {
+		if source.Config.Inputs == nil {
+			continue
+		}
+
+		moduleDir := paths.ModuleDir(pc.TempDir, source.Name)
+		depsDir := paths.DependencyDir(pc.TempDir, source.Name)
+
+		vars, success, err := pc.Engine.ResolveDependencies(source, depsDir)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			log.Warnf("skipping module, could not resolve dependencies.")
+		}
+
+		if err := pc.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
 			return err
 		}
 	}

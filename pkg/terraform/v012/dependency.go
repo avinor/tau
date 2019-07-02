@@ -40,14 +40,14 @@ func (d *dependencyProcessor) Content() []byte {
 	return d.File.Bytes()
 }
 
-func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, error) {
+func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, error) {
 	debugLog := &processors.Log{
 		Debug: true,
 	}
 	errorLog := &processors.Log{}
 
 	if err := hooks.Run(d.Source, "prepare", "init"); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	options := &shell.Options{
@@ -63,12 +63,12 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, error)
 
 	log.Debugf("running terraform init on %s", base)
 	if err := d.executor.Execute(options, "init"); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	log.Debugf("running terraform apply on %s", base)
 	if err := d.executor.Execute(options, "apply"); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	buffer := &processors.Buffer{}
@@ -76,8 +76,13 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, error)
 
 	log.Debugf("reading output from %s", base)
 	if err := d.executor.Execute(options, "output", "-json"); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return d.resolver.ResolveStateOutput([]byte(buffer.Stdout()))
+	values, err := d.resolver.ResolveStateOutput([]byte(buffer.Stdout()))
+	if err != nil {
+		return nil, false, err
+	}
+
+	return values, true, nil
 }
