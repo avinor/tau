@@ -1,4 +1,4 @@
-TARGETS           = darwin/amd64 linux/amd64 windows/amd64
+TARGETS           = darwin/amd64 linux/amd64
 DIST_DIRS         = find * -type d -exec
 
 ifdef DEBUG

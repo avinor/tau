@@ -15,6 +15,9 @@ jobs:
           name: Bootstrap build
           command: make bootstrap
       - run:
+          name: Run tests
+          command: go test -v ./...
+      - run:
           name: Building release binaries
           command: make release
       - persist_to_workspace:
