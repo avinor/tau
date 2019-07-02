@@ -16,7 +16,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-// Engine to process
+// Engine that can process version specific terraform commands
 type Engine struct {
 	Version string
 

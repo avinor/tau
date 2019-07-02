@@ -106,7 +106,9 @@ func (c *Command) Run() error {
 	}
 
 	buffer := &processors.Buffer{}
-	logp := &processors.Log{}
+	logp := &processors.Log{
+		Level: log.ErrorLevel,
+	}
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),
@@ -125,7 +127,7 @@ func (c *Command) Run() error {
 	}
 
 	if c.Hook.SetEnv != nil && *c.Hook.SetEnv {
-		for key, value := range parseOutput(buffer.Stdout()) {
+		for key, value := range parseOutput(buffer.String()) {
 			c.Output[key] = value
 		}
 	}

@@ -42,9 +42,11 @@ func (d *dependencyProcessor) Content() []byte {
 
 func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, error) {
 	debugLog := &processors.Log{
-		Debug: true,
+		Level: log.DebugLevel,
 	}
-	errorLog := &processors.Log{}
+	errorLog := &processors.Log{
+		Level: log.ErrorLevel,
+	}
 
 	if err := hooks.Run(d.Source, "prepare", "init"); err != nil {
 		return nil, false, err
@@ -79,7 +81,7 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 		return nil, false, err
 	}
 
-	values, err := d.resolver.ResolveStateOutput([]byte(buffer.Stdout()))
+	values, err := d.resolver.ResolveStateOutput([]byte(buffer.String()))
 	if err != nil {
 		return nil, false, err
 	}

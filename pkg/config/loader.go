@@ -40,7 +40,7 @@ type Loader struct {
 }
 
 // Options when loading modules. If TempDirectory is not set it will create a random
-// temporary directory. This is not adviced as it will create a new temporary directory
+// temporary directory. This is not advised as it will create a new temporary directory
 // for every call to load.
 type Options struct {
 	WorkingDirectory string

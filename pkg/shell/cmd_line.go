@@ -69,6 +69,8 @@ func Execute(options *Options, command string, args ...string) error {
 
 func processLine(processors []OutputProcessor, line string) {
 	for _, out := range processors {
-		out.WriteStdout(line)
+		if !out.Write(line) {
+			return
+		}
 	}
 }

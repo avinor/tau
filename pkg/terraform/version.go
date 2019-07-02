@@ -3,6 +3,7 @@ package terraform
 import (
 	"regexp"
 
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 )
@@ -15,9 +16,12 @@ var (
 	versionRegex = regexp.MustCompile(versionPattern)
 )
 
+// Version checks the current terraform version, returns empty string if not found
 func Version() string {
 	buffer := &processors.Buffer{}
-	logp := &processors.Log{}
+	logp := &processors.Log{
+		Level: log.ErrorLevel,
+	}
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),
@@ -28,7 +32,7 @@ func Version() string {
 		return ""
 	}
 
-	matches := versionRegex.FindAllStringSubmatch(buffer.Stdout(), -1)
+	matches := versionRegex.FindAllStringSubmatch(buffer.String(), -1)
 
 	if len(matches) < 1 || len(matches[0]) < 2 {
 		return ""

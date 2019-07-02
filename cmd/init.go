@@ -201,26 +201,6 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	// log.Info(color.New(color.Bold).Sprint("Resolving dependencies..."))
-	// for _, source := range loaded {
-	// 	if source.Config.Inputs == nil {
-	// 		continue
-	// 	}
-
-	// 	moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
-	// 	depsDir := paths.DependencyDir(ic.TempDir, source.Name)
-
-	// 	vars, err := ic.Engine.ResolveDependencies(source, depsDir)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	if err := ic.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
-	// 		return err
-	// 	}
-	// }
-	// log.Info("")
-
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
 
@@ -230,8 +210,8 @@ func (ic *initCmd) run(args []string) error {
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(new(processors.Log)),
-			Stderr:           shell.Processors(new(processors.Log)),
+			Stdout:           shell.Processors(&processors.Log{}),
+			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
 			Env:              source.Env,
 		}
 

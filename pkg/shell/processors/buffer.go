@@ -4,25 +4,20 @@ import (
 	"strings"
 )
 
+// Buffer collects all lines in buffer that can later be read and processed
 type Buffer struct {
-	stdoutBuilder strings.Builder
-	stderrBuilder strings.Builder
+	builder strings.Builder
 }
 
-func (b *Buffer) WriteStdout(line string) {
-	b.stdoutBuilder.WriteString(line)
-	b.stdoutBuilder.WriteByte('\n')
+// Write line to buffer
+func (b *Buffer) Write(line string) bool {
+	b.builder.WriteString(line)
+	b.builder.WriteByte('\n')
+
+	return true
 }
 
-func (b *Buffer) WriteStderr(line string) {
-	b.stderrBuilder.WriteString(line)
-	b.stdoutBuilder.WriteByte('\n')
-}
-
-func (b *Buffer) Stdout() string {
-	return b.stdoutBuilder.String()
-}
-
-func (b *Buffer) Stderr() string {
-	return b.stderrBuilder.String()
+// String returns string from buffer
+func (b *Buffer) String() string {
+	return b.builder.String()
 }

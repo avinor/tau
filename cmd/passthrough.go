@@ -111,8 +111,8 @@ func (pt *ptCmd) run(args []string) error {
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(new(processors.Log)),
-			Stderr:           shell.Processors(new(processors.Log)),
+			Stdout:           shell.Processors(&processors.Log{}),
+			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
 			Env:              source.Env,
 		}
 
