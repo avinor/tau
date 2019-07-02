@@ -12,7 +12,9 @@ jobs:
           command: make bootstrap
       - run:
           name: Run tests
-          command: go test -v ./...
+          command: gotestsum --junitfile unit-tests.xml
+      - store_test_results:
+          path: unit-tests.xml
       - run:
           name: Building release binaries
           command: make release
@@ -41,7 +43,7 @@ jobs:
             else
               ghr -t $GITHUB_TOKEN `git describe --tags` _dist/
             fi
-            
+
 workflows:
   version: 2
 
