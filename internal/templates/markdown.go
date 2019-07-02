@@ -96,44 +96,100 @@ func (r *ASCIIRenderer) BlockCode(out *bytes.Buffer, text []byte, lang string) {
 	out.WriteString(strings.Join(lines, linebreak))
 }
 
+// GetFlags always returns 0
 func (r *ASCIIRenderer) GetFlags() int { return 0 }
+
+// HRule returns horizontal line
 func (r *ASCIIRenderer) HRule(out *bytes.Buffer) {
 	out.WriteString(linebreak + "----------" + linebreak)
 }
-func (r *ASCIIRenderer) LineBreak(out *bytes.Buffer)                                      { out.WriteString(linebreak) }
-func (r *ASCIIRenderer) TitleBlock(out *bytes.Buffer, text []byte)                        { r.fw(out, text) }
-func (r *ASCIIRenderer) Header(out *bytes.Buffer, text func() bool, level int, id string) { text() }
-func (r *ASCIIRenderer) BlockHtml(out *bytes.Buffer, text []byte)                         { r.fw(out, text) } //nolint:golint
-func (r *ASCIIRenderer) BlockQuote(out *bytes.Buffer, text []byte)                        { r.fw(out, text) }
-func (r *ASCIIRenderer) TableRow(out *bytes.Buffer, text []byte)                          { r.fw(out, text) }
-func (r *ASCIIRenderer) TableHeaderCell(out *bytes.Buffer, text []byte, align int)        { r.fw(out, text) }
-func (r *ASCIIRenderer) TableCell(out *bytes.Buffer, text []byte, align int)              { r.fw(out, text) }
-func (r *ASCIIRenderer) Footnotes(out *bytes.Buffer, text func() bool)                    { text() }
-func (r *ASCIIRenderer) FootnoteItem(out *bytes.Buffer, name, text []byte, flags int)     { r.fw(out, text) }
-func (r *ASCIIRenderer) AutoLink(out *bytes.Buffer, link []byte, kind int)                { r.fw(out, link) }
-func (r *ASCIIRenderer) CodeSpan(out *bytes.Buffer, text []byte)                          { r.fw(out, text) }
-func (r *ASCIIRenderer) DoubleEmphasis(out *bytes.Buffer, text []byte)                    { r.fw(out, text) }
-func (r *ASCIIRenderer) Emphasis(out *bytes.Buffer, text []byte)                          { r.fw(out, text) }
-func (r *ASCIIRenderer) RawHtmlTag(out *bytes.Buffer, text []byte)                        { r.fw(out, text) } //nolint:golint
-func (r *ASCIIRenderer) TripleEmphasis(out *bytes.Buffer, text []byte)                    { r.fw(out, text) }
-func (r *ASCIIRenderer) StrikeThrough(out *bytes.Buffer, text []byte)                     { r.fw(out, text) }
-func (r *ASCIIRenderer) FootnoteRef(out *bytes.Buffer, ref []byte, id int)                { r.fw(out, ref) }
-func (r *ASCIIRenderer) Entity(out *bytes.Buffer, entity []byte)                          { r.fw(out, entity) }
-func (r *ASCIIRenderer) Smartypants(out *bytes.Buffer, text []byte)                       { r.fw(out, text) }
-func (r *ASCIIRenderer) DocumentHeader(out *bytes.Buffer)                                 {}
-func (r *ASCIIRenderer) DocumentFooter(out *bytes.Buffer)                                 {}
-func (r *ASCIIRenderer) TocHeaderWithAnchor(text []byte, level int, anchor string)        {}
-func (r *ASCIIRenderer) TocHeader(text []byte, level int)                                 {}
-func (r *ASCIIRenderer) TocFinalize()                                                     {}
 
+// LineBreak returns a line break
+func (r *ASCIIRenderer) LineBreak(out *bytes.Buffer) { out.WriteString(linebreak) }
+
+// TitleBlock writes title block
+func (r *ASCIIRenderer) TitleBlock(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// Header writes header
+func (r *ASCIIRenderer) Header(out *bytes.Buffer, text func() bool, level int, id string) { text() }
+
+// BlockHtml writes htlm
+func (r *ASCIIRenderer) BlockHtml(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// BlockQuote writes block
+func (r *ASCIIRenderer) BlockQuote(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// TableRow writes table row
+func (r *ASCIIRenderer) TableRow(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// TableHeaderCell writes table header cell
+func (r *ASCIIRenderer) TableHeaderCell(out *bytes.Buffer, text []byte, align int) { r.fw(out, text) }
+
+// TableCell writes table cell
+func (r *ASCIIRenderer) TableCell(out *bytes.Buffer, text []byte, align int) { r.fw(out, text) }
+
+// Footnotes writes footnotes
+func (r *ASCIIRenderer) Footnotes(out *bytes.Buffer, text func() bool) { text() }
+
+// FootnoteItem writes footnote item
+func (r *ASCIIRenderer) FootnoteItem(out *bytes.Buffer, name, text []byte, flags int) { r.fw(out, text) }
+
+// AutoLink writes autolink
+func (r *ASCIIRenderer) AutoLink(out *bytes.Buffer, link []byte, kind int) { r.fw(out, link) }
+
+// CodeSpan writes code span
+func (r *ASCIIRenderer) CodeSpan(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// DoubleEmphasis writes double emphasis
+func (r *ASCIIRenderer) DoubleEmphasis(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// Emphasis writes emphasis
+func (r *ASCIIRenderer) Emphasis(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// RawHtmlTag writes raw htlm tag
+func (r *ASCIIRenderer) RawHtmlTag(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// TripleEmphasis writes triple emphasis
+func (r *ASCIIRenderer) TripleEmphasis(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// StrikeThrough writes strike through
+func (r *ASCIIRenderer) StrikeThrough(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// FootnoteRef writes footnote ref
+func (r *ASCIIRenderer) FootnoteRef(out *bytes.Buffer, ref []byte, id int) { r.fw(out, ref) }
+
+// Entity writes entity
+func (r *ASCIIRenderer) Entity(out *bytes.Buffer, entity []byte) { r.fw(out, entity) }
+
+// Smartypants writes smartypants
+func (r *ASCIIRenderer) Smartypants(out *bytes.Buffer, text []byte) { r.fw(out, text) }
+
+// DocumentHeader does nothing
+func (r *ASCIIRenderer) DocumentHeader(out *bytes.Buffer) {}
+
+// DocumentFooter does nothing
+func (r *ASCIIRenderer) DocumentFooter(out *bytes.Buffer) {}
+
+// TocHeaderWithAnchor does nothing
+func (r *ASCIIRenderer) TocHeaderWithAnchor(text []byte, level int, anchor string) {}
+
+// TocHeader does nothing
+func (r *ASCIIRenderer) TocHeader(text []byte, level int) {}
+
+// TocFinalize does nothing
+func (r *ASCIIRenderer) TocFinalize() {}
+
+// Table writes a table
 func (r *ASCIIRenderer) Table(out *bytes.Buffer, header []byte, body []byte, columnData []int) {
 	r.fw(out, header, body)
 }
 
+// Link writes a link
 func (r *ASCIIRenderer) Link(out *bytes.Buffer, link []byte, title []byte, content []byte) {
 	r.fw(out, link)
 }
 
+// Image writes image
 func (r *ASCIIRenderer) Image(out *bytes.Buffer, link []byte, title []byte, alt []byte) {
 	r.fw(out, link)
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Indentation string to use for indents
 const Indentation = `  `
 
 // LongDesc normalizes a command's long description to follow the conventions.
