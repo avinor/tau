@@ -59,12 +59,14 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, error)
 
 	base := filepath.Base(dest)
 
-	log.Infof("- Running terraform init on %s", base)
+	log.Infof("- %s", base)
+
+	log.Debugf("running terraform init on %s", base)
 	if err := d.executor.Execute(options, "init"); err != nil {
 		return nil, err
 	}
 
-	log.Infof("- Running terraform apply on %s", base)
+	log.Debugf("running terraform apply on %s", base)
 	if err := d.executor.Execute(options, "apply"); err != nil {
 		return nil, err
 	}
@@ -72,7 +74,7 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, error)
 	buffer := &processors.Buffer{}
 	options.Stdout = shell.Processors(buffer)
 
-	log.Infof("- Reading output from %s", base)
+	log.Debugf("reading output from %s", base)
 	if err := d.executor.Execute(options, "output", "-json"); err != nil {
 		return nil, err
 	}

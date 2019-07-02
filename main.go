@@ -20,6 +20,8 @@ func main() {
 	})
 
 	if err := cmd.NewRootCmd().Execute(); err != nil {
+		log.Info("")
+		log.Fatalf("Error: %v", err)
 		os.Exit(1)
 	}
 }

@@ -43,13 +43,6 @@ var (
 				`Read an output from the state file for module deployed.
 				`),
 		},
-		"plan": {
-			Use:              "plan [-f SOURCE]",
-			ShortDescription: "Generate and show an execution plan",
-			LongDescription: templates.LongDesc(
-				`Generate and show an execution plan for one or more modules.
-				`),
-		},
 		"refresh": {
 			Use:              "refresh [-f SOURCE]",
 			ShortDescription: "Update local state file against real resources",

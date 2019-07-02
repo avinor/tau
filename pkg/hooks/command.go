@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
@@ -116,6 +117,8 @@ func (c *Command) Run() error {
 	if c.Hook.Arguments != nil {
 		args = append(args, *c.Hook.Arguments...)
 	}
+
+	log.Infof("- %s", c.Hook.Type)
 
 	if err := shell.Execute(options, c.parsedCommand, args...); err != nil {
 		return err

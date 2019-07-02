@@ -118,7 +118,7 @@ func (pt *ptCmd) run(args []string) error {
 
 		log.Info("------------------------------------------------------------------------")
 
-		extraArgs := getExtraArgs(args, pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
+		extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
 		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
 			return err
 		}

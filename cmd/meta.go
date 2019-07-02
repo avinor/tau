@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/apex/log"
@@ -46,22 +47,21 @@ func (m *meta) addMetaFlags(cmd *cobra.Command) {
 	f.StringVarP(&m.file, "file", "f", ".", "file or directory to run configuration for")
 }
 
-// getExtraArgs returns all arguments starting with dash (-), but filters out invalid arguments
-func getExtraArgs(args []string, invalidArgs ...string) []string {
+// getExtraArgs returns extra terraform arguments, but filters out invalid arguments
+func getExtraArgs(invalidArgs ...string) []string {
 	extraArgs := []string{}
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			invalidArg := false
+	for _, arg := range terraformArgs {
+		invalidArg := false
+		arg = fmt.Sprintf("-%s", arg)
 
-			for _, ia := range invalidArgs {
-				if strings.HasPrefix(arg, ia) {
-					invalidArg = true
-				}
+		for _, ia := range invalidArgs {
+			if strings.HasPrefix(arg, ia) {
+				invalidArg = true
 			}
+		}
 
-			if !invalidArg {
-				extraArgs = append(extraArgs, arg)
-			}
+		if !invalidArg {
+			extraArgs = append(extraArgs, arg)
 		}
 	}
 

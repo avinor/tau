@@ -40,6 +40,7 @@ func NewRootCmd() *cobra.Command {
 	p.StringArrayVarP(&terraformArgs, "args", "a", []string{}, "arguments to forward to terraform in key=value format")
 
 	rootCmd.AddCommand(newInitCmd())
+	rootCmd.AddCommand(newPlanCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
 	for name, cmd := range validCommands {
