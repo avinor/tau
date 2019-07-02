@@ -14,7 +14,7 @@ jobs:
           name: Run tests
           command: gotestsum --junitfile unit-tests.xml
       - store_test_results:
-          path: unit-tests.xml
+          path: /tmp/test-results
       - run:
           name: Building release binaries
           command: make release
