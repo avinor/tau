@@ -95,6 +95,11 @@ func (dc *destroyCmd) run(args []string) error {
 		return nil
 	}
 
+	// Want to destroy them in reverse order
+	for i, j := 0, len(loaded)-1; i < j; i, j = i+1, j-1 {
+        loaded[i], loaded[j] = loaded[j], loaded[i]
+    }
+
 	// Verify all modules have been initialized
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(dc.TempDir, source.Name)

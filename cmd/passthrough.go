@@ -120,6 +120,8 @@ func (pt *ptCmd) run(args []string) error {
 		}
 	}
 
+	ui.Separator()
+
 	ui.Header("Executing finish hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "finish", pt.name); err != nil {
