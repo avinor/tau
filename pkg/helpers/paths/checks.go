@@ -1,8 +1,9 @@
 package paths
 
 import (
-	"github.com/apex/log"
 	"os"
+
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 // IsDir returns true if path is a directory, will fail otherwise
@@ -14,7 +15,7 @@ func IsDir(path string) bool {
 	}
 
 	if err != nil {
-		log.Fatalf("unable to get os.Stat for %s", path)
+		ui.Fatal("unable to get os.Stat for %s", path)
 	}
 
 	return fi.IsDir()
@@ -29,7 +30,7 @@ func IsFile(path string) bool {
 	}
 
 	if err != nil {
-		log.Fatalf("unable to get os.Stat for %s", path)
+		ui.Fatal("unable to get os.Stat for %s", path)
 	}
 
 	return !fi.IsDir()

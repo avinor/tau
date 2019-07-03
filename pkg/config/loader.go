@@ -8,9 +8,8 @@ import (
 	"strings"
 
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
 
-	"github.com/apex/log"
-	"github.com/fatih/color"
 	"github.com/go-errors/errors"
 )
 
@@ -73,7 +72,7 @@ func (l *Loader) Load(path string) ([]*Source, error) {
 		return nil, sourcePathNotFoundError
 	}
 
-	log.Info(color.New(color.Bold).Sprint("Loading sources..."))
+	ui.Header("Loading sources...")
 
 	sources, err := l.loadFromPath(path)
 	if err != nil {
@@ -187,7 +186,7 @@ func findFiles(path string, matchFunc func(string) bool) ([]string, error) {
 		}
 	}
 
-	log.Debugf("Found %v template file(s): %v", len(matches), matches)
+	ui.Debug("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
 }

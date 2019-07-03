@@ -4,24 +4,19 @@
 package main
 
 import (
-	stdlog "log"
 	"os"
+	"log"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/cmd"
-	"github.com/avinor/tau/internal/handler/simpletext"
-	"github.com/avinor/tau/pkg/getter"
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 func main() {
-	log.SetHandler(simpletext.Default)
-	stdlog.SetOutput(&getter.LogParser{
-		Logger: log.Log,
-	})
+	log.SetOutput(&ui.Writer{})
 
 	if err := cmd.NewRootCmd().Execute(); err != nil {
-		log.Info("")
-		log.Fatalf("Error: %v", err)
+		ui.NewLine()
+		ui.Fatal("Error: %v", err)
 		os.Exit(1)
 	}
 }

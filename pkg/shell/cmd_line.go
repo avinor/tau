@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/go-cmd/cmd"
 	"github.com/go-errors/errors"
 )
@@ -37,8 +37,8 @@ func Execute(options *Options, command string, args ...string) error {
 		}
 	}
 
-	log.Debugf("environment variables: %#v", execCmd.Env)
-	log.Debugf("command: %s %s", execCmd.Name, strings.Join(execCmd.Args, " "))
+	ui.Debug("environment variables: %#v", execCmd.Env)
+	ui.Debug("command: %s %s", execCmd.Name, strings.Join(execCmd.Args, " "))
 
 	// Print STDOUT and STDERR lines streaming from Cmd
 	go func() {

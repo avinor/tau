@@ -1,8 +1,8 @@
 package hooks
 
 import (
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 // Run all hooks in source for a specfic event. Command input can filter hooks that should only be run
@@ -12,7 +12,7 @@ func Run(source *config.Source, event string, command string) error {
 		cmd := GetCommand(source, &hook)
 
 		if !cmd.ShouldRun(event, command) {
-			log.Debugf("hook %s should not run for command %s", hook.Type, command)
+			ui.Debug("hook %s should not run for command %s", hook.Type, command)
 			continue
 		}
 
@@ -21,7 +21,7 @@ func Run(source *config.Source, event string, command string) error {
 		}
 
 		for key, value := range cmd.Output {
-			log.Debugf("setting env %s", key)
+			ui.Debug("setting env %s", key)
 			source.Env[key] = value
 		}
 	}

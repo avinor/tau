@@ -4,14 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +19,7 @@ type applyCmd struct {
 
 	loader *config.Loader
 
-	noInput bool
+	autoApprove bool
 }
 
 var (
@@ -68,7 +67,7 @@ func newApplyCmd() *cobra.Command {
 	}
 
 	f := applyCmd.Flags()
-	f.BoolVar(&ac.noInput, "no-input", false, "do not ask for any input")
+	f.BoolVar(&ac.autoApprove, "auto-approve", false, "auto approve deployment")
 
 	ac.addMetaFlags(applyCmd)
 
@@ -93,10 +92,9 @@ func (ac *applyCmd) run(args []string) error {
 		return err
 	}
 
-	log.Info("")
-
 	if len(loaded) == 0 {
-		log.Warn("No sources found")
+		ui.NewLine()
+		ui.Warn("No sources found")
 		return nil
 	}
 
@@ -110,52 +108,50 @@ func (ac *applyCmd) run(args []string) error {
 	}
 
 	// Execute prepare hook to make sure we are logged in etc.
-	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
+	ui.Header("Executing prepare hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "prepare", "apply"); err != nil {
 			return err
 		}
 	}
-	log.Info("")
 
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
 
-		log.Info("")
-		log.Info("------------------------------------------------------------------------")
-		log.Info("")
+		ui.Separator()
 
 		if !paths.IsFile(filepath.Join(moduleDir, "tau.tfplan")) {
-			log.Warnf(color.YellowString("No plan exists for %s", source.Name))
+			ui.Warn("No plan exists for %s", source.Name)
 			continue
 		}
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(&processors.Log{Level: log.InfoLevel}),
-			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
+			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
 			Env:              source.Env,
 		}
 
 		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
-		extraArgs = append(extraArgs, "-auto-approve", "-input=false", "tau.tfplan")
+		extraArgs = append(extraArgs, "-input=false", "tau.tfplan")
+
+		if ac.autoApprove {
+			extraArgs = append(extraArgs, "-auto-approve")
+		}
 
 		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
 			return err
 		}
 	}
 
-	log.Info("")
-	log.Info("------------------------------------------------------------------------")
-	log.Info("")
+	ui.Separator()
 
-	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
+	ui.Header("Executing finish hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "finish", "apply"); err != nil {
 			return err
 		}
 	}
-	log.Info("")
 
 	return nil
 }

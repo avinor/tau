@@ -2,7 +2,8 @@ package strings
 
 import (
 	"crypto/rand"
-	"log"
+
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 /*
@@ -39,7 +40,7 @@ func SecureRandomBytes(length int) []byte {
 	var randomBytes = make([]byte, length)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
-		log.Fatal("Unable to generate random bytes")
+		ui.Fatal("Unable to generate random bytes")
 	}
 	return randomBytes
 }

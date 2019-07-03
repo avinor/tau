@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/helpers/strings"
 )
 
@@ -58,10 +58,10 @@ func DependencyDir(tempDir, name string) string {
 // EnsureDirectoryExists makes sure the entire path exists, all parent folders too.
 func EnsureDirectoryExists(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.WithField("path", path).Debug("Creating directory")
+		ui.Debug("Creating directory %s", path)
 
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			log.Fatalf("%v", err)
+			ui.Fatal("%v", err)
 		}
 	}
 }
@@ -84,7 +84,7 @@ func join(dir, part, folder string, shouldPanic bool) string {
 		if shouldPanic {
 			panic("oh no...")
 		}
-		log.Fatal("Part directory must be set")
+		ui.Fatal("Part directory must be set")
 	}
 
 	if folder == "" || folder == "." {

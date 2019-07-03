@@ -3,7 +3,7 @@ package terraform
 import (
 	"regexp"
 
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 )
@@ -19,7 +19,7 @@ var (
 // Version checks the current terraform version, returns empty string if not found
 func Version() string {
 	buffer := &processors.Buffer{}
-	logp := &processors.Log{Level: log.ErrorLevel}
+	logp := processors.NewUI(ui.Error)
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),

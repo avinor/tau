@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/hashicorp/go-getter"
 )
@@ -91,7 +91,7 @@ func (c *Client) Get(src, dst string, version *string) error {
 		src = fmt.Sprintf("%s?registryVersion=%s", src, *version)
 	}
 
-	log.Infof("- %v", src)
+	ui.Info("- %v", src)
 
 	client := &getter.Client{
 		Ctx:       ctx,

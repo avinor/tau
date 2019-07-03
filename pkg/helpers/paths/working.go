@@ -3,7 +3,7 @@ package paths
 import (
 	"os"
 
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 func init() {
 	pwd, err := os.Getwd()
 	if err != nil {
-		log.Fatal("unable to get working directory")
+		ui.Fatal("unable to get working directory")
 	}
 
 	WorkingDir = pwd

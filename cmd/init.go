@@ -4,15 +4,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -101,7 +100,7 @@ func (ic *initCmd) init() {
 	{
 		timeout := time.Duration(ic.timeout) * time.Second
 
-		log.Debugf("- Http timeout: %s", timeout)
+		ui.Debug("http timeout: %s", timeout)
 
 		options := &getter.Options{
 			HttpClient: &http.Client{
@@ -119,6 +118,8 @@ func (ic *initCmd) init() {
 			TempDirectory:    ic.TempDir,
 			MaxDepth:         ic.maxDependencyDepth,
 		}
+
+		ui.Debug("max dependency depth: %s", ic.maxDependencyDepth)
 
 		ic.loader = config.NewLoader(options)
 	}
@@ -143,8 +144,7 @@ func (ic *initCmd) processArgs(args []string) error {
 // run initialization command
 func (ic *initCmd) run(args []string) error {
 	if ic.purge {
-		log.Debug("Purging temporary folder")
-		log.Debug("")
+		ui.Debug("Purging temporary folder")
 		paths.Remove(ic.TempDir)
 	}
 
@@ -154,24 +154,17 @@ func (ic *initCmd) run(args []string) error {
 		return err
 	}
 
-	log.Info("")
-
 	if len(loaded) == 0 {
-		log.Warn("No sources found in path")
+		ui.NewLine()
+		ui.Warn("No sources found in path")
 		return nil
 	}
 
 	// Load module files usign go-getter
-	log.Info(color.New(color.Bold).Sprint("Loading modules..."))
+	ui.Header("Loading modules...")
 	for _, source := range loaded {
 		module := source.Config.Module
 		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
-
-		if module == nil {
-			log.WithField("file", source.Name).Fatal("No module defined in source")
-			continue
-		}
-
 		source := module.Source
 		version := module.Version
 
@@ -184,9 +177,8 @@ func (ic *initCmd) run(args []string) error {
 			return err
 		}
 	}
-	log.Info("")
 
-	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
+	ui.Header("Executing prepare hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "prepare", "init"); err != nil {
 			return err
@@ -196,20 +188,18 @@ func (ic *initCmd) run(args []string) error {
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
 
+		ui.Separator()
+
 		if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
 			return err
 		}
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(&processors.Log{Level: log.InfoLevel}),
-			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
+			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
 			Env:              source.Env,
 		}
-
-		log.Info("")
-		log.Info("------------------------------------------------------------------------")
-		log.Info("")
 
 		extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
 		if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
@@ -217,17 +207,14 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	log.Info("")
-	log.Info("------------------------------------------------------------------------")
-	log.Info("")
+	ui.Separator()
 
-	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
+	ui.Header("Executing finish hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "finish", "init"); err != nil {
 			return err
 		}
 	}
-	log.Info("")
 
 	return nil
 }

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 )
 
@@ -106,7 +106,7 @@ func (c *Command) Run() error {
 	}
 
 	buffer := &processors.Buffer{}
-	logp := &processors.Log{Level: log.ErrorLevel}
+	logp := processors.NewUI(ui.Error)
 
 	options := &shell.Options{
 		Stdout: shell.Processors(buffer),
@@ -118,7 +118,7 @@ func (c *Command) Run() error {
 		args = append(args, *c.Hook.Arguments...)
 	}
 
-	log.Infof("- %s", c.Hook.Type)
+	ui.Info("- %s", c.Hook.Type)
 
 	if err := shell.Execute(options, c.parsedCommand, args...); err != nil {
 		return err

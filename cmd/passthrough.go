@@ -3,13 +3,12 @@ package cmd
 import (
 	"os"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -81,14 +80,11 @@ func (pt *ptCmd) run(args []string) error {
 		return err
 	}
 
-	log.Info("")
-
 	if len(loaded) == 0 {
-		log.Warn("No sources found")
+		ui.NewLine()
+		ui.Warn("No sources found")
 		return nil
 	}
-
-	log.Info("")
 
 	// Verify all modules have been initialized
 	for _, source := range loaded {
@@ -99,25 +95,24 @@ func (pt *ptCmd) run(args []string) error {
 		}
 	}
 
-	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
+	ui.Header("Executing prepare hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "prepare", pt.name); err != nil {
 			return err
 		}
 	}
-	log.Info("")
 
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
-			Stdout:           shell.Processors(&processors.Log{Level: log.InfoLevel}),
-			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
+			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
 			Env:              source.Env,
 		}
 
-		log.Info("------------------------------------------------------------------------")
+		ui.Separator()
 
 		extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
 		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
@@ -125,13 +120,12 @@ func (pt *ptCmd) run(args []string) error {
 		}
 	}
 
-	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
+	ui.Header("Executing finish hook...")
 	for _, source := range loaded {
 		if err := hooks.Run(source, "finish", pt.name); err != nil {
 			return err
 		}
 	}
-	log.Info("")
 
 	return nil
 }

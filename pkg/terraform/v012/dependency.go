@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
@@ -46,8 +46,8 @@ func (d *dependencyProcessor) Content() []byte {
 }
 
 func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, error) {
-	debugLog := &processors.Log{Level: log.DebugLevel}
-	errorLog := &processors.Log{Level: log.ErrorLevel}
+	debugLog := processors.NewUI(ui.Debug)
+	errorLog := processors.NewUI(ui.Error)
 
 	if err := hooks.Run(d.Source, "prepare", "init"); err != nil {
 		return nil, false, err
@@ -62,14 +62,14 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 
 	base := filepath.Base(dest)
 
-	log.Infof("- %s", base)
+	ui.Info("- %s", base)
 
-	log.Debugf("running terraform init on %s", base)
+	ui.Debug("running terraform init on %s", base)
 	if err := d.executor.Execute(options, "init"); err != nil {
 		return nil, false, err
 	}
 
-	log.Debugf("running terraform apply on %s", base)
+	ui.Debug("running terraform apply on %s", base)
 	if err := d.executor.Execute(options, "apply"); err != nil {
 		// If it accepts failure then just exit with no error, but create = false
 		if d.acceptApplyFailure {
@@ -82,7 +82,7 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 	buffer := &processors.Buffer{}
 	options.Stdout = shell.Processors(buffer)
 
-	log.Debugf("reading output from %s", base)
+	ui.Debug("reading output from %s", base)
 	if err := d.executor.Execute(options, "output", "-json"); err != nil {
 		return nil, false, err
 	}

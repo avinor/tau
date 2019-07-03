@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apex/log"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/terraform"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -21,16 +20,13 @@ type meta struct {
 }
 
 func (m *meta) processArgs(args []string) error {
-	log.Debug(color.New(color.Bold).Sprint("Processing arguments..."))
-
 	if workingDir == "" {
 		workingDir = paths.WorkingDir
 	}
 
 	m.TempDir = paths.TempDir(workingDir, m.file)
 
-	log.Debugf("- Temp dir: %s", m.TempDir)
-	log.Debug("")
+	ui.Debug("temp dir: %s", m.TempDir)
 
 	{
 		m.Engine = terraform.NewEngine()

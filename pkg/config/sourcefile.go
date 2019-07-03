@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/avinor/tau/pkg/helpers/hclcontext"
+	"github.com/avinor/tau/pkg/helpers/ui"
 
-	"github.com/apex/log"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -31,7 +31,7 @@ func GetSourceFile(file string) (*SourceFile, error) {
 		return loadedSourceFiles[file], nil
 	}
 
-	log.Infof("- loading %s", filepath.Base(file))
+	ui.Info("- loading %s", filepath.Base(file))
 
 	if _, err := os.Stat(file); err != nil {
 		return nil, err

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +29,7 @@ func NewRootCmd() *cobra.Command {
 		Long:  rootLong,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if debug {
-				log.SetLevel(log.DebugLevel)
+				ui.SetLevel(ui.DebugLevel)
 			}
 		},
 	}

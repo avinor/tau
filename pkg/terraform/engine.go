@@ -6,13 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/helpers/ctytree"
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/terraform/def"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
-	"github.com/fatih/color"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -32,11 +31,11 @@ func NewEngine() *Engine {
 	version := Version()
 
 	if version == "" {
-		log.Fatal(color.RedString("Could not identify terraform version. Make sure terraform is in PATH."))
+		ui.Fatal("Could not identify terraform version. Make sure terraform is in PATH.")
 	}
 
-	log.Debug(color.New(color.Bold).Sprintf("Terraform version: %s", version))
-	log.Debug("")
+	ui.Debug("Terraform version: %s", version)
+	ui.NewLine()
 
 	var compatibility def.VersionCompatibility
 	var generator def.Generator
@@ -51,7 +50,7 @@ func NewEngine() *Engine {
 		processor = v012Engine
 		executor = v012Engine
 	default:
-		log.Fatal(color.RedString("Unsupported terraform version!"))
+		ui.Fatal("Unsupported terraform version!")
 	}
 
 	return &Engine{
@@ -66,7 +65,7 @@ func NewEngine() *Engine {
 // CreateOverrides create the tau_override file in module folder. This file will overide
 // backend settings
 func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
-	log.Debug(color.New(color.Bold).Sprint("Creating overrides..."))
+	ui.Header("Creating overrides...")
 
 	content, create, err := e.Generator.GenerateOverrides(source)
 
