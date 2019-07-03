@@ -7,8 +7,8 @@ import (
 	"github.com/apex/log"
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
@@ -32,14 +32,11 @@ var (
 
 	// planExample is examples for plan command
 	planExample = templates.Examples(`
-		# Initialize current folder
-		tau init
+		# Plan current folder
+		tau plan
 
-		# Initialize a single module
-		tau init module.hcl
-
-		# Initialize a module and send additional argument to terraform
-		tau init module.hcl --args input=false
+		# Plan a single module
+		tau plan -f module.hcl
 	`)
 )
 
@@ -151,8 +148,12 @@ func (pc *planCmd) run(args []string) error {
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(pc.TempDir, source.Name)
 
+		log.Info("")
+		log.Info("------------------------------------------------------------------------")
+		log.Info("")
+
 		if !paths.IsFile(filepath.Join(moduleDir, "terraform.tfvars")) {
-			log.Warnf(color.YellowString("Cannot plan %s", source.Name))
+			log.Warnf(color.YellowString("Cannot create a plan for %s", source.Name))
 			continue
 		}
 
@@ -162,8 +163,6 @@ func (pc *planCmd) run(args []string) error {
 			Stderr:           shell.Processors(&processors.Log{Level: log.ErrorLevel}),
 			Env:              source.Env,
 		}
-
-		log.Info("------------------------------------------------------------------------")
 
 		extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
 		extraArgs = append(extraArgs, "-out=tau.tfplan")

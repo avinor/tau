@@ -51,10 +51,10 @@ var (
 		tau init
 
 		# Initialize a single module
-		tau init module.hcl
+		tau init -f module.hcl
 
 		# Initialize a module and send additional argument to terraform
-		tau init module.hcl --args input=false
+		tau init -f module.hcl --args input=false
 	`)
 )
 
