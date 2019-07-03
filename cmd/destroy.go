@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type applyCmd struct {
+type destroyCmd struct {
 	meta
 
 	loader *config.Loader
@@ -23,71 +23,68 @@ type applyCmd struct {
 }
 
 var (
-	// applyLong is long description of apply command
-	applyLong = templates.LongDesc(`Apply an execution plan where its possible. It will
-		loop through all plans generated from plan command and execute them. It will only
-		execute for those modules that successfully generated a plan.
+	// destroyLong is long description of destroy command
+	destroyLong = templates.LongDesc(`Destroy resources managed by a module. It
+		can either destroy a single resource or all of them. Requires that the 
+		module have been initialized first.
 		`)
 
-	// applyExample is examples for apply command
-	applyExample = templates.Examples(`
-		# Apply on current folder
-		tau apply
+	// destroyExample is examples for destroy command
+	destroyExample = templates.Examples(`
+		# Destroy all resources from local folder
+		tau destroy
 
-		# Apply a single module
-		tau apply -f module.hcl
-
-		# Apply a single module and auto approve
-		tau apply -f module.hcl --no-input
+		# Destroy all resources in file
+		tau destroy -f module.hcl
 	`)
 )
 
-// newApplyCmd creates a new apply command
-func newApplyCmd() *cobra.Command {
-	ac := &applyCmd{}
+// newDestroyCmd creates a new destroy command
+func newDestroyCmd() *cobra.Command {
+	dc := &destroyCmd{}
 
-	applyCmd := &cobra.Command{
-		Use:                   "apply [-f SORUCE]",
-		Short:                 "Builds or changes infrastructure",
-		Long:                  applyLong,
-		Example:               applyExample,
+	destroyCmd := &cobra.Command{
+		Use:                   "destroy [-f SORUCE]",
+		Short:                 "Destroy tau managed infrastructure",
+		Long:                  destroyLong,
+		Example:               destroyExample,
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		SilenceErrors:         true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := ac.processArgs(args); err != nil {
+			if err := dc.processArgs(args); err != nil {
 				return err
 			}
 
-			ac.init()
+			dc.init()
 
-			return ac.run(args)
+			return dc.run(args)
 		},
 	}
 
-	f := applyCmd.Flags()
-	f.BoolVar(&ac.autoApprove, "auto-approve", false, "auto approve deployment")
+	f := destroyCmd.Flags()
+	f.BoolVar(&dc.autoApprove, "auto-approve", false, "auto approve destruction")
 
-	ac.addMetaFlags(applyCmd)
+	dc.addMetaFlags(destroyCmd)
 
-	return applyCmd
+	return destroyCmd
 }
 
-func (ac *applyCmd) init() {
+func (dc *destroyCmd) init() {
 	{
 		options := &config.Options{
 			WorkingDirectory: paths.WorkingDir,
-			TempDirectory:    ac.TempDir,
+			TempDirectory:    dc.TempDir,
 			MaxDepth:         1,
 		}
 
-		ac.loader = config.NewLoader(options)
+		dc.loader = config.NewLoader(options)
 	}
 }
 
-func (ac *applyCmd) run(args []string) error {
-	loaded, err := ac.loader.Load(ac.file)
+func (dc *destroyCmd) run(args []string) error {
+	loaded, err := dc.loader.Load(dc.file)
 	if err != nil {
 		return err
 	}
@@ -100,7 +97,7 @@ func (ac *applyCmd) run(args []string) error {
 
 	// Verify all modules have been initialized
 	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
+		moduleDir := paths.ModuleDir(dc.TempDir, source.Name)
 
 		if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
 			return moduleNotInitError
@@ -110,13 +107,13 @@ func (ac *applyCmd) run(args []string) error {
 	// Execute prepare hook to make sure we are logged in etc.
 	ui.Header("Executing prepare hook...")
 	for _, source := range loaded {
-		if err := hooks.Run(source, "prepare", "apply"); err != nil {
+		if err := hooks.Run(source, "prepare", "destroy"); err != nil {
 			return err
 		}
 	}
 
 	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
+		moduleDir := paths.ModuleDir(dc.TempDir, source.Name)
 
 		ui.Separator()
 
@@ -132,14 +129,13 @@ func (ac *applyCmd) run(args []string) error {
 			Env:              source.Env,
 		}
 
-		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
-		extraArgs = append(extraArgs, "-input=false", "tau.tfplan")
+		extraArgs := getExtraArgs(dc.Engine.Compatibility.GetInvalidArgs("destroy")...)
 
-		if ac.autoApprove {
+		if dc.autoApprove {
 			extraArgs = append(extraArgs, "-auto-approve")
 		}
 
-		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
+		if err := dc.Engine.Executor.Execute(options, "destroy", extraArgs...); err != nil {
 			return err
 		}
 	}
@@ -148,7 +144,7 @@ func (ac *applyCmd) run(args []string) error {
 
 	ui.Header("Executing finish hook...")
 	for _, source := range loaded {
-		if err := hooks.Run(source, "finish", "apply"); err != nil {
+		if err := hooks.Run(source, "finish", "destroy"); err != nil {
 			return err
 		}
 	}

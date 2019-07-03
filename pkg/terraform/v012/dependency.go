@@ -65,12 +65,12 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 	ui.Info("- %s", base)
 
 	ui.Debug("running terraform init on %s", base)
-	if err := d.executor.Execute(options, "init"); err != nil {
+	if err := d.executor.Execute(options, "init", "-input=false"); err != nil {
 		return nil, false, err
 	}
 
 	ui.Debug("running terraform apply on %s", base)
-	if err := d.executor.Execute(options, "apply"); err != nil {
+	if err := d.executor.Execute(options, "apply", "-auto-approve", "-input=false"); err != nil {
 		// If it accepts failure then just exit with no error, but create = false
 		if d.acceptApplyFailure {
 			return nil, false, nil

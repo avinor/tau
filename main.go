@@ -16,7 +16,7 @@ func main() {
 
 	if err := cmd.NewRootCmd().Execute(); err != nil {
 		ui.NewLine()
-		ui.Fatal("Error: %v", err)
+		ui.Fatal("Error: %s", err)
 		os.Exit(1)
 	}
 }

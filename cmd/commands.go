@@ -15,11 +15,6 @@ type Command struct {
 
 var (
 	validCommands = map[string]Command{
-		"destroy": {
-			Use:              "destroy [-f SOURCE",
-			ShortDescription: "Destroy Tau-managed infrastructure",
-			LongDescription:  "Destroy Tau-managed infrastructure",
-		},
 		"get": {
 			Use:              "get [-f SOURCE]",
 			ShortDescription: "Download and install modules for the configuration",

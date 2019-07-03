@@ -194,6 +194,8 @@ func (ic *initCmd) run(args []string) error {
 			return err
 		}
 
+		ui.NewLine()
+
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
