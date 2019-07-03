@@ -41,6 +41,7 @@ func NewRootCmd() *cobra.Command {
 
 	rootCmd.AddCommand(newInitCmd())
 	rootCmd.AddCommand(newPlanCmd())
+	rootCmd.AddCommand(newApplyCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
 	for name, cmd := range validCommands {

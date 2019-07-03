@@ -3,6 +3,7 @@ package shell
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/apex/log"
@@ -37,6 +38,7 @@ func Execute(options *Options, command string, args ...string) error {
 	}
 
 	log.Debugf("environment variables: %#v", execCmd.Env)
+	log.Debugf("command: %s %s", execCmd.Name, strings.Join(execCmd.Args, " "))
 
 	// Print STDOUT and STDERR lines streaming from Cmd
 	go func() {

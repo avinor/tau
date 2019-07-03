@@ -15,11 +15,6 @@ type Command struct {
 
 var (
 	validCommands = map[string]Command{
-		"apply": {
-			Use:              "apply [-f SOURCE]",
-			ShortDescription: "Builds or changes infrastructure",
-			LongDescription:  "Builds or changes infrastructure",
-		},
 		"destroy": {
 			Use:              "destroy [-f SOURCE",
 			ShortDescription: "Destroy Tau-managed infrastructure",
