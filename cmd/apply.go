@@ -112,7 +112,7 @@ func (ac *applyCmd) run(args []string) error {
 	// Execute prepare hook to make sure we are logged in etc.
 	log.Info(color.New(color.Bold).Sprint("Executing prepare hook..."))
 	for _, source := range loaded {
-		if err := hooks.Run(source, "prepare", "plan"); err != nil {
+		if err := hooks.Run(source, "prepare", "apply"); err != nil {
 			return err
 		}
 	}
@@ -137,9 +137,10 @@ func (ac *applyCmd) run(args []string) error {
 			Env:              source.Env,
 		}
 
-		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("plan")...)
-		extraArgs = append(extraArgs, "-out=tau.tfplan")
-		if err := ac.Engine.Executor.Execute(options, "plan", extraArgs...); err != nil {
+		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
+		extraArgs = append(extraArgs, "-auto-approve", "-input=false", "tau.tfplan")
+
+		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
 			return err
 		}
 	}
@@ -150,7 +151,7 @@ func (ac *applyCmd) run(args []string) error {
 
 	log.Info(color.New(color.Bold).Sprint("Executing finish hook..."))
 	for _, source := range loaded {
-		if err := hooks.Run(source, "finish", "plan"); err != nil {
+		if err := hooks.Run(source, "finish", "apply"); err != nil {
 			return err
 		}
 	}

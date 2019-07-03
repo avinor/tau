@@ -31,6 +31,8 @@ func (c *Compatibility) GetInvalidArgs(command string) []string {
 		return []string{"-backend-config", "-from-module"}
 	case "plan":
 		return []string{"-detailed-exitcode", "-out"}
+	case "apply":
+		return []string{"-auto-approve", "-input"}
 	}
 
 	return []string{}
