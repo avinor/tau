@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/apex/log"
@@ -10,7 +9,7 @@ import (
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/hooks"
-	"github.com/avinor/tau/pkg/paths"
+	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
@@ -129,15 +128,8 @@ func (ic *initCmd) init() {
 func (ic *initCmd) processArgs(args []string) error {
 
 	// if source defined then it can only deploy a single file, not folder
-	if ic.source != "" {
-		fi, err := os.Stat(ic.file)
-		if err != nil {
-			return err
-		}
-
-		if fi.IsDir() {
-			return sourceMustBeAFile
-		}
+	if ic.source != "" && paths.IsDir(ic.file) {
+		return sourceMustBeAFile
 	}
 
 	// if source-version is defined then source is also required

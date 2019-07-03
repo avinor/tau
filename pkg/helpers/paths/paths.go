@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/apex/log"
-	"github.com/avinor/tau/pkg/strings"
+	"github.com/avinor/tau/pkg/helpers/strings"
 )
 
 const (

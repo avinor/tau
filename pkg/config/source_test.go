@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/avinor/tau/pkg/hclcontext"
+	"github.com/avinor/tau/pkg/helpers/hclcontext"
 	"github.com/stretchr/testify/assert"
 )
 

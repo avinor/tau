@@ -2,7 +2,7 @@ package v012
 
 import (
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/hclcontext"
+	"github.com/avinor/tau/pkg/helpers/hclcontext"
 	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"

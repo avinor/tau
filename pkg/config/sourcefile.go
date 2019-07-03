@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/avinor/tau/pkg/hclcontext"
+	"github.com/avinor/tau/pkg/helpers/hclcontext"
 
 	"github.com/apex/log"
 	"github.com/hashicorp/hcl2/hcl"

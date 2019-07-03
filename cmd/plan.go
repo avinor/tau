@@ -8,7 +8,7 @@ import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/hooks"
-	"github.com/avinor/tau/pkg/paths"
+	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"

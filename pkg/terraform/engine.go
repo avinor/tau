@@ -8,8 +8,8 @@ import (
 
 	"github.com/apex/log"
 	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/ctytree"
-	"github.com/avinor/tau/pkg/paths"
+	"github.com/avinor/tau/pkg/helpers/ctytree"
+	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/terraform/def"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
 	"github.com/fatih/color"

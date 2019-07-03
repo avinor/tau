@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	"github.com/avinor/tau/pkg/paths"
+	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/hashicorp/go-getter"
 )
 

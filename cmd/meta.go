@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/apex/log"
-	"github.com/avinor/tau/pkg/paths"
+	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"

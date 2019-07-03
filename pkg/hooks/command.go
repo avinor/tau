@@ -10,7 +10,7 @@ import (
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	pstrings "github.com/avinor/tau/pkg/strings"
+	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 )
 
 // Command is an internal representation of a hook command. Used to execute the hook
