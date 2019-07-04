@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/hashicorp/go-getter"
 )
 
@@ -65,7 +65,7 @@ func New(options *Options) *Client {
 	}
 
 	getters := map[string]getter.Getter{
-		"file":  &getter.FileGetter{Copy: true},
+		"file":  &LocalGetter{FileGetter: getter.FileGetter{Copy: true}},
 		"git":   new(getter.GitGetter),
 		"gcs":   new(getter.GCSGetter),
 		"hg":    new(getter.HgGetter),

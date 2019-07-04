@@ -20,6 +20,7 @@ type applyCmd struct {
 	loader *config.Loader
 
 	autoApprove bool
+	deletePlan bool
 }
 
 var (
@@ -68,6 +69,7 @@ func newApplyCmd() *cobra.Command {
 
 	f := applyCmd.Flags()
 	f.BoolVar(&ac.autoApprove, "auto-approve", false, "auto approve deployment")
+	f.BoolVar(&ac.deletePlan, "delete-plan", true, "delete terraform plan on success")
 
 	ac.addMetaFlags(applyCmd)
 
@@ -117,10 +119,11 @@ func (ac *applyCmd) run(args []string) error {
 
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
+		planFile := filepath.Join(moduleDir, "tau.tfplan")
 
 		ui.Separator()
 
-		if !paths.IsFile(filepath.Join(moduleDir, "tau.tfplan")) {
+		if !paths.IsFile(planFile) {
 			ui.Warn("No plan exists for %s", source.Name)
 			continue
 		}
@@ -141,6 +144,10 @@ func (ac *applyCmd) run(args []string) error {
 
 		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
 			return err
+		}
+
+		if ac.deletePlan {
+			paths.Remove(planFile)
 		}
 	}
 
