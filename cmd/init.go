@@ -25,6 +25,7 @@ type initCmd struct {
 
 	maxDependencyDepth int
 	purge              bool
+	noOverrides bool
 	source             string
 	sourceVersion      string
 }
@@ -87,6 +88,7 @@ func newInitCmd() *cobra.Command {
 	f := initCmd.Flags()
 	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
+	f.BoolVar(&ic.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
 	f.StringVar(&ic.source, "source", "", "override module source location")
 	f.StringVar(&ic.sourceVersion, "source-version", "", "override module source version, only valid together with source override")
 
@@ -192,8 +194,10 @@ func (ic *initCmd) run(args []string) error {
 
 		ui.Separator()
 
-		if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
-			return err
+		if !ic.noOverrides {
+			if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
+				return err
+			}
 		}
 
 		ui.NewLine()
