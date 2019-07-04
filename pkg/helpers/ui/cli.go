@@ -45,7 +45,7 @@ func (hnd *CliHandler) Info(msg string, args ...interface{}) {
 
 // Warn prints message
 func (hnd *CliHandler) Warn(msg string, args ...interface{}) {
-	hnd.printLine(hnd.Writer, color.YellowString(msg, args))
+	hnd.printLine(hnd.Writer, color.YellowString(msg), args...)
 }
 
 // Error prints message
@@ -55,7 +55,7 @@ func (hnd *CliHandler) Error(msg string, args ...interface{}) {
 
 // Fatal prints message and makes sure to fail
 func (hnd *CliHandler) Fatal(msg string, args ...interface{}) {
-	hnd.printLine(hnd.ErrorWriter, color.RedString(msg, args))
+	hnd.printLine(hnd.ErrorWriter, color.RedString(msg), args...)
 	os.Exit(1)
 }
 
