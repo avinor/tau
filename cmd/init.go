@@ -128,11 +128,6 @@ func (ic *initCmd) init() {
 // processArgs process arguments and checks for invalid options or combination of arguments
 func (ic *initCmd) processArgs(args []string) error {
 
-	// if source defined then it can only deploy a single file, not folder
-	if ic.source != "" && paths.IsDir(ic.file) {
-		return sourceMustBeAFile
-	}
-
 	// if source-version is defined then source is also required
 	if ic.source == "" && ic.sourceVersion != "" {
 		return sourceArgumentRequired
@@ -158,6 +153,13 @@ func (ic *initCmd) run(args []string) error {
 		ui.NewLine()
 		ui.Warn("No sources found in path")
 		return nil
+	}
+
+	// if source defined then it can only deploy a single file, not folder
+	if len(loaded) > 1 {
+		if ic.source != "" && paths.IsDir(ic.file) {
+			return sourceMustBeAFile
+		}
 	}
 
 	// Load module files usign go-getter
