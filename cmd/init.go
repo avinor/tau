@@ -7,9 +7,9 @@ import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/getter"
-	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
+	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/pkg/errors"
@@ -25,9 +25,10 @@ type initCmd struct {
 
 	maxDependencyDepth int
 	purge              bool
-	noOverrides bool
+	noOverrides        bool
 	source             string
 	sourceVersion      string
+	reconfigure        bool
 }
 
 var (
@@ -37,6 +38,9 @@ var (
 
 	// sourceArgumentRequired required source argument when source-version is defined
 	sourceArgumentRequired = errors.Errorf("source has to be set when source version is set")
+
+	// purgeAndReconfigureTogether is returned if purge and reconfigure are both defined
+	purgeAndReconfigureTogether = errors.Errorf("purge and reconfigure arguments cannot be defined together")
 
 	// initLong is long description of init command
 	initLong = templates.LongDesc(`Initialize tau working folder based on file argument or by
@@ -89,6 +93,7 @@ func newInitCmd() *cobra.Command {
 	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
 	f.BoolVar(&ic.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
+	f.BoolVar(&ic.reconfigure, "reconfigure", false, "reconfigure the backend")
 	f.StringVar(&ic.source, "source", "", "override module source location")
 	f.StringVar(&ic.sourceVersion, "source-version", "", "override module source version, only valid together with source override")
 
@@ -135,6 +140,10 @@ func (ic *initCmd) processArgs(args []string) error {
 		return sourceArgumentRequired
 	}
 
+	if ic.reconfigure && ic.purge {
+		return purgeAndReconfigureTogether
+	}
+
 	return nil
 }
 
@@ -165,20 +174,22 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	// Load module files usign go-getter
-	ui.Header("Loading modules...")
-	for _, source := range loaded {
-		module := source.Config.Module
-		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
-		source := module.Source
-		version := module.Version
+	if !ic.reconfigure {
+		ui.Header("Loading modules...")
+		for _, source := range loaded {
+			module := source.Config.Module
+			moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
+			source := module.Source
+			version := module.Version
 
-		if ic.source != "" {
-			source = ic.source
-			version = &ic.sourceVersion
-		}
+			if ic.source != "" {
+				source = ic.source
+				version = &ic.sourceVersion
+			}
 
-		if err := ic.getter.Get(source, moduleDir, version); err != nil {
-			return err
+			if err := ic.getter.Get(source, moduleDir, version); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -210,6 +221,11 @@ func (ic *initCmd) run(args []string) error {
 		}
 
 		extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
+
+		if ic.reconfigure {
+			extraArgs = append(extraArgs, "-reconfigure")
+		}
+
 		if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
 			return err
 		}
