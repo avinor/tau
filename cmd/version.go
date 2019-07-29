@@ -1,25 +1,24 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/avinor/tau/pkg/terraform"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/spf13/cobra"
 )
 
 var (
-	BuildVersion = "0.1.0"
-
+	// BuildTag set during build to git tag, if any
 	BuildTag = "unset"
 
+	// BuildSha is the git sha set during build
 	BuildSha = "unset"
 
+	// GitTreeState is state of git tree during build, dirty if there are uncommited changes
 	GitTreeState = "unset"
 )
 
 type versionCmd struct {
-	client bool
-	//noCheck bool
+	short bool
+	// noCheck bool
 }
 
 func newVersionCmd() *cobra.Command {
@@ -27,30 +26,26 @@ func newVersionCmd() *cobra.Command {
 
 	verCmd := &cobra.Command{
 		Use:   "version",
-		Short: "Shows version of tau and terraform",
-		Long:  "Shows version of tau and terraform",
+		Short: "Shows version of tau",
+		Long:  "Shows version of tau",
 		Run: func(cmd *cobra.Command, args []string) {
 			ver.printVersion()
 		},
 	}
 
 	f := verCmd.Flags()
-	f.BoolVar(&ver.client, "client", false, "check only version for tau client")
+	f.BoolVar(&ver.short, "short", false, "short version information")
 	//f.BoolVar(&ver.noCheck, "no-check", false, "do not check for upgrades")
 
 	return verCmd
 }
 
 func (ver *versionCmd) printVersion() {
-	fmt.Printf("tau v%s\n", BuildVersion)
+	ui.Info("tau v%s", BuildTag)
 
-	if !ver.client {
-		version := terraform.Version()
-
-		if version == "" {
-			fmt.Println("terraform not found!")
-		} else {
-			fmt.Printf("terraform v%s\n", version)
-		}
+	if !ver.short {
+		ui.NewLine()
+		ui.Info("Git Commit: %s", BuildSha)
+		ui.Info("Git Tree State: %s", GitTreeState)
 	}
 }
