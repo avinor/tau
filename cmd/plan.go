@@ -11,8 +11,8 @@ import (
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/spf13/cobra"
 	"github.com/fatih/color"
+	"github.com/spf13/cobra"
 )
 
 type planCmd struct {
@@ -110,37 +110,8 @@ func (pc *planCmd) run(args []string) error {
 		}
 	}
 
-	showDepFailureInfo := false
-	ui.Header("Resolving dependencies...")
-	for _, source := range loaded {
-		if source.Config.Inputs == nil {
-			continue
-		}
-
-		moduleDir := paths.ModuleDir(pc.TempDir, source.Name)
-		depsDir := paths.DependencyDir(pc.TempDir, source.Name)
-
-		vars, success, err := pc.Engine.ResolveDependencies(source, depsDir)
-		if err != nil {
-			return err
-		}
-
-		if !success {
-			showDepFailureInfo = true
-			continue
-		}
-
-		if err := pc.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
-			return err
-		}
-	}
-
-	if showDepFailureInfo {
-		ui.NewLine()
-		ui.Info(color.GreenString("Some of the dependencies failed to resolve. This can be because dependency"))
-		ui.Info(color.GreenString("have not been applied yet, and therefore it cannot read remote-state."))
-		ui.Info(color.GreenString("It will continue to plan those modules that can be applied and skip failed."))
-		ui.NewLine()
+	if err := pc.resolveDependencies(loaded); err != nil {
+		return err
 	}
 
 	for _, source := range loaded {
@@ -174,6 +145,43 @@ func (pc *planCmd) run(args []string) error {
 		if err := hooks.Run(source, "finish", "plan"); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *meta) resolveDependencies(loaded []*config.Source) error {
+	showDepFailureInfo := false
+	ui.Header("Resolving dependencies...")
+	for _, source := range loaded {
+		if source.Config.Inputs == nil {
+			continue
+		}
+
+		moduleDir := paths.ModuleDir(m.TempDir, source.Name)
+		depsDir := paths.DependencyDir(m.TempDir, source.Name)
+
+		vars, success, err := m.Engine.ResolveDependencies(source, depsDir)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			showDepFailureInfo = true
+			continue
+		}
+
+		if err := m.Engine.WriteInputVariables(source, moduleDir, vars); err != nil {
+			return err
+		}
+	}
+
+	if showDepFailureInfo {
+		ui.NewLine()
+		ui.Info(color.GreenString("Some of the dependencies failed to resolve. This can be because dependency"))
+		ui.Info(color.GreenString("have not been applied yet, and therefore it cannot read remote-state."))
+		ui.Info(color.GreenString("It will continue to plan those modules that can be applied and skip failed."))
+		ui.NewLine()
 	}
 
 	return nil

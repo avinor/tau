@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/spf13/cobra"
@@ -45,9 +48,30 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newDestroyCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
-	for name, cmd := range validCommands {
+	for name, cmd := range passThroughCommands {
 		rootCmd.AddCommand(newPtCmd(name, cmd))
 	}
 
 	return rootCmd
+}
+
+// getExtraArgs returns extra terraform arguments, but filters out invalid arguments
+func getExtraArgs(invalidArgs ...string) []string {
+	extraArgs := []string{}
+	for _, arg := range terraformArgs {
+		invalidArg := false
+		arg = fmt.Sprintf("-%s", arg)
+
+		for _, ia := range invalidArgs {
+			if strings.HasPrefix(arg, ia) {
+				invalidArg = true
+			}
+		}
+
+		if !invalidArg {
+			extraArgs = append(extraArgs, arg)
+		}
+	}
+
+	return extraArgs
 }

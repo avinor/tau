@@ -20,7 +20,7 @@ type applyCmd struct {
 	loader *config.Loader
 
 	autoApprove bool
-	deletePlan bool
+	deletePlan  bool
 }
 
 var (
@@ -117,13 +117,32 @@ func (ac *applyCmd) run(args []string) error {
 		}
 	}
 
+	// Check if any plans exist, if not then run plan first
+	noPlansExists := true
 	for _, source := range loaded {
 		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
 		planFile := filepath.Join(moduleDir, "tau.tfplan")
 
+		if paths.IsFile(planFile) {
+			noPlansExists = false
+			continue
+		}
+	}
+
+	if noPlansExists {
+		ac.resolveDependencies(loaded)
+	} else {
+		ui.Header("Found tau.plan files, only applying valid plans...")
+	}
+
+	for _, source := range loaded {
+		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
+		planFile := filepath.Join(moduleDir, "tau.tfplan")
+		planFileExists := paths.IsFile(planFile)
+
 		ui.Separator()
 
-		if !paths.IsFile(planFile) {
+		if !planFileExists && !noPlansExists {
 			ui.Warn("No plan exists for %s", source.Name)
 			continue
 		}
@@ -136,7 +155,11 @@ func (ac *applyCmd) run(args []string) error {
 		}
 
 		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
-		extraArgs = append(extraArgs, "-input=false", "tau.tfplan")
+		extraArgs = append(extraArgs, "-input=false")
+
+		if planFileExists {
+			extraArgs = append(extraArgs, "tau.tfplan")
+		}
 
 		if ac.autoApprove {
 			extraArgs = append(extraArgs, "-auto-approve")
