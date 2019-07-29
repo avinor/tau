@@ -17,7 +17,7 @@ var (
 )
 
 type versionCmd struct {
-	short bool
+	detailed bool
 	// noCheck bool
 }
 
@@ -34,7 +34,7 @@ func newVersionCmd() *cobra.Command {
 	}
 
 	f := verCmd.Flags()
-	f.BoolVar(&ver.short, "short", false, "short version information")
+	f.BoolVar(&ver.detailed, "detailed", false, "show detailed information")
 	//f.BoolVar(&ver.noCheck, "no-check", false, "do not check for upgrades")
 
 	return verCmd
@@ -43,7 +43,7 @@ func newVersionCmd() *cobra.Command {
 func (ver *versionCmd) printVersion() {
 	ui.Info("tau v%s", BuildTag)
 
-	if !ver.short {
+	if ver.detailed {
 		ui.NewLine()
 		ui.Info("Git Commit: %s", BuildSha)
 		ui.Info("Git Tree State: %s", GitTreeState)
