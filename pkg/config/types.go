@@ -51,12 +51,15 @@ type Dependency struct {
 // To prevent same command from running multiple times it will assume that running same command
 // multiple times always produce same result and therefore cache output. To prevent this
 // set disable_cache = true. It will force the command to run for every source including hook
+//
+// By default it will fail command if hook fails. To prevent this set fail_on_error = false
 type Hook struct {
 	Type         string    `hcl:"type,label"`
 	TriggerOn    string    `hcl:"trigger_on,attr"`
 	Command      string    `hcl:"command,attr"`
 	Arguments    *[]string `hcl:"args,attr"`
 	SetEnv       *bool     `hcl:"set_env,attr"`
+	FailOnError  *bool     `hcl:"fail_on_error,attr"`
 	DisableCache *bool     `hcl:"disable_cache,attr"`
 }
 

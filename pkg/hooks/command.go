@@ -7,10 +7,10 @@ import (
 	"sync"
 
 	"github.com/avinor/tau/pkg/config"
+	pstrings "github.com/avinor/tau/pkg/helpers/strings"
+	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/avinor/tau/pkg/helpers/ui"
-	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 )
 
 // Command is an internal representation of a hook command. Used to execute the hook
@@ -121,6 +121,10 @@ func (c *Command) Run() error {
 	ui.Info("- %s", c.Hook.Type)
 
 	if err := shell.Execute(options, c.parsedCommand, args...); err != nil {
+		if c.Hook.FailOnError != nil && !*c.Hook.FailOnError {
+			return nil
+		}
+
 		return err
 	}
 

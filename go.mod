@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd
+	github.com/avinor/cmd v1.0.4
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/fatih/color v1.7.0
 	github.com/go-cmd/cmd v1.0.4
