@@ -122,6 +122,7 @@ func (c *Command) Run() error {
 
 	if err := shell.Execute(options, c.parsedCommand, args...); err != nil {
 		if c.Hook.FailOnError != nil && !*c.Hook.FailOnError {
+			c.HasRun = true
 			return nil
 		}
 
