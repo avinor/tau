@@ -223,7 +223,7 @@ func (ic *initCmd) run(args []string) error {
 		extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
 
 		if ic.reconfigure {
-			extraArgs = append(extraArgs, "-reconfigure")
+			extraArgs = append(extraArgs, "-reconfigure", "-force-copy")
 		}
 
 		if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {

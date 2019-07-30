@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
@@ -97,8 +96,8 @@ func (dc *destroyCmd) run(args []string) error {
 
 	// Want to destroy them in reverse order
 	for i, j := 0, len(loaded)-1; i < j; i, j = i+1, j-1 {
-        loaded[i], loaded[j] = loaded[j], loaded[i]
-    }
+		loaded[i], loaded[j] = loaded[j], loaded[i]
+	}
 
 	// Verify all modules have been initialized
 	for _, source := range loaded {
@@ -121,11 +120,6 @@ func (dc *destroyCmd) run(args []string) error {
 		moduleDir := paths.ModuleDir(dc.TempDir, source.Name)
 
 		ui.Separator()
-
-		if !paths.IsFile(filepath.Join(moduleDir, "tau.tfplan")) {
-			ui.Warn("No plan exists for %s", source.Name)
-			continue
-		}
 
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,

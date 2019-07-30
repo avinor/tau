@@ -157,12 +157,12 @@ func (ac *applyCmd) run(args []string) error {
 		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
 		extraArgs = append(extraArgs, "-input=false")
 
-		if planFileExists {
-			extraArgs = append(extraArgs, "tau.tfplan")
-		}
-
 		if ac.autoApprove {
 			extraArgs = append(extraArgs, "-auto-approve")
+		}
+
+		if planFileExists {
+			extraArgs = append(extraArgs, "tau.tfplan")
 		}
 
 		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
