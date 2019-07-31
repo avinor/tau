@@ -144,6 +144,11 @@ func (ic *initCmd) processArgs(args []string) error {
 		return purgeAndReconfigureTogether
 	}
 
+	// Always purge if source is overwritten
+	if ic.source != "" {
+		ic.purge = true
+	}
+
 	return nil
 }
 
