@@ -62,6 +62,13 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]def.Dependenc
 	if len(source.Config.Datas) != 0 {
 		dataProcessor := NewDependencyProcessor(source, g.executor, g.resolver)
 
+		// TODO Make sure we use azurerm data provider < 2.0
+		azblock := hclwrite.NewBlock("required_providers", []string{})
+		azblock.Body().SetAttributeValue("azurerm", cty.StringVal("< 2.0.0"))
+		tblock := hclwrite.NewBlock("terraform", []string{})
+		tblock.Body().AppendBlock(azblock)
+		dataProcessor.File.Body().AppendBlock(tblock)
+
 		for _, data := range source.Config.Datas {
 			block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
 			if err != nil {
