@@ -147,6 +147,11 @@ func (ac *applyCmd) run(args []string) error {
 			continue
 		}
 
+		if !paths.IsFile(filepath.Join(moduleDir, "terraform.tfvars")) {
+			ui.Warn("No values file exists for %s", source.Name)
+			continue
+		}
+
 		options := &shell.Options{
 			WorkingDirectory: moduleDir,
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
