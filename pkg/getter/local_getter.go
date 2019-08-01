@@ -45,7 +45,7 @@ func (g *LocalGetter) Get(dst string, u *url.URL) error {
 	// If the destination already exists, just delete it
 	if err == nil {
 		// Remove the destination
-		if err := os.Remove(dst); err != nil {
+		if err := os.RemoveAll(dst); err != nil {
 			return err
 		}
 	}
