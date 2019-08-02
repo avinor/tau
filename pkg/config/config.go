@@ -22,11 +22,15 @@ type Config struct {
 
 // Merge all sources into current configuration struct.
 func (c *Config) Merge(srcs []*Config) error {
-	if err := mergeBackends(c, srcs); err != nil {
+	if err := mergeDatas(c, srcs); err != nil {
 		return err
 	}
 
-	if err := mergeDatas(c, srcs); err != nil {
+	if err := mergeDependencies(c, srcs); err != nil {
+		return err
+	}
+
+	if err := mergeBackends(c, srcs); err != nil {
 		return err
 	}
 

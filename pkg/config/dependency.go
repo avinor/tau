@@ -1,6 +1,8 @@
 package config
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 var (
 	dependencySourceMustBeSet = errors.Errorf("dependency source must be set")
@@ -55,4 +57,28 @@ func (d *Dependency) Validate() (bool, error) {
 	}
 
 	return true, nil
+}
+
+// mergeDependencies merges the dependency arrays into destination config.
+func mergeDependencies(dest *Config, srcs []*Config) error {
+	deps := map[string]*Dependency{}
+
+	for _, src := range srcs {
+		for _, dep := range src.Dependencies {
+			if _, ok := deps[dep.Name]; !ok {
+				deps[dep.Name] = dep
+				continue
+			}
+
+			if err := deps[dep.Name].Merge(dep); err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, dep := range deps {
+		dest.Dependencies = append(dest.Dependencies, dep)
+	}
+
+	return nil
 }
