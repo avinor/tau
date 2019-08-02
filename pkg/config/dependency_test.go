@@ -56,11 +56,6 @@ var (
 	depFile6 = fileFromString("dep6", depTest6)
 )
 
-type ValidationDependencyResult struct {
-	Result bool
-	Error  error
-}
-
 func TestDependencyMerge(t *testing.T) {
 	tests := []struct {
 		Files    []*File
@@ -126,18 +121,18 @@ func TestDependencyMerge(t *testing.T) {
 func TestDependencyValidation(t *testing.T) {
 	tests := []struct {
 		Files    []*File
-		Expected map[string]ValidationDependencyResult
+		Expected map[string]ValidationResult
 	}{
 		{
 			[]*File{depFile1},
-			map[string]ValidationDependencyResult{
-				"name": ValidationDependencyResult{Result: true, Error: nil},
+			map[string]ValidationResult{
+				"name": ValidationResult{Result: true, Error: nil},
 			},
 		},
 		{
 			[]*File{depFile4},
-			map[string]ValidationDependencyResult{
-				"two": ValidationDependencyResult{Result: false, Error: dependencySourceMustBeSet},
+			map[string]ValidationResult{
+				"two": ValidationResult{Result: false, Error: dependencySourceMustBeSet},
 			},
 		},
 	}

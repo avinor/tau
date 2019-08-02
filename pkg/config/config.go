@@ -30,6 +30,14 @@ func (c *Config) Merge(srcs []*Config) error {
 		return err
 	}
 
+	if err := mergeHooks(c, srcs); err != nil {
+		return err
+	}
+
+	if err := mergeEnvironments(c, srcs); err != nil {
+		return err
+	}
+
 	if err := mergeBackends(c, srcs); err != nil {
 		return err
 	}

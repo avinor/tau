@@ -98,7 +98,7 @@ func (f *File) parse(context *hcl.EvalContext) (*Config, error) {
 	bodyDiags := gohcl.DecodeBody(hclFile.Body, context, config)
 
 	if bodyDiags.HasErrors() {
-		return nil, diags
+		return nil, bodyDiags
 	}
 
 	return config, nil

@@ -147,7 +147,7 @@ func TestDataMerge(t *testing.T) {
 				t.Fatal("expected attribute failure")
 			}
 
-			assert.Equal(t, test.Expected, actual)
+			assert.ElementsMatch(t, test.Expected, actual)
 		})
 	}
 }
