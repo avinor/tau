@@ -9,6 +9,7 @@ require (
 	github.com/fatih/color v1.7.0
 	github.com/go-cmd/cmd v1.0.4
 	github.com/go-errors/errors v1.0.1
+	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/go-getter v1.3.0
 	github.com/hashicorp/hcl2 v0.0.0-20190515223218-4b22149b7cef
 	github.com/hashicorp/terraform v0.12.2

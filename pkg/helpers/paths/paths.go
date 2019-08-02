@@ -4,8 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/helpers/strings"
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 const (
