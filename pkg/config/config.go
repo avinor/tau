@@ -42,6 +42,14 @@ func (c *Config) Merge(srcs []*Config) error {
 		return err
 	}
 
+	if err := mergeModules(c, srcs); err != nil {
+		return err
+	}
+
+	if err := mergeInputs(c, srcs); err != nil {
+		return err
+	}
+
 	return nil
 }
 
