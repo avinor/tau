@@ -31,6 +31,25 @@ func getConfigFromFiles(t *testing.T, files []*File) []*Config {
 	return configs
 }
 
+func getBodyAttributes(body hcl.Body) (map[string]string, error) {
+	attrs, diags := body.JustAttributes()
+	if diags != nil {
+		return nil, diags
+	}
+
+	actual := map[string]string{}
+	for _, attr := range attrs {
+		value, diags := attr.Expr.Value(nil)
+		if diags != nil {
+			return nil, diags
+		}
+
+		actual[attr.Name] = value.AsString()
+	}
+
+	return actual, nil
+}
+
 func testBodyAttributes(t *testing.T, body hcl.Body, expected map[string]string, expectError bool) {
 	attrs, diags := body.JustAttributes()
 	if diags != nil {

@@ -79,10 +79,8 @@ func (f *File) Config() (*Config, error) {
 	}
 
 	config := &Config{}
-	for _, cfg := range configs {
-		if err := config.Merge(cfg); err != nil {
-			return nil, err
-		}
+	if err := config.Merge(configs); err != nil {
+		return nil, err
 	}
 
 	return config, nil

@@ -64,6 +64,20 @@ func TestBackendMerge(t *testing.T) {
 			nil,
 			false,
 		},
+		{
+			[]*File{backendFile4},
+			map[string]string{
+				"region": "oregon",
+			},
+			nil,
+			false,
+		},
+		{
+			[]*File{backendFile1, backendFile4},
+			nil,
+			differentBackendTypes,
+			false,
+		},
 	}
 
 	for i, test := range tests {
@@ -76,7 +90,20 @@ func TestBackendMerge(t *testing.T) {
 				return
 			}
 
-			testBodyAttributes(t, config.Backend.Config, test.Expected, test.AttrError)
+			actual, err := getBodyAttributes(config.Backend.Config)
+			if err != nil {
+				if test.AttrError {
+					return
+				}
+
+				t.Fatal("failed getting attribute body", err)
+			}
+
+			if test.AttrError {
+				t.Fatal("expected attribute failure")
+			}
+
+			assert.Equal(t, test.Expected, actual)
 		})
 	}
 }

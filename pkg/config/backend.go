@@ -19,6 +19,7 @@ type Backend struct {
 	Config hcl.Body `hcl:",remain"`
 }
 
+// Merge current backend with source. Source will overwrite settings from current backend
 func (b *Backend) Merge(src *Backend) error {
 	if src == nil {
 		return nil
@@ -33,12 +34,18 @@ func (b *Backend) Merge(src *Backend) error {
 	return nil
 }
 
+// Validate that all settings in backend are correct and required settings are configured
 func (b Backend) Validate() (bool, error) {
 	return true, nil
 }
 
+// mergeBackends merges only the backends from all configurations in srcs into dest
 func mergeBackends(dest *Config, srcs []*Config) error {
 	for _, src := range srcs {
+		if src.Backend == nil {
+			continue
+		}
+
 		if dest.Backend == nil {
 			dest.Backend = src.Backend
 			continue
