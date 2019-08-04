@@ -17,7 +17,7 @@ import (
 type applyCmd struct {
 	meta
 
-	loader *config.Loader
+	loader *module.Loader
 
 	autoApprove bool
 	deletePlan  bool
