@@ -21,7 +21,7 @@ type initCmd struct {
 	meta
 
 	getter *getter.Client
-	loader *config.Loader
+	loader *module.Loader
 
 	maxDependencyDepth int
 	purge              bool
@@ -120,7 +120,7 @@ func (ic *initCmd) init() {
 	}
 
 	{
-		options := &config.Options{
+		options := &module.Options{
 			WorkingDirectory: paths.WorkingDir,
 			TempDirectory:    ic.TempDir,
 			MaxDepth:         ic.maxDependencyDepth,
@@ -128,7 +128,7 @@ func (ic *initCmd) init() {
 
 		ui.Debug("max dependency depth: %s", ic.maxDependencyDepth)
 
-		ic.loader = config.NewLoader(options)
+		ic.loader = module.NewLoader(options)
 	}
 }
 
