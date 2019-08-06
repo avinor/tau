@@ -18,7 +18,7 @@ func fileFromString(name string, content string) *File {
 		Name:     name,
 		FullPath: name,
 		Content:  []byte(content),
-		Children: []*File{},
+		children: []*File{},
 	}
 }
 
