@@ -62,5 +62,21 @@ func (c Config) Validate() (bool, error) {
 		return false, moduleRequired
 	}
 
+	for _, dep := range c.Dependencies {
+		if valid, err := dep.Validate(); !valid {
+			return false, err
+		}
+	}
+
+	if valid, err := c.Environment.Validate(); !valid {
+		return false, err
+	}
+
+	for _, hook := range c.Hooks {
+		if valid, err := hook.Validate(); !valid {
+			return false, err
+		}
+	}
+
 	return true, nil
 }
