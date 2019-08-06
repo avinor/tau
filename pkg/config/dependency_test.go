@@ -126,13 +126,13 @@ func TestDependencyValidation(t *testing.T) {
 		{
 			[]*File{depFile1},
 			map[string]ValidationResult{
-				"name": ValidationResult{Result: true, Error: nil},
+				"name": {Result: true, Error: nil},
 			},
 		},
 		{
 			[]*File{depFile4},
 			map[string]ValidationResult{
-				"two": ValidationResult{Result: false, Error: dependencySourceMustBeSet},
+				"two": {Result: false, Error: dependencySourceMustBeSet},
 			},
 		},
 	}

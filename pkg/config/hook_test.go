@@ -60,7 +60,7 @@ func TestHookMerge(t *testing.T) {
 		{
 			[]*File{hookFile1},
 			[]*Hook{
-				&Hook{
+				{
 					Type:      "name",
 					Command:   stringPointer("command"),
 					TriggerOn: stringPointer("prepare"),
@@ -71,7 +71,7 @@ func TestHookMerge(t *testing.T) {
 		{
 			[]*File{hookFile1, hookFile2},
 			[]*Hook{
-				&Hook{
+				{
 					Type:      "name",
 					Command:   stringPointer("overwrite"),
 					TriggerOn: stringPointer("prepare"),
@@ -83,7 +83,7 @@ func TestHookMerge(t *testing.T) {
 		{
 			[]*File{hookFile1, hookFile2, hookFile3},
 			[]*Hook{
-				&Hook{
+				{
 					Type:      "name",
 					Command:   stringPointer("overwrite"),
 					TriggerOn: stringPointer("prepare"),
@@ -122,19 +122,19 @@ func TestHookValidation(t *testing.T) {
 		{
 			[]*File{hookFile1},
 			map[string]ValidationResult{
-				"name": ValidationResult{Result: true, Error: nil},
+				"name": {Result: true, Error: nil},
 			},
 		},
 		{
 			[]*File{hookFile4},
 			map[string]ValidationResult{
-				"name": ValidationResult{Result: false, Error: triggerOnValueIncorrect},
+				"name": {Result: false, Error: triggerOnValueIncorrect},
 			},
 		},
 		{
 			[]*File{hookFile5},
 			map[string]ValidationResult{
-				"name": ValidationResult{Result: false, Error: commandIsRequired},
+				"name": {Result: false, Error: commandIsRequired},
 			},
 		},
 	}
