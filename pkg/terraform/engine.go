@@ -3,7 +3,6 @@ package terraform
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/avinor/tau/pkg/config/loader"
@@ -76,9 +75,7 @@ func (e *Engine) CreateOverrides(file *loader.ParsedFile) error {
 		return nil
 	}
 
-	overrides := filepath.Join(file.ModuleDir(), "tau_override.tf")
-
-	return ioutil.WriteFile(overrides, content, os.ModePerm)
+	return ioutil.WriteFile(file.OverrideFile(), content, os.ModePerm)
 }
 
 // ResolveDependencies processes the source file and generates terraform modules for each unique
@@ -135,7 +132,5 @@ func (e *Engine) WriteInputVariables(file *loader.ParsedFile) error {
 		return err
 	}
 
-	vars := filepath.Join(file.ModuleDir(), "terraform.tfvars")
-
-	return ioutil.WriteFile(vars, content, os.ModePerm)
+	return ioutil.WriteFile(file.VariableFile(), content, os.ModePerm)
 }

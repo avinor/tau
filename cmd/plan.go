@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
@@ -118,7 +120,7 @@ func (pc *planCmd) run(args []string) error {
 		}
 
 		extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
-		extraArgs = append(extraArgs, "-out=tau.tfplan")
+		extraArgs = append(extraArgs, fmt.Sprintf("-out=%s", file.PlanFile()))
 		if err := pc.Engine.Executor.Execute(options, "plan", extraArgs...); err != nil {
 			return err
 		}

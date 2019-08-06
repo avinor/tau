@@ -109,6 +109,11 @@ func (dc *destroyCmd) run(args []string) error {
 	for _, file := range files {
 		ui.Separator()
 
+		if !paths.IsFile(file.VariableFile()) {
+			ui.Warn("No values file exists for %s", file.Name)
+			continue
+		}
+
 		options := &shell.Options{
 			WorkingDirectory: file.ModuleDir(),
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),

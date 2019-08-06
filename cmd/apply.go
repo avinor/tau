@@ -109,9 +109,7 @@ func (ac *applyCmd) run(args []string) error {
 	// Check if any plans exist, if not then run plan first
 	noPlansExists := true
 	for _, file := range files {
-		planFile := paths.Join(file.ModuleDir(), "tau.tfplan")
-
-		if paths.IsFile(planFile) {
+		if paths.IsFile(file.PlanFile()) {
 			noPlansExists = false
 			continue
 		}
@@ -153,7 +151,7 @@ func (ac *applyCmd) run(args []string) error {
 		}
 
 		if planFileExists {
-			extraArgs = append(extraArgs, "tau.tfplan")
+			extraArgs = append(extraArgs, file.PlanFile())
 		}
 
 		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
