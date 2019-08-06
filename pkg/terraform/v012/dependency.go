@@ -114,7 +114,7 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 }
 
 // Write implements the shell.OutputProcessor interface so it can use DependencyProcessor
-// as a processer when executing commands, and therefore set acceptApplyFailure if it detects
+// as a processor when executing commands, and therefore set acceptApplyFailure if it detects
 // acceptable error messages in output
 func (d *DependencyProcessor) Write(line string) bool {
 	if strings.Contains(line, "Unable to find remote state") {

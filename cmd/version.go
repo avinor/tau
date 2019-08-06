@@ -12,7 +12,7 @@ var (
 	// BuildSha is the git sha set during build
 	BuildSha = "unset"
 
-	// GitTreeState is state of git tree during build, dirty if there are uncommited changes
+	// GitTreeState is state of git tree during build, dirty if there are uncommitted changes
 	GitTreeState = "unset"
 )
 

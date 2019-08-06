@@ -19,7 +19,7 @@ type LocalGetter struct {
 }
 
 // Get overwrites FileGetter.Get if Copy is set to true. Otherwise it will just
-// call the FileGetter.Get function and use standard functionallity
+// call the FileGetter.Get function and use standard functionality
 func (g *LocalGetter) Get(dst string, u *url.URL) error {
 	if !g.Copy {
 		return g.FileGetter.Get(dst, u)
