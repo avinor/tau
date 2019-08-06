@@ -7,7 +7,7 @@ import (
 	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
-// Run all hooks in source for a specfic event. Command input can filter hooks that should only be run
+// Run all hooks in source for a specific event. Command input can filter hooks that should only be run
 // got specific terraform commands.
 func Run(file *loader.ParsedFile, event string, command string) error {
 	for _, hook := range file.Config.Hooks {
