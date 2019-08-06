@@ -1,8 +1,9 @@
 package v012
 
-type Compatibility struct {
-}
+// Compatibility implements the def.VersionCompatibility interface
+type Compatibility struct{}
 
+// GetValidCommands returns valid commands for terraform 0.12
 func (c *Compatibility) GetValidCommands() []string {
 	return []string{
 		"apply",
@@ -25,6 +26,8 @@ func (c *Compatibility) GetValidCommands() []string {
 	}
 }
 
+// GetInvalidArgs returns invalid arguments for command. These are invalid because they
+// are usually set by tau and should not be configured by user.
 func (c *Compatibility) GetInvalidArgs(command string) []string {
 	switch command {
 	case "init":

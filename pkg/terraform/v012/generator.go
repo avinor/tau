@@ -1,6 +1,7 @@
 package v012
 
 import (
+	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/hclcontext"
 	"github.com/avinor/tau/pkg/terraform/def"
@@ -46,7 +47,7 @@ func (g *Generator) GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, er
 
 // GenerateDependencies returns a list of all dependency processors that will generate dependencies.
 func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.DependencyProcesser, bool, error) {
-	trav, err := g.resolver.ResolveInputExpressions(file)
+	trav, err := g.resolver.ResolveVariables(file.Config.Inputs.Config)
 	if err != nil {
 		return nil, false, err
 	}
@@ -62,66 +63,18 @@ func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.Depende
 	processors := []def.DependencyProcesser{}
 
 	if len(file.Config.Datas) != 0 {
-		dataProcessor := NewDependencyProcessor(file, file, g.executor, g.resolver)
-
-		// TODO Make sure we use azurerm data provider < 2.0
-		azblock := hclwrite.NewBlock("required_providers", []string{})
-		azblock.Body().SetAttributeValue("azurerm", cty.StringVal("< 2.0.0"))
-		tblock := hclwrite.NewBlock("terraform", []string{})
-		tblock.Body().AppendBlock(azblock)
-		dataProcessor.File.Body().AppendBlock(tblock)
-
-		for _, data := range file.Config.Datas {
-			block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
-			if err != nil {
-				return nil, false, err
-			}
-
-			dataProcessor.File.Body().AppendBlock(block)
-		}
-
-		// Find variables with data source
-		for _, t := range trav {
-			if block := generateOutputTraversalBlock(t, "data", ""); block != nil {
-				dataProcessor.File.Body().AppendBlock(block)
-			}
+		dataProcessor, err := g.generateDataProcessor(file, trav)
+		if err != nil {
+			return nil, false, err
 		}
 
 		processors = append(processors, dataProcessor)
 	}
 
 	for _, dep := range file.Config.Dependencies {
-		depsource, ok := file.Dependencies[dep.Name]
-		if !ok {
-			return nil, false, errors.Errorf("Could not find dependency %s", dep.Name)
-		}
-
-		if depsource.Config.Backend == nil {
-			return nil, false, errors.Errorf("Dependencies must have a backend")
-		}
-
-		if dep.Backend != nil && depsource.Config.Backend.Type != dep.Backend.Type {
-			return nil, false, errors.Errorf("Dependency backend type and override backend type must match")
-		}
-
-		var depBackend hcl.Body
-		if dep.Backend != nil {
-			depBackend = dep.Backend.Config
-		}
-
-		block, err := g.generateRemoteBackendBlock(depsource, dep.Name, depsource.Config.Backend.Type, depsource.Config.Backend.Config, depBackend)
+		depProcessor, err := g.generateDepProcessor(file, dep, trav)
 		if err != nil {
 			return nil, false, err
-		}
-
-		depProcessor := NewDependencyProcessor(file, depsource, g.executor, g.resolver)
-		depProcessor.File.Body().AppendBlock(block)
-
-		// Find variables using this dependency
-		for _, t := range trav {
-			if block := generateOutputTraversalBlock(t, "dependency", dep.Name); block != nil {
-				depProcessor.File.Body().AppendBlock(block)
-			}
 		}
 
 		processors = append(processors, depProcessor)
@@ -200,6 +153,72 @@ func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, ba
 	blockBody.SetAttributeValue("config", cty.MapVal(values))
 
 	return block, nil
+}
+
+func (g *Generator) generateDataProcessor(file *loader.ParsedFile, trav []hcl.Traversal) (*DependencyProcessor, error) {
+	dataProcessor := NewDependencyProcessor(file, file, g.executor, g.resolver)
+
+	// TODO Make sure we use azurerm data provider < 2.0
+	azblock := hclwrite.NewBlock("required_providers", []string{})
+	azblock.Body().SetAttributeValue("azurerm", cty.StringVal("< 2.0.0"))
+	tblock := hclwrite.NewBlock("terraform", []string{})
+	tblock.Body().AppendBlock(azblock)
+	dataProcessor.File.Body().AppendBlock(tblock)
+
+	for _, data := range file.Config.Datas {
+		block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
+		if err != nil {
+			return nil, err
+		}
+
+		dataProcessor.File.Body().AppendBlock(block)
+	}
+
+	// Find variables with data source
+	for _, t := range trav {
+		if block := generateOutputTraversalBlock(t, "data", ""); block != nil {
+			dataProcessor.File.Body().AppendBlock(block)
+		}
+	}
+
+	return dataProcessor, nil
+}
+
+func (g *Generator) generateDepProcessor(file *loader.ParsedFile, dep *config.Dependency, trav []hcl.Traversal) (*DependencyProcessor, error) {
+	depFile, ok := file.Dependencies[dep.Name]
+	if !ok {
+		return nil, errors.Errorf("Could not find dependency %s", dep.Name)
+	}
+
+	if depFile.Config.Backend == nil {
+		return nil, errors.Errorf("Dependencies must have a backend")
+	}
+
+	if dep.Backend != nil && depFile.Config.Backend.Type != dep.Backend.Type {
+		return nil, errors.Errorf("Dependency backend type and override backend type must match")
+	}
+
+	var depBackend hcl.Body
+	if dep.Backend != nil {
+		depBackend = dep.Backend.Config
+	}
+
+	block, err := g.generateRemoteBackendBlock(depFile, dep.Name, depFile.Config.Backend.Type, depFile.Config.Backend.Config, depBackend)
+	if err != nil {
+		return nil, err
+	}
+
+	depProcessor := NewDependencyProcessor(file, depFile, g.executor, g.resolver)
+	depProcessor.File.Body().AppendBlock(block)
+
+	// Find variables using this dependency
+	for _, t := range trav {
+		if block := generateOutputTraversalBlock(t, "dependency", dep.Name); block != nil {
+			depProcessor.File.Body().AppendBlock(block)
+		}
+	}
+
+	return depProcessor, nil
 }
 
 func generateOutputTraversalBlock(t hcl.Traversal, rootname string, name string) *hclwrite.Block {

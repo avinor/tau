@@ -3,18 +3,21 @@ package v012
 import (
 	"encoding/json"
 
-	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
+// Resolver is used to resolve output or config
 type Resolver struct{}
 
-func (r *Resolver) ResolveInputExpressions(file *loader.ParsedFile) ([]hcl.Traversal, error) {
+// ResolveVariables decodes the config and returns a list of all variables found in hcl.Body.
+// This is used later to be able to determine what variables it needs to resolve before
+// finally resolving the body.
+func (r *Resolver) ResolveVariables(body hcl.Body) ([]hcl.Traversal, error) {
 	exprs := map[string]hcl.Expression{}
-	diags := gohcl.DecodeBody(file.Config.Inputs.Config, nil, &exprs)
+	diags := gohcl.DecodeBody(body, nil, &exprs)
 
 	if diags.HasErrors() {
 		return nil, diags
@@ -33,6 +36,8 @@ func (r *Resolver) ResolveInputExpressions(file *loader.ParsedFile) ([]hcl.Trave
 	return trav, nil
 }
 
+// ResolveStateOutput takes the output from terraform command and parses the output into
+// a map of string -> cty.Value
 func (r *Resolver) ResolveStateOutput(output []byte) (map[string]cty.Value, error) {
 	type OutputMeta struct {
 		Sensitive bool            `json:"sensitive"`
