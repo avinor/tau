@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/ctytree"
-	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/terraform/def"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
@@ -64,10 +63,10 @@ func NewEngine() *Engine {
 
 // CreateOverrides create the tau_override file in module folder. This file will overide
 // backend settings
-func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
+func (e *Engine) CreateOverrides(file *loader.ParsedFile) error {
 	ui.Header("Creating overrides...")
 
-	content, create, err := e.Generator.GenerateOverrides(source)
+	content, create, err := e.Generator.GenerateOverrides(file)
 
 	if err != nil {
 		return err
@@ -77,9 +76,9 @@ func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
 		return nil
 	}
 
-	file := filepath.Join(dest, "tau_override.tf")
+	overrides := filepath.Join(file.ModuleDir(), "tau_override.tf")
 
-	return ioutil.WriteFile(file, content, os.ModePerm)
+	return ioutil.WriteFile(overrides, content, os.ModePerm)
 }
 
 // ResolveDependencies processes the source file and generates terraform modules for each unique
@@ -89,37 +88,29 @@ func (e *Engine) CreateOverrides(source *config.Source, dest string) error {
 // source. If it failed to resolve dependencies but error is nil, it should not proceed to create this
 // source, but should also not fail application. That generally means that it was a problem resolving
 // dependencies for this source only. Other sources can still be generated.
-func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[string]cty.Value, bool, error) {
-	processors, create, err := e.Generator.GenerateDependencies(source)
+func (e *Engine) ResolveDependencies(file *loader.ParsedFile) (bool, error) {
+	processors, create, err := e.Generator.GenerateDependencies(file)
 
 	if err != nil {
-		return nil, false, err
+		return false, err
 	}
 
 	if !create {
-		return nil, true, nil
+		return true, nil
 	}
 
 	values := map[string]cty.Value{}
 
 	for _, proc := range processors {
-		procDest := filepath.Join(dest, proc.Name())
-		paths.EnsureDirectoryExists(procDest)
-
-		file := filepath.Join(procDest, "main.tf")
-		if err := ioutil.WriteFile(file, proc.Content(), os.ModePerm); err != nil {
-			return nil, false, err
-		}
-
-		vals, create, err := proc.Process(procDest)
+		vals, create, err := proc.Process()
 		if err != nil {
-			return nil, false, err
+			return false, err
 		}
 
 		// if not create then resolving dependency failed, but it should not result in an error.
 		// it should just skip this source
 		if !create {
-			return nil, false, nil
+			return false, nil
 		}
 
 		for key, value := range vals {
@@ -127,20 +118,24 @@ func (e *Engine) ResolveDependencies(source *config.Source, dest string) (map[st
 		}
 	}
 
-	return ctytree.CreateTree(values).ToCtyMap(), true, nil
+	for k, v := range ctytree.CreateTree(values).ToCtyMap() {
+		file.AddToContext(k, v)
+	}
+
+	return true, nil
 }
 
 // WriteInputVariables write the terraform.tfvars file into module folder. This file is the parsed and
 // processed variables where all dependencies and data source have been resolved and replaced with real
 // values
-func (e *Engine) WriteInputVariables(source *config.Source, dest string, variables map[string]cty.Value) error {
-	content, err := e.Generator.GenerateVariables(source, variables)
+func (e *Engine) WriteInputVariables(file *loader.ParsedFile) error {
+	content, err := e.Generator.GenerateVariables(file)
 
 	if err != nil {
 		return err
 	}
 
-	file := filepath.Join(dest, "terraform.tfvars")
+	vars := filepath.Join(file.ModuleDir(), "terraform.tfvars")
 
-	return ioutil.WriteFile(file, content, os.ModePerm)
+	return ioutil.WriteFile(vars, content, os.ModePerm)
 }

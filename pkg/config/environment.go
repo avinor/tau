@@ -3,8 +3,10 @@ package config
 import (
 	"regexp"
 
+	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/pkg/errors"
+	"github.com/zclconf/go-cty/cty"
 )
 
 var (
@@ -46,6 +48,28 @@ func (e Environment) Validate() (bool, error) {
 	}
 
 	return true, nil
+}
+
+// Parse parses the config and returns all the environment variables defined in config.
+func (e *Environment) Parse(context *hcl.EvalContext) (map[string]string, error) {
+	env := map[string]string{}
+
+	if e == nil {
+		return env, nil
+	}
+
+	values := map[string]cty.Value{}
+	diags := gohcl.DecodeBody(e.Config, context, &values)
+
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	for key, value := range values {
+		env[key] = value.AsString()
+	}
+
+	return env, nil
 }
 
 // mergeEnvironments merges only the environment from all configurations in srcs into dest

@@ -1,16 +1,13 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +16,7 @@ type ptCmd struct {
 	name    string
 	command passThroughCommand
 
-	loader *config.Loader
+	loader *loader.Loader
 }
 
 // passThroughCommand description for a command that should just be passed through to terraform
@@ -32,8 +29,6 @@ type passThroughCommand struct {
 }
 
 var (
-	moduleNotInitError = errors.Errorf("module is not initialized")
-
 	passThroughCommands = map[string]passThroughCommand{
 		"get": {
 			Use:              "get [-f SOURCE]",
@@ -117,52 +112,43 @@ func newPtCmd(name string, command passThroughCommand) *cobra.Command {
 
 func (pt *ptCmd) init() {
 	{
-		options := &config.Options{
+		options := &loader.Options{
 			WorkingDirectory: paths.WorkingDir,
-			TempDirectory:    pt.TempDir,
+			TauDirectory:     pt.TauDir,
 			MaxDepth:         1,
 		}
 
-		pt.loader = config.NewLoader(options)
+		pt.loader = loader.New(options)
 	}
 }
 
 func (pt *ptCmd) run(args []string) error {
-	loaded, err := pt.loader.Load(pt.file)
+	files, err := pt.loader.Load(pt.file)
 	if err != nil {
 		return err
 	}
 
-	if len(loaded) == 0 {
+	if len(files) == 0 {
 		ui.NewLine()
 		ui.Warn("No sources found")
 		return nil
 	}
 
 	// Verify all modules have been initialized
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
-
-		if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
-			return moduleNotInitError
-		}
+	if err := files.IsAllInitialized(); err != nil {
+		return err
 	}
 
-	ui.Header("Executing prepare hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "prepare", pt.name); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "prepare", pt.name); err != nil {
+		return err
 	}
 
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(pt.TempDir, source.Name)
-
+	for _, file := range files {
 		options := &shell.Options{
-			WorkingDirectory: moduleDir,
+			WorkingDirectory: file.ModuleDir(),
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
 			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              source.Env,
+			Env:              file.Env,
 		}
 
 		ui.Separator()
@@ -175,11 +161,8 @@ func (pt *ptCmd) run(args []string) error {
 
 	ui.Separator()
 
-	ui.Header("Executing finish hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "finish", pt.name); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "finish", pt.name); err != nil {
+		return err
 	}
 
 	return nil

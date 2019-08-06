@@ -3,19 +3,18 @@ package v012
 import (
 	"encoding/json"
 
-	"github.com/avinor/tau/pkg/config"
-	gohcl2 "github.com/hashicorp/hcl2/gohcl"
+	"github.com/avinor/tau/pkg/config/loader"
+	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
-type Resolver struct {
-}
+type Resolver struct{}
 
-func (r *Resolver) ResolveInputExpressions(source *config.Source) ([]hcl.Traversal, error) {
+func (r *Resolver) ResolveInputExpressions(file *loader.ParsedFile) ([]hcl.Traversal, error) {
 	exprs := map[string]hcl.Expression{}
-	diags := gohcl2.DecodeBody(source.Config.Inputs.Config, nil, &exprs)
+	diags := gohcl.DecodeBody(file.Config.Inputs.Config, nil, &exprs)
 
 	if diags.HasErrors() {
 		return nil, diags

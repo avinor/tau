@@ -28,7 +28,10 @@ type File struct {
 	FullPath string
 	Content  []byte
 
-	Children []*File
+	children []*File
+
+	// context to evaluate expressions with. New variables can be added to this by calling AddToContext()
+	context *hcl.EvalContext
 }
 
 // NewFile returns a new File. It will check that it exists and read content, but not parse it
@@ -54,23 +57,33 @@ func NewFile(file string) (*File, error) {
 		Name:     name,
 		FullPath: absPath,
 		Content:  content,
-		Children: []*File{},
+		children: []*File{},
+		context:  getNewEvalContext(file),
 	}, nil
 }
 
 // AddChild adds a child File.
 func (f *File) AddChild(file *File) {
-	f.Children = append(f.Children, file)
+	f.children = append(f.children, file)
+}
+
+// AddToContext adds a variable to the evaluation context of this file
+func (f *File) AddToContext(key string, value cty.Value) {
+	f.context.Variables[key] = value
+}
+
+// EvalContext returns the evaluation context for this file
+func (f *File) EvalContext() *hcl.EvalContext {
+	return f.context
 }
 
 // Config returns the full configuration for file. This includes the merged configuration from
 // all children. Should only call this once as it will do full parsing of file and all children
 func (f *File) Config() (*Config, error) {
 	configs := []*Config{}
-	context := f.getEvalContext()
 
-	for _, file := range append(f.Children, f) {
-		parsed, err := file.parse(context)
+	for _, file := range append(f.children, f) {
+		parsed, err := file.parse(f.context)
 		if err != nil {
 			return nil, err
 		}
@@ -104,17 +117,19 @@ func (f *File) parse(context *hcl.EvalContext) (*Config, error) {
 	return config, nil
 }
 
-// getEvalContext gets the context for this file. Adding variables for source to default context
-func (f File) getEvalContext() *hcl.EvalContext {
-	ext := filepath.Ext(f.Name)
+// GetEvalContext gets the context for this file. Adding variables for source to default context
+func getNewEvalContext(fullPath string) *hcl.EvalContext {
+	name := filepath.Base(fullPath)
+	ext := filepath.Ext(name)
 
-	values := map[string]cty.Value{
-		"source": cty.ObjectVal(map[string]cty.Value{
-			"path":     cty.StringVal(f.FullPath),
-			"name":     cty.StringVal(f.Name[0 : len(f.Name)-len(ext)]),
-			"filename": cty.StringVal(f.Name),
-		}),
-	}
+	value := cty.ObjectVal(map[string]cty.Value{
+		"path":     cty.StringVal(fullPath),
+		"name":     cty.StringVal(name[0 : len(name)-len(ext)]),
+		"filename": cty.StringVal(name),
+	})
 
-	return hclcontext.WithVariables(hclcontext.Default, values)
+	context := hclcontext.NewContext()
+	context.Variables["source"] = value
+
+	return context
 }

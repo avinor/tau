@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -17,7 +14,7 @@ import (
 type applyCmd struct {
 	meta
 
-	loader *module.Loader
+	loader *loader.Loader
 
 	autoApprove bool
 	deletePlan  bool
@@ -78,50 +75,41 @@ func newApplyCmd() *cobra.Command {
 
 func (ac *applyCmd) init() {
 	{
-		options := &config.Options{
+		options := &loader.Options{
 			WorkingDirectory: paths.WorkingDir,
-			TempDirectory:    ac.TempDir,
+			TauDirectory:     ac.TauDir,
 			MaxDepth:         1,
 		}
 
-		ac.loader = config.NewLoader(options)
+		ac.loader = loader.New(options)
 	}
 }
 
 func (ac *applyCmd) run(args []string) error {
-	loaded, err := ac.loader.Load(ac.file)
+	files, err := ac.loader.Load(ac.file)
 	if err != nil {
 		return err
 	}
 
-	if len(loaded) == 0 {
+	if len(files) == 0 {
 		ui.NewLine()
 		ui.Warn("No sources found")
 		return nil
 	}
 
 	// Verify all modules have been initialized
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
-
-		if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
-			return moduleNotInitError
-		}
+	if err := files.IsAllInitialized(); err != nil {
+		return err
 	}
 
-	// Execute prepare hook to make sure we are logged in etc.
-	ui.Header("Executing prepare hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "prepare", "apply"); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "prepare", "apply"); err != nil {
+		return err
 	}
 
 	// Check if any plans exist, if not then run plan first
 	noPlansExists := true
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
-		planFile := filepath.Join(moduleDir, "tau.tfplan")
+	for _, file := range files {
+		planFile := paths.Join(file.ModuleDir(), "tau.tfplan")
 
 		if paths.IsFile(planFile) {
 			noPlansExists = false
@@ -130,33 +118,31 @@ func (ac *applyCmd) run(args []string) error {
 	}
 
 	if noPlansExists {
-		ac.resolveDependencies(loaded)
+		ac.resolveDependencies(files)
 	} else {
 		ui.Header("Found tau.plan files, only applying valid plans...")
 	}
 
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(ac.TempDir, source.Name)
-		planFile := filepath.Join(moduleDir, "tau.tfplan")
-		planFileExists := paths.IsFile(planFile)
+	for _, file := range files {
+		planFileExists := paths.IsFile(file.PlanFile())
 
 		ui.Separator()
 
 		if !planFileExists && !noPlansExists {
-			ui.Warn("No plan exists for %s", source.Name)
+			ui.Warn("No plan exists for %s", file.Name)
 			continue
 		}
 
-		if !paths.IsFile(filepath.Join(moduleDir, "terraform.tfvars")) {
-			ui.Warn("No values file exists for %s", source.Name)
+		if !paths.IsFile(file.VariableFile()) {
+			ui.Warn("No values file exists for %s", file.Name)
 			continue
 		}
 
 		options := &shell.Options{
-			WorkingDirectory: moduleDir,
+			WorkingDirectory: file.ModuleDir(),
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
 			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              source.Env,
+			Env:              file.Env,
 		}
 
 		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
@@ -175,17 +161,14 @@ func (ac *applyCmd) run(args []string) error {
 		}
 
 		if ac.deletePlan {
-			paths.Remove(planFile)
+			paths.Remove(file.PlanFile())
 		}
 	}
 
 	ui.Separator()
 
-	ui.Header("Executing finish hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "finish", "apply"); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "finish", "apply"); err != nil {
+		return err
 	}
 
 	return nil

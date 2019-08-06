@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
@@ -21,7 +21,7 @@ type initCmd struct {
 	meta
 
 	getter *getter.Client
-	loader *module.Loader
+	loader *loader.Loader
 
 	maxDependencyDepth int
 	purge              bool
@@ -120,15 +120,15 @@ func (ic *initCmd) init() {
 	}
 
 	{
-		options := &module.Options{
+		options := &loader.Options{
 			WorkingDirectory: paths.WorkingDir,
-			TempDirectory:    ic.TempDir,
+			TauDirectory:     ic.TauDir,
 			MaxDepth:         ic.maxDependencyDepth,
 		}
 
 		ui.Debug("max dependency depth: %s", ic.maxDependencyDepth)
 
-		ic.loader = module.NewLoader(options)
+		ic.loader = loader.New(options)
 	}
 }
 
@@ -156,23 +156,23 @@ func (ic *initCmd) processArgs(args []string) error {
 func (ic *initCmd) run(args []string) error {
 	if ic.purge {
 		ui.Debug("Purging temporary folder")
-		paths.Remove(ic.TempDir)
+		paths.Remove(ic.TauDir)
 	}
 
 	// load all sources
-	loaded, err := ic.loader.Load(ic.file)
+	files, err := ic.loader.Load(ic.file)
 	if err != nil {
 		return err
 	}
 
-	if len(loaded) == 0 {
+	if len(files) == 0 {
 		ui.NewLine()
 		ui.Warn("No sources found in path")
 		return nil
 	}
 
 	// if source defined then it can only deploy a single file, not folder
-	if len(loaded) > 1 {
+	if len(files) > 1 {
 		if ic.source != "" && paths.IsDir(ic.file) {
 			return sourceMustBeAFile
 		}
@@ -181,9 +181,8 @@ func (ic *initCmd) run(args []string) error {
 	// Load module files usign go-getter
 	if !ic.reconfigure {
 		ui.Header("Loading modules...")
-		for _, source := range loaded {
-			module := source.Config.Module
-			moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
+		for _, file := range files {
+			module := file.Config.Module
 			source := module.Source
 			version := module.Version
 
@@ -192,26 +191,21 @@ func (ic *initCmd) run(args []string) error {
 				version = &ic.sourceVersion
 			}
 
-			if err := ic.getter.Get(source, moduleDir, version); err != nil {
+			if err := ic.getter.Get(source, file.ModuleDir(), version); err != nil {
 				return err
 			}
 		}
 	}
 
-	ui.Header("Executing prepare hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "prepare", "init"); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "prepare", "init"); err != nil {
+		return err
 	}
 
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(ic.TempDir, source.Name)
-
+	for _, file := range files {
 		ui.Separator()
 
 		if !ic.noOverrides {
-			if err := ic.Engine.CreateOverrides(source, moduleDir); err != nil {
+			if err := ic.Engine.CreateOverrides(file); err != nil {
 				return err
 			}
 		}
@@ -219,10 +213,10 @@ func (ic *initCmd) run(args []string) error {
 		ui.NewLine()
 
 		options := &shell.Options{
-			WorkingDirectory: moduleDir,
+			WorkingDirectory: file.ModuleDir(),
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
 			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              source.Env,
+			Env:              file.Env,
 		}
 
 		extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
@@ -238,11 +232,8 @@ func (ic *initCmd) run(args []string) error {
 
 	ui.Separator()
 
-	ui.Header("Executing finish hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "finish", "init"); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "finish", "init"); err != nil {
+		return err
 	}
 
 	return nil

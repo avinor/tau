@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
@@ -38,11 +39,11 @@ var (
 
 // GetCommand creates a new command or return command from cache if it has already been
 // created before. Cache key is based on full path for command including arguments
-func GetCommand(source *config.Source, hook *config.Hook) *Command {
-	command := hook.Command
-	if strings.HasPrefix(hook.Command, ".") {
-		workingDir := filepath.Dir(source.File)
-		command = filepath.Join(workingDir, hook.Command)
+func GetCommand(file *loader.ParsedFile, hook *config.Hook) *Command {
+	command := *hook.Command
+	if strings.HasPrefix(*hook.Command, ".") {
+		workingDir := filepath.Dir(file.FullPath)
+		command = filepath.Join(workingDir, *hook.Command)
 	}
 
 	key := getCacheKey(command, hook)
@@ -53,7 +54,7 @@ func GetCommand(source *config.Source, hook *config.Hook) *Command {
 		return cache[key]
 	}
 
-	split := strings.Split(hook.TriggerOn, ":")
+	split := strings.Split(*hook.TriggerOn, ":")
 	hookEvent := strings.ToLower(split[0])
 	hookCommands := []string{}
 
