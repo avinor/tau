@@ -106,6 +106,19 @@ func (dc *destroyCmd) run(args []string) error {
 		return err
 	}
 
+	// Check if any plans exist, if not then run plan first
+	noVariablesExists := true
+	for _, file := range files {
+		if paths.IsFile(file.VariableFile()) {
+			noVariablesExists = false
+			continue
+		}
+	}
+
+	if noVariablesExists {
+		dc.resolveDependencies(files)
+	}
+
 	for _, file := range files {
 		ui.Separator()
 
@@ -130,6 +143,8 @@ func (dc *destroyCmd) run(args []string) error {
 		if err := dc.Engine.Executor.Execute(options, "destroy", extraArgs...); err != nil {
 			return err
 		}
+
+		paths.Remove(file.VariableFile())
 	}
 
 	ui.Separator()
