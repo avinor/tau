@@ -62,7 +62,7 @@ func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.Depende
 	processors := []def.DependencyProcesser{}
 
 	if len(file.Config.Datas) != 0 {
-		dataProcessor := NewDependencyProcessor(file, g.executor, g.resolver)
+		dataProcessor := NewDependencyProcessor(file, file, g.executor, g.resolver)
 
 		// TODO Make sure we use azurerm data provider < 2.0
 		azblock := hclwrite.NewBlock("required_providers", []string{})
@@ -114,7 +114,7 @@ func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.Depende
 			return nil, false, err
 		}
 
-		depProcessor := NewDependencyProcessor(depsource, g.executor, g.resolver)
+		depProcessor := NewDependencyProcessor(file, depsource, g.executor, g.resolver)
 		depProcessor.File.Body().AppendBlock(block)
 
 		// Find variables using this dependency

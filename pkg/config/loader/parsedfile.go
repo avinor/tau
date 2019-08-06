@@ -58,7 +58,7 @@ func (p ParsedFile) ModuleDir() string {
 
 // DependencyDir returns the dependency directory for dependency `dep`
 func (p ParsedFile) DependencyDir(dep string) string {
-	return paths.Join(p.TempDir, "dep", dep)
+	return paths.JoinAndCreate(p.TempDir, "dep", dep)
 }
 
 // OverrideFile returns name of override file that writes backend configuration etc

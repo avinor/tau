@@ -17,8 +17,13 @@ import (
 
 // DependencyProcessor implements the def.DepdendencyProcessor interface
 type DependencyProcessor struct {
+	// ParsedFile is the parent file that its currently resolving dependencies for
 	ParsedFile *loader.ParsedFile
-	File       *hclwrite.File
+
+	// DepFile is the dependency in parent file it is processing. This is for instance used
+	// to retrieve the name of the dependency
+	DepFile *loader.ParsedFile
+	File    *hclwrite.File
 
 	executor *Executor
 	resolver *Resolver
@@ -29,11 +34,12 @@ type DependencyProcessor struct {
 }
 
 // NewDependencyProcessor creates a new dependencyProcessor structure from input arguments
-func NewDependencyProcessor(file *loader.ParsedFile, executor *Executor, resolver *Resolver) *DependencyProcessor {
+func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor, resolver *Resolver) *DependencyProcessor {
 	f := hclwrite.NewEmptyFile()
 
 	return &DependencyProcessor{
 		ParsedFile: file,
+		DepFile:    depFile,
 		File:       f,
 
 		executor: executor,
@@ -53,7 +59,7 @@ func (d *DependencyProcessor) WriteContent(dest string) error {
 
 // Process the dependency and return the variables from output.
 func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
-	dest := d.ParsedFile.DependencyDir(d.ParsedFile.Name)
+	dest := d.ParsedFile.DependencyDir(d.DepFile.Name)
 	if err := d.WriteContent(dest); err != nil {
 		return nil, false, err
 	}
