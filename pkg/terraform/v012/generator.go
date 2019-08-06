@@ -1,26 +1,27 @@
 package v012
 
 import (
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/hclcontext"
 	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
-	gohcl2 "github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
 
+// Generator implements the def.Generator interface and can generate files for terraform 0.12 version
 type Generator struct {
 	processor *Processor
 	resolver  *Resolver
 	executor  *Executor
 }
 
-func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, error) {
-	if source.Config.Backend == nil {
+// GenerateOverrides generates overrides file bytes
+func (g *Generator) GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, error) {
+	if file.Config.Backend == nil {
 		return nil, false, nil
 	}
 
@@ -28,10 +29,10 @@ func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, erro
 	rootBody := f.Body()
 	tfBlock := rootBody.AppendNewBlock("terraform", nil)
 	tfBody := tfBlock.Body()
-	backendBlock := tfBody.AppendNewBlock("backend", []string{source.Config.Backend.Type})
+	backendBlock := tfBody.AppendNewBlock("backend", []string{file.Config.Backend.Type})
 	backendBody := backendBlock.Body()
 
-	values, err := g.processor.ProcessBackendBody(source.Config.Backend.Config, source.EvalContext())
+	values, err := g.processor.ProcessBackendBody(file.Config.Backend.Config, file.EvalContext())
 	if err != nil {
 		return nil, false, err
 	}
@@ -43,8 +44,9 @@ func (g *Generator) GenerateOverrides(source *config.Source) ([]byte, bool, erro
 	return f.Bytes(), true, nil
 }
 
-func (g *Generator) GenerateDependencies(source *config.Source) ([]def.DependencyProcesser, bool, error) {
-	trav, err := g.resolver.ResolveInputExpressions(source)
+// GenerateDependencies returns a list of all dependency processors that will generate dependencies.
+func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.DependencyProcesser, bool, error) {
+	trav, err := g.resolver.ResolveInputExpressions(file)
 	if err != nil {
 		return nil, false, err
 	}
@@ -53,14 +55,14 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]def.Dependenc
 		return nil, false, nil
 	}
 
-	if len(source.Config.Datas) == 0 && len(source.Config.Dependencies) == 0 {
+	if len(file.Config.Datas) == 0 && len(file.Config.Dependencies) == 0 {
 		return nil, false, nil
 	}
 
 	processors := []def.DependencyProcesser{}
 
-	if len(source.Config.Datas) != 0 {
-		dataProcessor := NewDependencyProcessor(source, g.executor, g.resolver)
+	if len(file.Config.Datas) != 0 {
+		dataProcessor := NewDependencyProcessor(file, file, g.executor, g.resolver)
 
 		// TODO Make sure we use azurerm data provider < 2.0
 		azblock := hclwrite.NewBlock("required_providers", []string{})
@@ -69,7 +71,7 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]def.Dependenc
 		tblock.Body().AppendBlock(azblock)
 		dataProcessor.File.Body().AppendBlock(tblock)
 
-		for _, data := range source.Config.Datas {
+		for _, data := range file.Config.Datas {
 			block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
 			if err != nil {
 				return nil, false, err
@@ -88,8 +90,8 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]def.Dependenc
 		processors = append(processors, dataProcessor)
 	}
 
-	for _, dep := range source.Config.Dependencies {
-		depsource, ok := source.Dependencies[dep.Name]
+	for _, dep := range file.Config.Dependencies {
+		depsource, ok := file.Dependencies[dep.Name]
 		if !ok {
 			return nil, false, errors.Errorf("Could not find dependency %s", dep.Name)
 		}
@@ -112,7 +114,7 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]def.Dependenc
 			return nil, false, err
 		}
 
-		depProcessor := NewDependencyProcessor(depsource, g.executor, g.resolver)
+		depProcessor := NewDependencyProcessor(file, depsource, g.executor, g.resolver)
 		depProcessor.File.Body().AppendBlock(block)
 
 		// Find variables using this dependency
@@ -128,13 +130,13 @@ func (g *Generator) GenerateDependencies(source *config.Source) ([]def.Dependenc
 	return processors, true, nil
 }
 
-func (g *Generator) GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error) {
+// GenerateVariables generates the input variables
+func (g *Generator) GenerateVariables(file *loader.ParsedFile) ([]byte, error) {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
-	ctx := hclcontext.WithVariables(source.EvalContext(), data)
 	values := map[string]cty.Value{}
-	diags := gohcl2.DecodeBody(source.Config.Inputs.Config, ctx, &values)
+	diags := gohcl.DecodeBody(file.Config.Inputs.Config, file.EvalContext(), &values)
 
 	if diags.HasErrors() {
 		return nil, diags
@@ -153,7 +155,7 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 
 	for _, attr := range body.Attributes {
 		value := cty.Value{}
-		diags := gohcl.DecodeExpression(attr.Expr, hclcontext.Default, &value)
+		diags := gohcl.DecodeExpression(attr.Expr, hclcontext.NewContext(), &value)
 
 		if diags.HasErrors() {
 			return nil, diags
@@ -174,7 +176,7 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 	return block, nil
 }
 
-func (g *Generator) generateRemoteBackendBlock(source *config.Source, name, backend string, bodies ...hcl.Body) (*hclwrite.Block, error) {
+func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, backend string, bodies ...hcl.Body) (*hclwrite.Block, error) {
 	block := hclwrite.NewBlock("data", []string{"terraform_remote_state", name})
 	blockBody := block.Body()
 
@@ -184,7 +186,7 @@ func (g *Generator) generateRemoteBackendBlock(source *config.Source, name, back
 			continue
 		}
 
-		vals, err := g.processor.ProcessBackendBody(body, source.EvalContext())
+		vals, err := g.processor.ProcessBackendBody(body, file.EvalContext())
 		if err != nil {
 			return nil, err
 		}

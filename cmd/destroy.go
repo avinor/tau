@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -16,7 +14,7 @@ import (
 type destroyCmd struct {
 	meta
 
-	loader *config.Loader
+	loader *loader.Loader
 
 	autoApprove bool
 }
@@ -72,60 +70,50 @@ func newDestroyCmd() *cobra.Command {
 
 func (dc *destroyCmd) init() {
 	{
-		options := &config.Options{
+		options := &loader.Options{
 			WorkingDirectory: paths.WorkingDir,
-			TempDirectory:    dc.TempDir,
+			TauDirectory:     dc.TauDir,
 			MaxDepth:         1,
 		}
 
-		dc.loader = config.NewLoader(options)
+		dc.loader = loader.New(options)
 	}
 }
 
 func (dc *destroyCmd) run(args []string) error {
-	loaded, err := dc.loader.Load(dc.file)
+	files, err := dc.loader.Load(dc.file)
 	if err != nil {
 		return err
 	}
 
-	if len(loaded) == 0 {
+	if len(files) == 0 {
 		ui.NewLine()
 		ui.Warn("No sources found")
 		return nil
 	}
 
 	// Want to destroy them in reverse order
-	for i, j := 0, len(loaded)-1; i < j; i, j = i+1, j-1 {
-		loaded[i], loaded[j] = loaded[j], loaded[i]
+	for i, j := 0, len(files)-1; i < j; i, j = i+1, j-1 {
+		files[i], files[j] = files[j], files[i]
 	}
 
 	// Verify all modules have been initialized
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(dc.TempDir, source.Name)
-
-		if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
-			return moduleNotInitError
-		}
+	if err := files.IsAllInitialized(); err != nil {
+		return err
 	}
 
-	// Execute prepare hook to make sure we are logged in etc.
-	ui.Header("Executing prepare hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "prepare", "destroy"); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "prepare", "destroy"); err != nil {
+		return err
 	}
 
-	for _, source := range loaded {
-		moduleDir := paths.ModuleDir(dc.TempDir, source.Name)
-
+	for _, file := range files {
 		ui.Separator()
 
 		options := &shell.Options{
-			WorkingDirectory: moduleDir,
+			WorkingDirectory: file.ModuleDir(),
 			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
 			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              source.Env,
+			Env:              file.Env,
 		}
 
 		extraArgs := getExtraArgs(dc.Engine.Compatibility.GetInvalidArgs("destroy")...)
@@ -141,11 +129,8 @@ func (dc *destroyCmd) run(args []string) error {
 
 	ui.Separator()
 
-	ui.Header("Executing finish hook...")
-	for _, source := range loaded {
-		if err := hooks.Run(source, "finish", "destroy"); err != nil {
-			return err
-		}
+	if err := hooks.RunAll(files, "finish", "destroy"); err != nil {
+		return err
 	}
 
 	return nil

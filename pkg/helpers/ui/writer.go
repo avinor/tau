@@ -5,7 +5,7 @@ import (
 )
 
 // Writer implements io.Writer
-type Writer struct {}
+type Writer struct{}
 
 const (
 	// logPattern to match "[LEVEL] message"

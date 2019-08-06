@@ -2,6 +2,7 @@ package v012
 
 import "github.com/avinor/tau/pkg/shell"
 
+// Executor to execute shell commands, implements def.Executor interface
 type Executor struct{}
 
 // Execute wraps shell.Execute to execute terraform commands

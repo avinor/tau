@@ -1,17 +1,18 @@
 package def
 
 import (
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
-// DependencyProcesser can process a dependency and return the values from output
+// DependencyProcesser can process a dependency and return the values from output.
+// Each dependency processor will run in its own context, with separate environment variables.
+// All dependency resolving that can be done in same context can be run in one processor, but
+// use multiple processors to separate the context they run in
 type DependencyProcesser interface {
-	Name() string
-	Content() []byte
-	Process(dest string) (map[string]cty.Value, bool, error)
+	Process() (map[string]cty.Value, bool, error)
 }
 
 // VersionCompatibility checks terraform executor for capabilities
@@ -22,9 +23,9 @@ type VersionCompatibility interface {
 
 // Generator for generating terraform assets
 type Generator interface {
-	GenerateOverrides(source *config.Source) ([]byte, bool, error)
-	GenerateDependencies(source *config.Source) ([]DependencyProcesser, bool, error)
-	GenerateVariables(source *config.Source, data map[string]cty.Value) ([]byte, error)
+	GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, error)
+	GenerateDependencies(file *loader.ParsedFile) ([]DependencyProcesser, bool, error)
+	GenerateVariables(file *loader.ParsedFile) ([]byte, error)
 }
 
 // Processor for processing terraform config or output

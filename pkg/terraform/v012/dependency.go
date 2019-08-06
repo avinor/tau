@@ -1,10 +1,12 @@
 package v012
 
 import (
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
@@ -13,9 +15,15 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-type dependencyProcessor struct {
-	Source *config.Source
-	File   *hclwrite.File
+// DependencyProcessor implements the def.DepdendencyProcessor interface
+type DependencyProcessor struct {
+	// ParsedFile is the parent file that its currently resolving dependencies for
+	ParsedFile *loader.ParsedFile
+
+	// DepFile is the dependency in parent file it is processing. This is for instance used
+	// to retrieve the name of the dependency
+	DepFile *loader.ParsedFile
+	File    *hclwrite.File
 
 	executor *Executor
 	resolver *Resolver
@@ -25,31 +33,41 @@ type dependencyProcessor struct {
 	acceptApplyFailure bool
 }
 
-func NewDependencyProcessor(source *config.Source, executor *Executor, resolver *Resolver) *dependencyProcessor {
+// NewDependencyProcessor creates a new dependencyProcessor structure from input arguments
+func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor, resolver *Resolver) *DependencyProcessor {
 	f := hclwrite.NewEmptyFile()
 
-	return &dependencyProcessor{
-		Source: source,
-		File:   f,
+	return &DependencyProcessor{
+		ParsedFile: file,
+		DepFile:    depFile,
+		File:       f,
 
 		executor: executor,
 		resolver: resolver,
 	}
 }
 
-func (d *dependencyProcessor) Name() string {
-	return d.Source.Name
+// WriteContent writes the context of main.tf
+func (d *DependencyProcessor) WriteContent(dest string) error {
+	file := filepath.Join(dest, "main.tf")
+	if err := ioutil.WriteFile(file, d.File.Bytes(), os.ModePerm); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (d *dependencyProcessor) Content() []byte {
-	return d.File.Bytes()
-}
+// Process the dependency and return the variables from output.
+func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
+	dest := d.ParsedFile.DependencyDir(d.DepFile.Name)
+	if err := d.WriteContent(dest); err != nil {
+		return nil, false, err
+	}
 
-func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, error) {
 	debugLog := processors.NewUI(ui.Debug)
 	errorLog := processors.NewUI(ui.Error)
 
-	if err := hooks.Run(d.Source, "prepare", "init"); err != nil {
+	if err := hooks.Run(d.ParsedFile, "prepare", "init"); err != nil {
 		return nil, false, err
 	}
 
@@ -57,7 +75,7 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 		Stdout:           shell.Processors(debugLog),
 		Stderr:           shell.Processors(d, errorLog),
 		WorkingDirectory: dest,
-		Env:              d.Source.Env,
+		Env:              d.ParsedFile.Env,
 	}
 
 	base := filepath.Base(dest)
@@ -95,7 +113,10 @@ func (d *dependencyProcessor) Process(dest string) (map[string]cty.Value, bool, 
 	return values, true, nil
 }
 
-func (d *dependencyProcessor) Write(line string) bool {
+// Write implements the shell.OutputProcessor interface so it can use DependencyProcessor
+// as a processer when executing commands, and therefore set acceptApplyFailure if it detects
+// acceptable error messages in output
+func (d *DependencyProcessor) Write(line string) bool {
 	if strings.Contains(line, "Unable to find remote state") {
 		d.acceptApplyFailure = true
 	}

@@ -4,8 +4,8 @@
 package main
 
 import (
-	"os"
 	"log"
+	"os"
 
 	"github.com/avinor/tau/cmd"
 	"github.com/avinor/tau/pkg/helpers/ui"

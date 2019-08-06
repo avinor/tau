@@ -15,7 +15,7 @@ const (
 	FatalLevel
 )
 
-// ParseLevel returns the level defined by string. If it is not able to parse the 
+// ParseLevel returns the level defined by string. If it is not able to parse the
 // level string it will return Info as default level
 //
 // Since there is no trace level that is interpreted as debug

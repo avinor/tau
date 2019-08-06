@@ -10,16 +10,16 @@ import (
 func TestLevelParser(t *testing.T) {
 	tests := []struct {
 		Level       string
-		ExpectLevel   Level
+		ExpectLevel Level
 	}{
-		{"TRACE",DebugLevel},
-		{"DEBUG",DebugLevel},
-		{"INFO",InfoLevel},
-		{"WARN",WarnLevel},
-		{"ERR",ErrorLevel},
-		{"ERROR",ErrorLevel},
-		{"SOMETHING",InfoLevel},
-		{"",InfoLevel},
+		{"TRACE", DebugLevel},
+		{"DEBUG", DebugLevel},
+		{"INFO", InfoLevel},
+		{"WARN", WarnLevel},
+		{"ERR", ErrorLevel},
+		{"ERROR", ErrorLevel},
+		{"SOMETHING", InfoLevel},
+		{"", InfoLevel},
 	}
 
 	for i, test := range tests {
