@@ -15,6 +15,9 @@ type Handler interface {
 	Error(msg string, args ...interface{})
 	Fatal(msg string, args ...interface{})
 
+	// Output writes to stdout so it can be piped to subsequent commands
+	Output(msg string, args ...interface{})
+
 	// Header prints a header, can be bold etc. Implementation can decide how a header
 	// should be made. Should always be printed as info message
 	Header(msg string)

@@ -16,9 +16,9 @@ import (
 
 // CliHandler is the default handler and will write to stdout / stderr
 type CliHandler struct {
-	Reader      io.Reader
-	Writer      io.Writer
-	ErrorWriter io.Writer
+	Reader       io.Reader
+	OutputWriter io.Writer
+	LogWriter    io.Writer
 
 	previousLine string
 }
@@ -35,53 +35,58 @@ func (hnd *CliHandler) AskSecret(query string) (string, error) {
 
 // Debug prints a debug message
 func (hnd *CliHandler) Debug(msg string, args ...interface{}) {
-	hnd.printLine(hnd.Writer, msg, args...)
+	hnd.printLine(hnd.LogWriter, msg, args...)
 }
 
 // Info prints message to standard out
 func (hnd *CliHandler) Info(msg string, args ...interface{}) {
-	hnd.printLine(hnd.Writer, msg, args...)
+	hnd.printLine(hnd.LogWriter, msg, args...)
 }
 
 // Warn prints message
 func (hnd *CliHandler) Warn(msg string, args ...interface{}) {
-	hnd.printLine(hnd.Writer, color.YellowString(msg), args...)
+	hnd.printLine(hnd.LogWriter, color.YellowString(msg), args...)
 }
 
 // Error prints message
 func (hnd *CliHandler) Error(msg string, args ...interface{}) {
-	hnd.printLine(hnd.ErrorWriter, msg, args...)
+	hnd.printLine(hnd.LogWriter, msg, args...)
 }
 
 // Fatal prints message and makes sure to fail
 func (hnd *CliHandler) Fatal(msg string, args ...interface{}) {
-	hnd.printLine(hnd.ErrorWriter, color.RedString(msg), args...)
+	hnd.printLine(hnd.LogWriter, color.RedString(msg), args...)
 	os.Exit(1)
+}
+
+// Output prints to output writer
+func (hnd *CliHandler) Output(msg string, args ...interface{}) {
+	hnd.printLine(hnd.OutputWriter, msg, args...)
 }
 
 // Header does nothing
 func (hnd *CliHandler) Header(msg string) {
 	hnd.NewLine()
-	hnd.printLine(hnd.Writer, color.New(color.Bold).Sprint(msg))
+	hnd.printLine(hnd.LogWriter, color.New(color.Bold).Sprint(msg))
 }
 
 // Separator does nothing
 func (hnd *CliHandler) Separator(title string) {
-	hnd.printLine(hnd.Writer, "")
-	hnd.printLine(hnd.Writer, "------------------------------------------------------------------------")
+	hnd.printLine(hnd.LogWriter, "")
+	hnd.printLine(hnd.LogWriter, "------------------------------------------------------------------------")
 
 	if title != "" {
-		hnd.printLine(hnd.Writer, color.New(color.Bold).Sprint(title))
-		hnd.printLine(hnd.Writer, "------------------------------------------------------------------------")
+		hnd.printLine(hnd.LogWriter, color.New(color.Bold).Sprint(title))
+		hnd.printLine(hnd.LogWriter, "------------------------------------------------------------------------")
 	}
 
-	hnd.printLine(hnd.Writer, "")
+	hnd.printLine(hnd.LogWriter, "")
 }
 
 // NewLine creates a new line, except if previous line was a new line.
 // Do not want 2 new lines after another
 func (hnd *CliHandler) NewLine() {
-	hnd.printLine(hnd.Writer, "")
+	hnd.printLine(hnd.LogWriter, "")
 }
 
 // printLine writes a line to writer and saves it in temporary variable. It will
@@ -139,7 +144,7 @@ func (hnd *CliHandler) ask(query string, secret bool) (string, error) {
 	case <-sigCh:
 		// Print a newline so that any further output starts properly
 		// on a new line.
-		fmt.Fprintln(hnd.Writer)
+		fmt.Fprintln(hnd.LogWriter)
 
 		return "", errors.New("interrupted")
 	}

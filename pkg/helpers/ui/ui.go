@@ -5,9 +5,9 @@ import "os"
 var (
 	// handler is a singleton handler, override with SetHandler function
 	handler Handler = &CliHandler{
-		Reader:      os.Stdin,
-		Writer:      os.Stderr,
-		ErrorWriter: os.Stderr,
+		Reader:       os.Stdin,
+		OutputWriter: os.Stdout,
+		LogWriter:    os.Stderr,
 	}
 
 	// level is the current output level, defaults to Info
@@ -81,6 +81,11 @@ func Fatal(msg string, args ...interface{}) {
 	// Make sure it always exists.. if handler have not implemented that
 	// it will make sure to exit here
 	os.Exit(1)
+}
+
+// Output writes to output channel
+func Output(msg string, args ...interface{}) {
+	handler.Output(msg, args...)
 }
 
 // Header prints a header, can be bold etc. Implementation can decide how a header
