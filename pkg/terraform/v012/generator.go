@@ -45,7 +45,7 @@ func (g *Generator) GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, er
 }
 
 // GenerateDependencies returns a list of all dependency processors that will generate dependencies.
-func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.DependencyProcesser, bool, error) {
+func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.DependencyProcessor, bool, error) {
 	trav, err := g.resolver.ResolveVariables(file.Config.Inputs.Config)
 	if err != nil {
 		return nil, false, err
@@ -59,7 +59,7 @@ func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.Depende
 		return nil, false, nil
 	}
 
-	processors := []def.DependencyProcesser{}
+	processors := []def.DependencyProcessor{}
 
 	if len(file.Config.Datas) != 0 {
 		dataProcessor, err := g.generateDataProcessor(file, trav)
