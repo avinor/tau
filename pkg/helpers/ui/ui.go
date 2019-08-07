@@ -90,8 +90,8 @@ func Header(msg string) {
 }
 
 // Separator between elements
-func Separator() {
-	handler.Separator()
+func Separator(title string) {
+	handler.Separator(title)
 }
 
 // NewLine adds a new line

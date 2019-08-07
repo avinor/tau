@@ -66,9 +66,15 @@ func (hnd *CliHandler) Header(msg string) {
 }
 
 // Separator does nothing
-func (hnd *CliHandler) Separator() {
+func (hnd *CliHandler) Separator(title string) {
 	hnd.printLine(hnd.Writer, "")
 	hnd.printLine(hnd.Writer, "------------------------------------------------------------------------")
+
+	if title != "" {
+		hnd.printLine(hnd.Writer, color.New(color.Bold).Sprint(title))
+		hnd.printLine(hnd.Writer, "------------------------------------------------------------------------")
+	}
+
 	hnd.printLine(hnd.Writer, "")
 }
 

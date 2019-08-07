@@ -120,7 +120,7 @@ func (dc *destroyCmd) run(args []string) error {
 	}
 
 	for _, file := range files {
-		ui.Separator()
+		ui.Separator(file.Name)
 
 		if !paths.IsFile(file.VariableFile()) {
 			ui.Warn("No values file exists for %s", file.Name)
@@ -147,7 +147,7 @@ func (dc *destroyCmd) run(args []string) error {
 		paths.Remove(file.VariableFile())
 	}
 
-	ui.Separator()
+	ui.Separator("")
 
 	if err := hooks.RunAll(files, "finish", "destroy"); err != nil {
 		return err

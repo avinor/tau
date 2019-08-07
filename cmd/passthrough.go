@@ -151,7 +151,7 @@ func (pt *ptCmd) run(args []string) error {
 			Env:              file.Env,
 		}
 
-		ui.Separator()
+		ui.Separator(file.Name)
 
 		extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
 		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
@@ -159,7 +159,7 @@ func (pt *ptCmd) run(args []string) error {
 		}
 	}
 
-	ui.Separator()
+	ui.Separator("")
 
 	if err := hooks.RunAll(files, "finish", pt.name); err != nil {
 		return err

@@ -20,7 +20,7 @@ type Handler interface {
 	Header(msg string)
 
 	// Separator between elements. Should always be printed as info message
-	Separator()
+	Separator(title string)
 
 	// NewLine adds a new line if necessary
 	NewLine()

@@ -202,7 +202,7 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	for _, file := range files {
-		ui.Separator()
+		ui.Separator(file.Name)
 
 		if !ic.noOverrides {
 			if err := ic.Engine.CreateOverrides(file); err != nil {
@@ -230,7 +230,7 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	ui.Separator()
+	ui.Separator("")
 
 	if err := hooks.RunAll(files, "finish", "init"); err != nil {
 		return err

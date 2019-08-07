@@ -105,7 +105,7 @@ func (pc *planCmd) run(args []string) error {
 	}
 
 	for _, file := range files {
-		ui.Separator()
+		ui.Separator(file.Name)
 
 		if !paths.IsFile(file.VariableFile()) {
 			ui.Warn("Cannot create a plan for %s", file.Name)
@@ -126,7 +126,7 @@ func (pc *planCmd) run(args []string) error {
 		}
 	}
 
-	ui.Separator()
+	ui.Separator("")
 
 	if err := hooks.RunAll(files, "finish", "plan"); err != nil {
 		return err

@@ -124,7 +124,7 @@ func (ac *applyCmd) run(args []string) error {
 	for _, file := range files {
 		planFileExists := paths.IsFile(file.PlanFile())
 
-		ui.Separator()
+		ui.Separator(file.Name)
 
 		if !planFileExists && !noPlansExists {
 			ui.Warn("No plan exists for %s", file.Name)
@@ -163,7 +163,7 @@ func (ac *applyCmd) run(args []string) error {
 		}
 	}
 
-	ui.Separator()
+	ui.Separator("")
 
 	if err := hooks.RunAll(files, "finish", "apply"); err != nil {
 		return err
