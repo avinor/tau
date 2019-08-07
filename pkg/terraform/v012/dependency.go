@@ -95,7 +95,7 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 		return nil, false, err
 	}
 
-	outputProcessor := &OutputProcessor{}
+	outputProcessor := &OutputProcessor{decodeNames: true}
 	options.Stdout = shell.Processors(outputProcessor)
 
 	ui.Debug("reading output from %s", base)

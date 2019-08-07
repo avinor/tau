@@ -12,6 +12,10 @@ import (
 // Implements the def.OutputProcessor interface
 type OutputProcessor struct {
 	processors.Buffer
+
+	// decodeNames is set when the output names are encoded first. Internal attribute
+	// only as output values should not be encoded normally
+	decodeNames bool
 }
 
 // GetOutput takes the output from terraform command and parses the output into
@@ -34,11 +38,16 @@ func (op *OutputProcessor) GetOutput() (map[string]cty.Value, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		ctyValue, err := ctyjson.Unmarshal(meta.Value, ctyType)
 		if err != nil {
 			return nil, err
 		}
-		name = decodeName(name)
+
+		if op.decodeNames {
+			name = decodeName(name)
+		}
+
 		values[name] = ctyValue
 	}
 
