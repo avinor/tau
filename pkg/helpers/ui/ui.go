@@ -6,7 +6,7 @@ var (
 	// handler is a singleton handler, override with SetHandler function
 	handler Handler = &CliHandler{
 		Reader:      os.Stdin,
-		Writer:      os.Stdout,
+		Writer:      os.Stderr,
 		ErrorWriter: os.Stderr,
 	}
 
