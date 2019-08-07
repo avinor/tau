@@ -1,6 +1,9 @@
 package v012
 
-import "github.com/avinor/tau/pkg/shell"
+import (
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/terraform/def"
+)
 
 // Executor to execute shell commands, implements def.Executor interface
 type Executor struct{}
@@ -10,4 +13,9 @@ func (e *Executor) Execute(options *shell.Options, command string, args ...strin
 	args = append([]string{command}, args...)
 
 	return shell.Execute(options, "terraform", args...)
+}
+
+// NewOutputProcessor returns a new output processor
+func (e *Executor) NewOutputProcessor() def.OutputProcessor {
+	return &OutputProcessor{}
 }

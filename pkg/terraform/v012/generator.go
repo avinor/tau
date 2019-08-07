@@ -15,8 +15,7 @@ import (
 
 // Generator implements the def.Generator interface and can generate files for terraform 0.12 version
 type Generator struct {
-	resolver  *Resolver
-	executor  *Executor
+	executor *Executor
 }
 
 // GenerateOverrides generates overrides file bytes
@@ -46,7 +45,7 @@ func (g *Generator) GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, er
 
 // GenerateDependencies returns a list of all dependency processors that will generate dependencies.
 func (g *Generator) GenerateDependencies(file *loader.ParsedFile) ([]def.DependencyProcessor, bool, error) {
-	trav, err := g.resolver.ResolveVariables(file.Config.Inputs.Config)
+	trav, err := file.Config.Inputs.ResolveVariables(file.Config.Inputs.Config)
 	if err != nil {
 		return nil, false, err
 	}
@@ -155,7 +154,7 @@ func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, ba
 }
 
 func (g *Generator) generateDataProcessor(file *loader.ParsedFile, trav []hcl.Traversal) (*DependencyProcessor, error) {
-	dataProcessor := NewDependencyProcessor(file, file, g.executor, g.resolver)
+	dataProcessor := NewDependencyProcessor(file, file, g.executor)
 
 	// TODO Make sure we use azurerm data provider < 2.0
 	azblock := hclwrite.NewBlock("required_providers", []string{})
@@ -207,7 +206,7 @@ func (g *Generator) generateDepProcessor(file *loader.ParsedFile, dep *config.De
 		return nil, err
 	}
 
-	depProcessor := NewDependencyProcessor(file, depFile, g.executor, g.resolver)
+	depProcessor := NewDependencyProcessor(file, depFile, g.executor)
 	depProcessor.File.Body().AppendBlock(block)
 
 	// Find variables using this dependency

@@ -40,4 +40,5 @@ type Generator interface {
 // Executor executes terraform commands
 type Executor interface {
 	Execute(options *shell.Options, command string, args ...string) error
+	NewOutputProcessor() OutputProcessor
 }

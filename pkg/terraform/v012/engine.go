@@ -10,10 +10,8 @@ type Engine struct {
 // NewEngine creates a new engine and returns reference
 func NewEngine() *Engine {
 	executor := Executor{}
-	resolver := Resolver{}
 
 	generator := Generator{
-		resolver: &resolver,
 		executor: &executor,
 	}
 

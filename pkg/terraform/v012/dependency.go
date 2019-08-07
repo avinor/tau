@@ -26,7 +26,6 @@ type DependencyProcessor struct {
 	File    *hclwrite.File
 
 	executor *Executor
-	resolver *Resolver
 
 	// acceptApplyFailure should be set if its acceptable that apply fails. Should be set if
 	// no backend is found or unsupported attribute, most probably means a dependency is not deployed
@@ -34,7 +33,7 @@ type DependencyProcessor struct {
 }
 
 // NewDependencyProcessor creates a new dependencyProcessor structure from input arguments
-func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor, resolver *Resolver) *DependencyProcessor {
+func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor) *DependencyProcessor {
 	f := hclwrite.NewEmptyFile()
 
 	return &DependencyProcessor{
@@ -43,7 +42,6 @@ func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile,
 		File:       f,
 
 		executor: executor,
-		resolver: resolver,
 	}
 }
 
@@ -97,15 +95,15 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 		return nil, false, err
 	}
 
-	buffer := &processors.Buffer{}
-	options.Stdout = shell.Processors(buffer)
+	outputProcessor := &OutputProcessor{}
+	options.Stdout = shell.Processors(outputProcessor)
 
 	ui.Debug("reading output from %s", base)
 	if err := d.executor.Execute(options, "output", "-json"); err != nil {
 		return nil, false, err
 	}
 
-	values, err := d.resolver.ResolveStateOutput([]byte(buffer.String()))
+	values, err := outputProcessor.GetOutput()
 	if err != nil {
 		return nil, false, err
 	}
