@@ -67,7 +67,7 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 	debugLog := processors.NewUI(ui.Debug)
 	errorLog := processors.NewUI(ui.Error)
 
-	if err := hooks.Run(d.ParsedFile, "prepare", "init"); err != nil {
+	if err := hooks.Run(d.DepFile, "prepare", "init"); err != nil {
 		return nil, false, err
 	}
 
@@ -75,7 +75,7 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 		Stdout:           shell.Processors(debugLog),
 		Stderr:           shell.Processors(d, errorLog),
 		WorkingDirectory: dest,
-		Env:              d.ParsedFile.Env,
+		Env:              d.DepFile.Env,
 	}
 
 	base := filepath.Base(dest)
