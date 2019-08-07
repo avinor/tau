@@ -1,5 +1,5 @@
 // Copyright (c) Avinor AS. All rights reserved.
-// Licensed under the MIT license.
+// Licensed under the Apache license.
 
 package main
 

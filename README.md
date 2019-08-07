@@ -4,9 +4,9 @@
 
 # Tau
 
-Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.terraform.io/) that makes terraform execution and secret handling easier. The basic idea is taken from [Terragrunt](https://github.com/gruntwork-io/terragrunt) to keep code DRY, however it does some changes to how remote state and data sources are handled. It tries to not change terraform too much and use the existing functionallities. Hopefully that will make it easier to upgrade when terraform does major changes as well.
+Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.terraform.io/) that makes terraform execution and secret handling easier. It tries to conform to the principal of keeping code DRY (Don't Repeat Yourself) and bases all executions on terraform modules. Since terraform already provides a lot of excellent features it tries to not change that too much but use those features best possible.
 
-For a comparison with other similar tools see [comparison](#comparison).
+There are also other good tools available, see the [comparison](#comparison) at the end.
 
 **NOTE: This is still in development.**
 
@@ -16,36 +16,89 @@ For a comparison with other similar tools see [comparison](#comparison).
 2. Download tau from [Release page](https://github.com/avinor/tau/releases) for your OS
 3. Rename file to `tau` and add it to your `PATH`
 
-## Motivation
+## Highlights
 
-At the time of creation the tools available did not feel complete enough. We evaluated a few options (terragrunt, astro, "pure" terraform), but decided to create a new tool. See [comparison](#comparison) for details on why other tools where dismissed in the end.
+**DRY:** All executions are based on using terraform modules. Tau configuration file just describes how to execute / deploy the modules.
 
-Goals of project was to handle all these issues:
+**Dependency handling:** Tau handles dependencies between different modules. Executing them in correct order and passing output from one module as input to another.
 
-- Keep code DRY
-- Backend configuration
-- Secrets
-- Dependencies
+**Secret handling:** Recommended way to deal with secrets is passing them in as input variables. Using the build-in data sources in terraform tau can send anything as input variables to terraform.
+
+**Backend:** Backend configuration is taken out of modules and defined in tau configuration.
 
 ## Configuration
 
-For a simple example how to get started create a file `example.hcl` (or `example.tau`) and include a module and some inputs:
+Any files named `.hcl` or `.tau` are read, where each file is one deployment of module.
 
 ```terraform
+// One or many hooks that can trigger on prepare or finish
+hook "set_access_key" {
+    trigger_on = "prepare"
+    command = "./set_access_key.sh"
+    set_env = true
+}
+
+// One or more dependencies
+dependency "vnet" {
+    source = "./vnet.hcl"
+}
+
+dependency "logs" {
+    source = "./logs.hcl"
+}
+
+// One or more data blocks, support any terraform data block
+data "azurerm_key_vault_secret" "secret" {
+    name = "my-secret"
+    key_vault_id = "/subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/secrets-rg/providers/Microsoft.KeyVault/vaults/terraform-secrets-kv"
+}
+
+data "azurerm_key_vault_secret" "sp" {
+    name = "sp-secret"
+    key_vault_id = "/subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/secrets-rg/providers/Microsoft.KeyVault/vaults/terraform-secrets-kv"
+}
+
+// Set environment variables for all terraform commands
+environment_variables {
+    ARM_SUBSCRIPTION_ID = "xxxx-xxxx-xxxx-xxxx"
+}
+
+backend "azurerm" {
+    storage_account_name = "terraformstatesa"
+    container_name       = "state"
+    key                  = "westeurope/${source.name}.tfstate"
+}
+
+// Define which module to deploy.
 module {
-    source = "avinor/storage-account/azurerm"
+    source = "avinor/kubernetes/azurerm"
     version = "1.0.0"
 }
 
+// Input variables to module
 inputs {
     name = "example"
     resource_group_name = "example-rg"
-    location = "westeurope"
+    service_cidr = "10.241.0.0/24"
+    kubernetes_version = "1.13.5"
+    log_analytics_workspace_id = dependency.logs.outputs.resource_id
 
-    containers = [
+    service_principal = {
+        client_id = data.azurerm_key_vault_secret.secret.value
+        client_secret = data.azurerm_key_vault_secret.secret.value
+    }
+
+    azure_active_directory = {
+        client_app_id = data.azurerm_key_vault_secret.sp.value
+        server_app_id = data.azurerm_key_vault_secret.sp.value
+        server_app_secret = data.azurerm_key_vault_secret.sp.value
+    }
+
+    agent_pools = [
         {
-            name = "example"
-            access_type = "private"
+            name = "ipt"
+            vm_size = "Standard_D2_v3"
+            vnet_subnet_id = dependency.vnet.outputs.subnets.aks
         },
     ]
 }
