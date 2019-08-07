@@ -46,6 +46,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newPlanCmd())
 	rootCmd.AddCommand(newApplyCmd())
 	rootCmd.AddCommand(newDestroyCmd())
+	rootCmd.AddCommand(newOutputCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
 	for name, cmd := range passThroughCommands {

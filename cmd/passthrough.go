@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
@@ -40,13 +39,6 @@ var (
 			ShortDescription: "Import existing infrastructure into Terraform",
 			LongDescription:  "Import existing infrastructure into Terraform",
 			SingleResource:   true,
-		},
-		"output": {
-			Use:              "output [-f SOURCE]",
-			ShortDescription: "Read an output from a state file",
-			LongDescription: templates.LongDesc(
-				`Read an output from the state file for module deployed.
-				`),
 		},
 		"refresh": {
 			Use:              "refresh [-f SOURCE]",
