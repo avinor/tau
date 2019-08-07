@@ -19,7 +19,6 @@ type Engine struct {
 
 	Compatibility def.VersionCompatibility
 	Generator     def.Generator
-	Processor     def.Processor
 	Executor      def.Executor
 }
 
@@ -37,7 +36,6 @@ func NewEngine() *Engine {
 
 	var compatibility def.VersionCompatibility
 	var generator def.Generator
-	var processor def.Processor
 	var executor def.Executor
 
 	switch {
@@ -45,7 +43,6 @@ func NewEngine() *Engine {
 		v012Engine := v012.NewEngine()
 		compatibility = v012Engine
 		generator = v012Engine
-		processor = v012Engine
 		executor = v012Engine
 	default:
 		ui.Fatal("Unsupported terraform version!")
@@ -55,7 +52,6 @@ func NewEngine() *Engine {
 		Version:       version,
 		Compatibility: compatibility,
 		Generator:     generator,
-		Processor:     processor,
 		Executor:      executor,
 	}
 }

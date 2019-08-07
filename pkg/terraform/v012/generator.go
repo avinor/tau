@@ -15,7 +15,6 @@ import (
 
 // Generator implements the def.Generator interface and can generate files for terraform 0.12 version
 type Generator struct {
-	processor *Processor
 	resolver  *Resolver
 	executor  *Executor
 }
@@ -33,7 +32,7 @@ func (g *Generator) GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, er
 	backendBlock := tfBody.AppendNewBlock("backend", []string{file.Config.Backend.Type})
 	backendBody := backendBlock.Body()
 
-	values, err := g.processor.ProcessBackendBody(file.Config.Backend.Config, file.EvalContext())
+	values, err := processBackendBody(file.Config.Backend.Config, file.EvalContext())
 	if err != nil {
 		return nil, false, err
 	}
@@ -139,7 +138,7 @@ func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, ba
 			continue
 		}
 
-		vals, err := g.processor.ProcessBackendBody(body, file.EvalContext())
+		vals, err := processBackendBody(body, file.EvalContext())
 		if err != nil {
 			return nil, err
 		}
@@ -255,4 +254,16 @@ func generateOutputTraversalBlock(t hcl.Traversal, rootname string, name string)
 	blockBody.SetAttributeTraversal("value", t)
 
 	return block
+}
+
+// processBackendBody returns a map of backend data processed in context of `context`
+func processBackendBody(body hcl.Body, context *hcl.EvalContext) (map[string]cty.Value, error) {
+	values := map[string]cty.Value{}
+	diags := gohcl.DecodeBody(body, context, &values)
+
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	return values, nil
 }

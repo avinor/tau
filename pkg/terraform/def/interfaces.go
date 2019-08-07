@@ -3,7 +3,6 @@ package def
 import (
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/shell"
-	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -26,11 +25,6 @@ type Generator interface {
 	GenerateOverrides(file *loader.ParsedFile) ([]byte, bool, error)
 	GenerateDependencies(file *loader.ParsedFile) ([]DependencyProcesser, bool, error)
 	GenerateVariables(file *loader.ParsedFile) ([]byte, error)
-}
-
-// Processor for processing terraform config or output
-type Processor interface {
-	ProcessBackendBody(body hcl.Body, context *hcl.EvalContext) (map[string]cty.Value, error)
 }
 
 // Executor executes terraform commands
