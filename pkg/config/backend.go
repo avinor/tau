@@ -1,6 +1,8 @@
 package config
 
 import (
+	"github.com/avinor/tau/pkg/config/comp"
+
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/pkg/errors"
 )
@@ -17,6 +19,8 @@ var (
 type Backend struct {
 	Type   string   `hcl:"type,label"`
 	Config hcl.Body `hcl:",remain"`
+
+	comp.Remainer
 }
 
 // Merge current backend with source. Source will overwrite settings from current backend

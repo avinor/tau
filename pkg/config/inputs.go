@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/avinor/tau/pkg/config/comp"
 	"github.com/hashicorp/hcl2/hcl"
 )
 
@@ -8,6 +9,8 @@ import (
 // Supports all functions supported by terraform.
 type Inputs struct {
 	Config hcl.Body `hcl:",remain"`
+
+	comp.Remainer
 }
 
 // Merge current inputs with config from source

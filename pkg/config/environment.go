@@ -3,6 +3,8 @@ package config
 import (
 	"regexp"
 
+	"github.com/avinor/tau/pkg/config/comp"
+
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/pkg/errors"
@@ -21,6 +23,8 @@ var (
 // Define variables using attributes, blocks not supported
 type Environment struct {
 	Config hcl.Body `hcl:",remain"`
+
+	comp.Remainer
 }
 
 // Merge current environment with config from source

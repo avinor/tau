@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 
+	"github.com/avinor/tau/pkg/config/comp"
+
 	"github.com/hashicorp/hcl2/hcl"
 )
 
@@ -13,6 +15,8 @@ type Data struct {
 	Name string `hcl:"name,label"`
 
 	Config hcl.Body `hcl:",remain"`
+
+	comp.Remainer
 }
 
 // Merge data source with src data source only if type and name matches.
