@@ -173,10 +173,8 @@ func (g *Generator) generateDataProcessor(file *loader.ParsedFile, trav []hcl.Tr
 	}
 
 	// Find variables with data source
-	for _, t := range trav {
-		if block := generateOutputTraversalBlock(t, "data", ""); block != nil {
-			dataProcessor.File.Body().AppendBlock(block)
-		}
+	for _, block := range generateOutputBlocks(trav, "data", "") {
+		dataProcessor.File.Body().AppendBlock(block)
 	}
 
 	return dataProcessor, nil
@@ -210,13 +208,62 @@ func (g *Generator) generateDepProcessor(file *loader.ParsedFile, dep *config.De
 	depProcessor.File.Body().AppendBlock(block)
 
 	// Find variables using this dependency
-	for _, t := range trav {
-		if block := generateOutputTraversalBlock(t, "dependency", dep.Name); block != nil {
-			depProcessor.File.Body().AppendBlock(block)
-		}
+	for _, block := range generateOutputBlocks(trav, "dependency", dep.Name) {
+		depProcessor.File.Body().AppendBlock(block)
 	}
 
 	return depProcessor, nil
+}
+
+func generateOutputBlocks(trav []hcl.Traversal, rootName, name string) []*hclwrite.Block {
+	blocks := map[string]*hclwrite.Block{}
+
+	for _, t := range trav {
+		// For some reason this does not work.. using workaround under instead to convert
+		// to a hclwrite.Expression and then to token
+		// tokens := hclwrite.TokensForTraversal(t)
+
+		if t.RootName() != rootName {
+			continue
+		}
+
+		expr := hclwrite.NewExpressionAbsTraversal(t)
+		tokens := expr.BuildTokens(nil)
+		fullname := tokens.Bytes()
+
+		if _, ok := blocks[string(fullname)]; ok {
+			continue
+		}
+
+		if name != "" {
+			if len(tokens) < 3 || string(tokens[2].Bytes) != name {
+				continue
+			}
+		}
+
+		// Need to "rewrite" root for dependencies
+		if t.RootName() == "dependency" {
+			split := t.SimpleSplit()
+			root := hcl.TraverseRoot{
+				Name: "data.terraform_remote_state",
+			}
+			t = hcl.TraversalJoin([]hcl.Traverser{root}, split.Rel)
+		}
+
+		block := hclwrite.NewBlock("output", []string{encodeName(fullname)})
+		blockBody := block.Body()
+
+		blockBody.SetAttributeTraversal("value", t)
+
+		blocks[string(fullname)] = block
+	}
+
+	ret := []*hclwrite.Block{}
+	for _, block := range blocks {
+		ret = append(ret, block)
+	}
+
+	return ret
 }
 
 func generateOutputTraversalBlock(t hcl.Traversal, rootname string, name string) *hclwrite.Block {
