@@ -104,7 +104,24 @@ inputs {
 }
 ```
 
-Run `tau init` in same folder and it will download module `avinor/storage-account/azurerm`, create input file and run `terraform init`.
+### hook
+
+One or more hooks that triggers on specific events during deployment. It can read the output from command run and set environment variables for terraform, for instance access keys etc.
+
+To read output and set environment variables set `set_env` = true. It will read all output in format "key = value" and add them to the environment when running terraform.
+
+If `fail_on_error` is set it will accept any failures from command and continue executing terraform commands. Default value is false and it will stop all executions.
+
+To optimize execution and not run same command multiple times (for instance retrieving same access key) it caches output from every command and reuses cached value if called multiple times in same run. To disable cache set `disable_cache` = true.
+
+attribute | Description
+----------|------------
+trigger_on    | Event to trigger hook on. Possible values are "prepare" and "finish"
+command       | Command to execute, should not include arguments
+args          | Arguments to send to command
+set_env       | If true it will read output in format "key = value"
+fail_on_error | Fail on error or continue running ignoring error
+disable_cache | Disable cache and make sure command is run every time
 
 ## Comparison
 
