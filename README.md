@@ -1,8 +1,8 @@
+# Tau
+
 [![CircleCI](https://circleci.com/gh/avinor/tau.svg?style=svg)](https://circleci.com/gh/avinor/tau)
 [![Go Report Card](https://goreportcard.com/badge/github.com/avinor/tau)](https://goreportcard.com/report/github.com/avinor/tau)
 [![GoDoc](https://godoc.org/github.com/avinor/tau?status.svg)](https://godoc.org/github.com/avinor/tau)
-
-# Tau
 
 Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.terraform.io/) that makes terraform execution and secret handling easier. It tries to conform to the principal of keeping code DRY (Don't Repeat Yourself) and bases all executions on terraform modules. Since terraform already provides a lot of excellent features it tries to not change that too much but use those features best possible.
 
@@ -45,6 +45,11 @@ dependency "vnet" {
 
 dependency "logs" {
     source = "./logs.hcl"
+
+    // override backend config from logs.hcl
+    backend {
+        sas_token = "override"
+    }
 }
 
 // One or more data blocks, support any terraform data block
@@ -122,6 +127,56 @@ args          | Arguments to send to command
 set_env       | If true it will read output in format "key = value"
 fail_on_error | Fail on error or continue running ignoring error
 disable_cache | Disable cache and make sure command is run every time
+
+### dependency
+
+One or more dependencies for this deployment. Using dependency block has 2 effects:
+
+* Make sure modules are deployed in correct order
+* Make output from dependency available as variables
+
+When resolving the output from a dependency it does this by using the terraform remote_state data source. Using example above it has a dependency on vnet.hcl that provides an output map of all subnets with their ids. Tau will not try to run any of the dependencies as that could require access it does not have, for instance vnet could be deployed in another subscription. Instead it creates a temporary terraform script that defines one `terraform_remote_state` data source for each variable defined in input block. It reads the backend definition from dependency source, but backend configuration can be overriden with the backend block in dependency definition. By doing it this way it should not be necessary to define any `terraform_remote_state` inside the module itself, and reading output from another module only requires access to its state store.
+
+To resolve dependencies correct it will run any hooks and use environment variables defined in dependency when resolving the remote state output. This to ensure that dependency is resolved in correct environment.
+
+attribute | Description
+----------|------------
+source    | Source of dependency, has to be a local file
+
+block   | Description
+--------|------------
+backend | Override one or all of attributes from dependency backend configuration
+
+### data
+
+Data can be any data source available in terraform. This could be used to read secrets from a key vault, get Kubernetes versions etc. These will be resolved in same context as module is running, with same environment variables.
+
+Output from data source can be used same way as in terraform by using the `data.source...` variables.
+
+See terraform documentation for configuration of data blocks.
+
+### environment_variables
+
+A list of key value pair of environment variables that should be added to the context before running any terraform commands. This could be access keys, subscription ids etc. It is also possible to set environment variables from [hooks](#hook).
+
+### backend
+
+Backend to use for remote state storage. The configuration is same as in terraform, so look in terraform documentation how to configure this for each available remote backend.
+
+Tau will create an override file with backend definition before running the module. By doing this it is not required to define any backend configuration in the module.
+
+### module
+
+Module is the source, and optionally version, of module to deploy. Source can be any sources available in go-getter library (http(s), git, local file, s3...) and terraform registry. If the version attribute is defined it will assume that source is from a terraform registry and will attempt to download from registry.
+
+attribute | Description
+----------|------------
+source    | Source of dependency, supports any go-getter + terraform registry
+version   | Terraform registry version
+
+### inputs
+
+Variable inputs to send to module on execution. Can contain references to any data source and dependencies. Before executing plan / apply it will create a `terraform.tfvars` file in the module temporary folder with all resolved variables. It is important to remember that even secrets sent as input variables are stored in remote state.
 
 ## Comparison
 
