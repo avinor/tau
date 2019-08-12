@@ -7,6 +7,7 @@ require (
 	github.com/avinor/cmd v1.0.4
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/fatih/color v1.7.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.0.4
 	github.com/go-errors/errors v1.0.1
 	github.com/google/go-cmp v0.3.0
