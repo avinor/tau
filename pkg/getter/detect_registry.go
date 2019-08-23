@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/registry/regsrc"
 )
 
-// RegistryDetector implements detector to detect terraform registry
+// RegistryDetector implements detector to detect terraform registry.
 // Src have to be formatted with query parameter ?registryVersion=
 // avinor/storage-account/azurerm?registryVersion=1.0
 type RegistryDetector struct {
