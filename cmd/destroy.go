@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -13,8 +12,6 @@ import (
 
 type destroyCmd struct {
 	meta
-
-	loader *loader.Loader
 
 	autoApprove bool
 }
@@ -50,11 +47,9 @@ func newDestroyCmd() *cobra.Command {
 		SilenceErrors:         true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := dc.processArgs(args); err != nil {
+			if err := dc.meta.init(args); err != nil {
 				return err
 			}
-
-			dc.init()
 
 			return dc.run(args)
 		},
@@ -68,20 +63,8 @@ func newDestroyCmd() *cobra.Command {
 	return destroyCmd
 }
 
-func (dc *destroyCmd) init() {
-	{
-		options := &loader.Options{
-			WorkingDirectory: paths.WorkingDir,
-			TauDirectory:     dc.TauDir,
-			MaxDepth:         1,
-		}
-
-		dc.loader = loader.New(options)
-	}
-}
-
 func (dc *destroyCmd) run(args []string) error {
-	files, err := dc.loader.Load(dc.file)
+	files, err := dc.Loader.Load(dc.file)
 	if err != nil {
 		return err
 	}

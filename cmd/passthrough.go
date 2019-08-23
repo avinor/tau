@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/config/loader"
-	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
@@ -14,8 +12,6 @@ type ptCmd struct {
 	meta
 	name    string
 	command passThroughCommand
-
-	loader *loader.Loader
 }
 
 // passThroughCommand description for a command that should just be passed through to terraform
@@ -79,11 +75,9 @@ func newPtCmd(name string, command passThroughCommand) *cobra.Command {
 		SilenceUsage:          true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := pt.processArgs(args); err != nil {
+			if err := pt.meta.init(args); err != nil {
 				return err
 			}
-
-			pt.init()
 
 			return pt.run(args)
 		},
@@ -102,20 +96,8 @@ func newPtCmd(name string, command passThroughCommand) *cobra.Command {
 	return ptCmd
 }
 
-func (pt *ptCmd) init() {
-	{
-		options := &loader.Options{
-			WorkingDirectory: paths.WorkingDir,
-			TauDirectory:     pt.TauDir,
-			MaxDepth:         1,
-		}
-
-		pt.loader = loader.New(options)
-	}
-}
-
 func (pt *ptCmd) run(args []string) error {
-	files, err := pt.loader.Load(pt.file)
+	files, err := pt.Loader.Load(pt.file)
 	if err != nil {
 		return err
 	}

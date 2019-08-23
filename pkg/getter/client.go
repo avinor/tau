@@ -13,16 +13,15 @@ import (
 
 // Options for initialization
 type Options struct {
-	HttpClient       *http.Client //nolint:golint
+	Timeout          time.Duration
 	WorkingDirectory string
 }
 
 // Client to retrieve sources
 type Client struct {
-	httpClient *http.Client
-	pwd        string
-	detectors  []getter.Detector
-	getters    map[string]getter.Getter
+	pwd       string
+	detectors []getter.Detector
+	getters   map[string]getter.Getter
 }
 
 const (
@@ -36,18 +35,20 @@ func New(options *Options) *Client {
 		options = &Options{}
 	}
 
-	if options.HttpClient == nil {
-		options.HttpClient = &http.Client{
-			Timeout: defaultTimeout,
-		}
-	}
-
 	if options.WorkingDirectory == "" {
 		options.WorkingDirectory = paths.WorkingDir
 	}
 
+	if options.Timeout == 0 {
+		options.Timeout = defaultTimeout
+	}
+
+	httpClient := &http.Client{
+		Timeout: defaultTimeout,
+	}
+
 	registryDetector := &RegistryDetector{
-		httpClient: options.HttpClient,
+		httpClient: httpClient,
 	}
 
 	detectors := []getter.Detector{
@@ -75,10 +76,9 @@ func New(options *Options) *Client {
 	}
 
 	return &Client{
-		httpClient: options.HttpClient,
-		pwd:        options.WorkingDirectory,
-		detectors:  detectors,
-		getters:    getters,
+		pwd:       options.WorkingDirectory,
+		detectors: detectors,
+		getters:   getters,
 	}
 }
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -13,8 +12,6 @@ import (
 
 type applyCmd struct {
 	meta
-
-	loader *loader.Loader
 
 	autoApprove bool
 	deletePlan  bool
@@ -54,11 +51,9 @@ func newApplyCmd() *cobra.Command {
 		SilenceErrors:         true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := ac.processArgs(args); err != nil {
+			if err := ac.meta.init(args); err != nil {
 				return err
 			}
-
-			ac.init()
 
 			return ac.run(args)
 		},
@@ -73,20 +68,8 @@ func newApplyCmd() *cobra.Command {
 	return applyCmd
 }
 
-func (ac *applyCmd) init() {
-	{
-		options := &loader.Options{
-			WorkingDirectory: paths.WorkingDir,
-			TauDirectory:     ac.TauDir,
-			MaxDepth:         1,
-		}
-
-		ac.loader = loader.New(options)
-	}
-}
-
 func (ac *applyCmd) run(args []string) error {
-	files, err := ac.loader.Load(ac.file)
+	files, err := ac.Loader.Load(ac.file)
 	if err != nil {
 		return err
 	}

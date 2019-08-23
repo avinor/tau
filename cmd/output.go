@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -20,8 +19,6 @@ import (
 
 type outputCmd struct {
 	meta
-
-	loader *loader.Loader
 
 	output string
 }
@@ -65,15 +62,13 @@ func newOutputCmd() *cobra.Command {
 		SilenceErrors:         true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := oc.meta.processArgs(args); err != nil {
+			if err := oc.meta.init(args); err != nil {
 				return err
 			}
 
 			if err := oc.processArgs(args); err != nil {
 				return err
 			}
-
-			oc.init()
 
 			return oc.run(args)
 		},
@@ -85,18 +80,6 @@ func newOutputCmd() *cobra.Command {
 	oc.addMetaFlags(outputCmd)
 
 	return outputCmd
-}
-
-func (oc *outputCmd) init() {
-	{
-		options := &loader.Options{
-			WorkingDirectory: paths.WorkingDir,
-			TauDirectory:     oc.TauDir,
-			MaxDepth:         1,
-		}
-
-		oc.loader = loader.New(options)
-	}
 }
 
 // processArgs process arguments and checks for invalid options or combination of arguments
@@ -123,7 +106,7 @@ func (oc *outputCmd) shouldProcessOutput() bool {
 }
 
 func (oc *outputCmd) run(args []string) error {
-	files, err := oc.loader.Load(oc.file)
+	files, err := oc.Loader.Load(oc.file)
 	if err != nil {
 		return err
 	}

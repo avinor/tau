@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
-	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -20,15 +15,11 @@ import (
 type initCmd struct {
 	meta
 
-	getter *getter.Client
-	loader *loader.Loader
-
-	maxDependencyDepth int
-	purge              bool
-	noOverrides        bool
-	source             string
-	sourceVersion      string
-	reconfigure        bool
+	purge         bool
+	noOverrides   bool
+	source        string
+	sourceVersion string
+	reconfigure   bool
 }
 
 var (
@@ -75,7 +66,7 @@ func newInitCmd() *cobra.Command {
 		SilenceErrors:         true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := ic.meta.processArgs(args); err != nil {
+			if err := ic.meta.init(args); err != nil {
 				return err
 			}
 
@@ -83,14 +74,11 @@ func newInitCmd() *cobra.Command {
 				return err
 			}
 
-			ic.init()
-
 			return ic.run(args)
 		},
 	}
 
 	f := initCmd.Flags()
-	f.IntVar(&ic.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
 	f.BoolVar(&ic.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
 	f.BoolVar(&ic.reconfigure, "reconfigure", false, "reconfigure the backend")
@@ -100,36 +88,6 @@ func newInitCmd() *cobra.Command {
 	ic.addMetaFlags(initCmd)
 
 	return initCmd
-}
-
-// init initializes the clients required for initCmd
-func (ic *initCmd) init() {
-	{
-		timeout := time.Duration(ic.timeout) * time.Second
-
-		ui.Debug("http timeout: %s", timeout)
-
-		options := &getter.Options{
-			HttpClient: &http.Client{
-				Timeout: timeout,
-			},
-			WorkingDirectory: paths.WorkingDir,
-		}
-
-		ic.getter = getter.New(options)
-	}
-
-	{
-		options := &loader.Options{
-			WorkingDirectory: paths.WorkingDir,
-			TauDirectory:     ic.TauDir,
-			MaxDepth:         ic.maxDependencyDepth,
-		}
-
-		ui.Debug("max dependency depth: %s", ic.maxDependencyDepth)
-
-		ic.loader = loader.New(options)
-	}
 }
 
 // processArgs process arguments and checks for invalid options or combination of arguments
@@ -160,7 +118,7 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	// load all sources
-	files, err := ic.loader.Load(ic.file)
+	files, err := ic.Loader.Load(ic.file)
 	if err != nil {
 		return err
 	}
@@ -181,6 +139,9 @@ func (ic *initCmd) run(args []string) error {
 	// Load module files usign go-getter
 	if !ic.reconfigure {
 		ui.Header("Loading modules...")
+
+		//client := getter.New(paths.WorkingDir)
+
 		for _, file := range files {
 			module := file.Config.Module
 			source := module.Source
@@ -191,7 +152,9 @@ func (ic *initCmd) run(args []string) error {
 				version = &ic.sourceVersion
 			}
 
-			if err := ic.getter.Get(source, file.ModuleDir(), version); err != nil {
+			//client.GetVersion(source, version, file.ModuleDir())
+
+			if err := ic.Getter.Get(source, file.ModuleDir(), version); err != nil {
 				return err
 			}
 		}

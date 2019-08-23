@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/avinor/tau/pkg/config/loader"
+	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/terraform"
@@ -10,26 +13,52 @@ import (
 )
 
 type meta struct {
-	timeout int
-	file    string
+	timeout            int
+	maxDependencyDepth int
+	file               string
 
 	Engine *terraform.Engine
+	Getter *getter.Client
+	Loader *loader.Loader
 
 	TauDir string
 }
 
-func (m *meta) processArgs(args []string) error {
+func (m *meta) init(args []string) error {
 	if workingDir == "" {
 		workingDir = paths.WorkingDir
 	}
 
 	m.TauDir = paths.JoinAndCreate(workingDir, paths.TauPath)
 
-	ui.Debug("tau dir: %s", m.TauDir)
+	{
+		timeout := time.Duration(m.timeout) * time.Second
+
+		options := &getter.Options{
+			Timeout:          timeout,
+			WorkingDirectory: workingDir,
+		}
+
+		m.Getter = getter.New(options)
+	}
+
+	{
+		options := &loader.Options{
+			WorkingDirectory: workingDir,
+			TauDirectory:     m.TauDir,
+			MaxDepth:         m.maxDependencyDepth,
+		}
+
+		m.Loader = loader.New(options)
+	}
 
 	{
 		m.Engine = terraform.NewEngine()
 	}
+
+	ui.Debug("tau dir: %s", m.TauDir)
+	ui.Debug("http timeout: %s", m.timeout)
+	ui.Debug("max dependency depth: %s", m.maxDependencyDepth)
 
 	return nil
 }
@@ -40,6 +69,7 @@ func (m *meta) addMetaFlags(cmd *cobra.Command) {
 	f := cmd.Flags()
 	f.IntVar(&m.timeout, "timeout", 10, "timeout for http client when retrieving sources")
 	f.StringVarP(&m.file, "file", "f", ".", "file or directory to run configuration for")
+	f.IntVar(&m.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 }
 
 // resolveDependencies resolves the dependencies for all files

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -15,8 +14,6 @@ import (
 
 type planCmd struct {
 	meta
-
-	loader *loader.Loader
 }
 
 var (
@@ -52,11 +49,9 @@ func newPlanCmd() *cobra.Command {
 		SilenceErrors:         true,
 		Args:                  cobra.MaximumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := pc.processArgs(args); err != nil {
+			if err := pc.meta.init(args); err != nil {
 				return err
 			}
-
-			pc.init()
 
 			return pc.run(args)
 		},
@@ -67,20 +62,8 @@ func newPlanCmd() *cobra.Command {
 	return planCmd
 }
 
-func (pc *planCmd) init() {
-	{
-		options := &loader.Options{
-			WorkingDirectory: paths.WorkingDir,
-			TauDirectory:     pc.TauDir,
-			MaxDepth:         1,
-		}
-
-		pc.loader = loader.New(options)
-	}
-}
-
 func (pc *planCmd) run(args []string) error {
-	files, err := pc.loader.Load(pc.file)
+	files, err := pc.Loader.Load(pc.file)
 	if err != nil {
 		return err
 	}

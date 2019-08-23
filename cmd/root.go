@@ -14,7 +14,7 @@ var (
 		It can deploy either a single module or all modules in a folder, taking into consideration the
 		dependencies between modules.
 
-		All arguments that are not handled by tau will be forwarded to terraform.
+		To pass additional arguments to terraform use the --args argument.
 		`)
 )
 
@@ -28,7 +28,7 @@ var (
 func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "tau",
-		Short: "Tau (Terraform Avinor Utility) manages terraform deployments",
+		Short: "Tau (Terraform Avinor Utility) manages terraform executions",
 		Long:  rootLong,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if debug {
