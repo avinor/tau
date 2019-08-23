@@ -99,7 +99,7 @@ func parseFile(file string, tauDir string) (*ParsedFile, error) {
 		return nil, err
 	}
 
-	env["TF_PLUGIN_CACHE_DIR"] = paths.JoinAndCreate(tauDir, "_plugins")
+	// TODO env["TF_PLUGIN_CACHE_DIR"] = paths.JoinAndCreate(tauDir, "_plugins")
 
 	if ok, err := cfg.Validate(); !ok {
 		return nil, err
