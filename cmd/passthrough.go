@@ -21,6 +21,7 @@ type passThroughCommand struct {
 	LongDescription  string
 	Example          string
 	SingleResource   bool
+	MaximumNArgs     int
 }
 
 var (
@@ -51,12 +52,14 @@ var (
 			ShortDescription: "Manually mark a resource for recreation",
 			LongDescription:  "Manually mark a resource for recreation",
 			SingleResource:   true,
+			MaximumNArgs:     1,
 		},
 		"untaint": {
 			Use:              "untaint -f SOURCE",
 			ShortDescription: "Manually unmark a resource as tainted",
 			LongDescription:  "Manually unmark a resource as tainted",
 			SingleResource:   true,
+			MaximumNArgs:     1,
 		},
 	}
 )
@@ -73,7 +76,7 @@ func newPtCmd(name string, command passThroughCommand) *cobra.Command {
 		Long:                  command.LongDescription,
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
-		Args:                  cobra.MaximumNArgs(0),
+		Args:                  cobra.MaximumNArgs(command.MaximumNArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := pt.meta.init(args); err != nil {
 				return err
@@ -128,6 +131,7 @@ func (pt *ptCmd) run(args []string) error {
 		ui.Separator(file.Name)
 
 		extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
+		extraArgs = append(extraArgs, args...)
 		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
 			return err
 		}
