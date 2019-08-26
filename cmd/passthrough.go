@@ -36,6 +36,7 @@ var (
 			ShortDescription: "Import existing infrastructure into Terraform",
 			LongDescription:  "Import existing infrastructure into Terraform",
 			SingleResource:   true,
+			MaximumNArgs:     2,
 		},
 		"refresh": {
 			Use:              "refresh [-f SOURCE]",
@@ -47,15 +48,22 @@ var (
 			ShortDescription: "Inspect Terraform state or plan",
 			LongDescription:  "Inspect Terraform state or plan",
 		},
+		"state": {
+			Use:              "state -f SOURCE [ARGS...]",
+			ShortDescription: "Advanced state management",
+			LongDescription:  "Advanced state management",
+			SingleResource:   true,
+			MaximumNArgs:     10,
+		},
 		"taint": {
-			Use:              "taint -f SOURCE",
+			Use:              "taint -f SOURCE ADDRESS",
 			ShortDescription: "Manually mark a resource for recreation",
 			LongDescription:  "Manually mark a resource for recreation",
 			SingleResource:   true,
 			MaximumNArgs:     1,
 		},
 		"untaint": {
-			Use:              "untaint -f SOURCE",
+			Use:              "untaint -f SOURCE ADDRESS",
 			ShortDescription: "Manually unmark a resource as tainted",
 			LongDescription:  "Manually unmark a resource as tainted",
 			SingleResource:   true,
