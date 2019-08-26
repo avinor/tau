@@ -19,7 +19,7 @@ type Options struct {
 
 // Client to retrieve sources
 type Client struct {
-	pwd       string
+	options   *Options
 	detectors []getter.Detector
 	getters   map[string]getter.Getter
 }
@@ -76,15 +76,44 @@ func New(options *Options) *Client {
 	}
 
 	return &Client{
-		pwd:       options.WorkingDirectory,
+		options:   options,
 		detectors: detectors,
 		getters:   getters,
 	}
 }
 
+// Clone creates a clone of the client with an alternative new working directory.
+// If workingDir is set to "" it will just reuse same directory in client
+func (c *Client) Clone(workingDir string) *Client {
+	if workingDir == "" {
+		workingDir = c.options.WorkingDirectory
+	}
+
+	return &Client{
+		options: &Options{
+			WorkingDirectory: workingDir,
+			Timeout:          c.options.Timeout,
+		},
+		detectors: c.detectors,
+		getters:   c.getters,
+	}
+}
+
+// func (c *Client) Get(src, dst string) error {
+// 	return nil
+// }
+
+// func (c *Client) GetVersion(src, version, dst string) error {
+// 	return nil
+// }
+
+// func (c *Client) GetPath(src string) string {
+// 	return src
+// }
+
 // Get retrieves sources from src and load them into dst
 func (c *Client) Get(src, dst string, version *string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
 	defer cancel()
 
 	if version != nil && *version != "" {
@@ -97,7 +126,7 @@ func (c *Client) Get(src, dst string, version *string) error {
 		Ctx:       ctx,
 		Src:       src,
 		Dst:       dst,
-		Pwd:       c.pwd,
+		Pwd:       c.options.WorkingDirectory,
 		Mode:      getter.ClientModeAny,
 		Detectors: c.detectors,
 		Getters:   c.getters,
@@ -108,5 +137,5 @@ func (c *Client) Get(src, dst string, version *string) error {
 
 // Detect is a wrapper on go-getter detect and will return the location for source
 func (c *Client) Detect(src string) (string, error) {
-	return getter.Detect(src, c.pwd, c.detectors)
+	return getter.Detect(src, c.options.WorkingDirectory, c.detectors)
 }
