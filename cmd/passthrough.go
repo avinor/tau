@@ -26,6 +26,13 @@ type passThroughCommand struct {
 
 var (
 	passThroughCommands = map[string]passThroughCommand{
+		"force-unlock": {
+			Use:              "force-unlock -f SOURCE ID",
+			ShortDescription: "Force unlock remote state lock",
+			LongDescription:  "Force unlock remote state lock",
+			SingleResource:   true,
+			MaximumNArgs:     1,
+		},
 		"get": {
 			Use:              "get [-f SOURCE]",
 			ShortDescription: "Download and install modules for the configuration",
