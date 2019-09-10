@@ -68,8 +68,10 @@ func (c Config) Validate() (bool, error) {
 		}
 	}
 
-	if valid, err := c.Environment.Validate(); !valid {
-		return false, err
+	if c.Environment != nil {
+		if valid, err := c.Environment.Validate(); !valid {
+			return false, err
+		}
 	}
 
 	for _, hook := range c.Hooks {
