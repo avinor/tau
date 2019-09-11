@@ -18,7 +18,6 @@ type meta struct {
 	file               string
 
 	Engine *terraform.Engine
-	Getter *getter.Client
 	Loader *loader.Loader
 
 	TauDir string
@@ -31,16 +30,7 @@ func (m *meta) init(args []string) error {
 
 	m.TauDir = paths.JoinAndCreate(workingDir, paths.TauPath)
 
-	{
-		timeout := time.Duration(m.timeout) * time.Second
-
-		options := &getter.Options{
-			Timeout:          timeout,
-			WorkingDirectory: workingDir,
-		}
-
-		m.Getter = getter.New(options)
-	}
+	getter.Timeout = time.Duration(m.timeout) * time.Second
 
 	{
 		options := &loader.Options{

@@ -11,40 +11,27 @@ import (
 	"github.com/hashicorp/go-getter"
 )
 
-// Options for initialization
-type Options struct {
-	Timeout          time.Duration
-	WorkingDirectory string
-}
-
 // Client to retrieve sources
 type Client struct {
-	options   *Options
-	detectors []getter.Detector
-	getters   map[string]getter.Getter
+	workingDir string
+	detectors  []getter.Detector
+	getters    map[string]getter.Getter
 }
 
-const (
-	defaultTimeout = 10 * time.Second
+var (
+	// Timeout for context to retrieve the sources
+	Timeout = 10 * time.Second
 )
 
 // New creates a new getter client. It configures all the detectors and getters itself to make
 // sure they are configured correctly.
-func New(options *Options) *Client {
-	if options == nil {
-		options = &Options{}
-	}
-
-	if options.WorkingDirectory == "" {
-		options.WorkingDirectory = paths.WorkingDir
-	}
-
-	if options.Timeout == 0 {
-		options.Timeout = defaultTimeout
+func New(workingDir string) *Client {
+	if workingDir == "" {
+		workingDir = paths.WorkingDir
 	}
 
 	httpClient := &http.Client{
-		Timeout: defaultTimeout,
+		Timeout: Timeout,
 	}
 
 	registryDetector := &RegistryDetector{
@@ -76,9 +63,9 @@ func New(options *Options) *Client {
 	}
 
 	return &Client{
-		options:   options,
-		detectors: detectors,
-		getters:   getters,
+		workingDir: workingDir,
+		detectors:  detectors,
+		getters:    getters,
 	}
 }
 
@@ -86,34 +73,20 @@ func New(options *Options) *Client {
 // If workingDir is set to "" it will just reuse same directory in client
 func (c *Client) Clone(workingDir string) *Client {
 	if workingDir == "" {
-		workingDir = c.options.WorkingDirectory
+		workingDir = c.workingDir
 	}
 
 	return &Client{
-		options: &Options{
-			WorkingDirectory: workingDir,
-			Timeout:          c.options.Timeout,
-		},
-		detectors: c.detectors,
-		getters:   c.getters,
+		workingDir: workingDir,
+		detectors:  c.detectors,
+		getters:    c.getters,
 	}
 }
 
-// func (c *Client) Get(src, dst string) error {
-// 	return nil
-// }
-
-// func (c *Client) GetVersion(src, version, dst string) error {
-// 	return nil
-// }
-
-// func (c *Client) GetPath(src string) string {
-// 	return src
-// }
-
-// Get retrieves sources from src and load them into dst
+// Get retrieves sources from src and load them into dst folder. If version is set it will try to
+// download from terraform registry. Set to nil to disable this feature.
 func (c *Client) Get(src, dst string, version *string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
 	defer cancel()
 
 	if version != nil && *version != "" {
@@ -126,7 +99,7 @@ func (c *Client) Get(src, dst string, version *string) error {
 		Ctx:       ctx,
 		Src:       src,
 		Dst:       dst,
-		Pwd:       c.options.WorkingDirectory,
+		Pwd:       c.workingDir,
 		Mode:      getter.ClientModeAny,
 		Detectors: c.detectors,
 		Getters:   c.getters,
@@ -137,5 +110,5 @@ func (c *Client) Get(src, dst string, version *string) error {
 
 // Detect is a wrapper on go-getter detect and will return the location for source
 func (c *Client) Detect(src string) (string, error) {
-	return getter.Detect(src, c.options.WorkingDirectory, c.detectors)
+	return getter.Detect(src, c.workingDir, c.detectors)
 }
