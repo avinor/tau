@@ -114,6 +114,10 @@ func (c *Command) Run() error {
 		Stderr: shell.Processors(logp),
 	}
 
+	if c.Hook.WorkingDir != nil && *c.Hook.WorkingDir != "" {
+		options.WorkingDirectory = *c.Hook.WorkingDir
+	}
+
 	args := []string{}
 	if c.Hook.Arguments != nil {
 		args = append(args, *c.Hook.Arguments...)

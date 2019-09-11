@@ -41,6 +41,21 @@ const (
 			trigger_on = "prepare"
 		}
 	`
+
+	hookTest6 = `
+		hook "name" {
+			command = "test"
+			script = "path"
+			trigger_on = "prepare"
+		}
+	`
+
+	hookTest7 = `
+		hook "name" {
+			script = "path"
+			trigger_on = "prepare"
+		}
+	`
 )
 
 var (
@@ -49,6 +64,8 @@ var (
 	hookFile3 = fileFromString("hook3", hookTest3)
 	hookFile4 = fileFromString("hook4", hookTest4)
 	hookFile5 = fileFromString("hook5", hookTest5)
+	hookFile6 = fileFromString("hook6", hookTest6)
+	hookFile7 = fileFromString("hook7", hookTest7)
 )
 
 func TestHookMerge(t *testing.T) {
@@ -126,6 +143,12 @@ func TestHookValidation(t *testing.T) {
 			},
 		},
 		{
+			[]*File{hookFile7},
+			map[string]ValidationResult{
+				"name": {Result: true, Error: nil},
+			},
+		},
+		{
 			[]*File{hookFile4},
 			map[string]ValidationResult{
 				"name": {Result: false, Error: triggerOnValueIncorrect},
@@ -134,7 +157,13 @@ func TestHookValidation(t *testing.T) {
 		{
 			[]*File{hookFile5},
 			map[string]ValidationResult{
-				"name": {Result: false, Error: commandIsRequired},
+				"name": {Result: false, Error: scriptOrCommandIsRequired},
+			},
+		},
+		{
+			[]*File{hookFile6},
+			map[string]ValidationResult{
+				"name": {Result: false, Error: scriptAndCommandBothDefined},
 			},
 		},
 	}

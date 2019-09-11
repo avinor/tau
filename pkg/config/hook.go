@@ -10,8 +10,11 @@ var (
 	// ValidHookTriggers is a list of valid values for trigger_on
 	ValidHookTriggers = []string{"prepare", "finish"}
 
-	// commandIsRequired is returned if command is not set
-	commandIsRequired = errors.Errorf("hook command is required")
+	// scriptOrCommandIsRequired is returned if command or script is not set
+	scriptOrCommandIsRequired = errors.Errorf("hook command or script is required")
+
+	// scriptAndCommandBothDefined is returned if both command and script attribute is defined
+	scriptAndCommandBothDefined = errors.Errorf("script and command can not be both defined in hook")
 
 	// triggerOnValueIncorrect is returned if the trigger_on value is incorrect value
 	triggerOnValueIncorrect = errors.Errorf("trigger_on has to be one of: %s", strings.Join(ValidHookTriggers, ", "))
@@ -34,10 +37,12 @@ type Hook struct {
 	Type         string    `hcl:"type,label"`
 	TriggerOn    *string   `hcl:"trigger_on,attr"`
 	Command      *string   `hcl:"command,attr"`
+	Script       *string   `hcl:"script,attr"`
 	Arguments    *[]string `hcl:"args,attr"`
 	SetEnv       *bool     `hcl:"set_env,attr"`
 	FailOnError  *bool     `hcl:"fail_on_error,attr"`
 	DisableCache *bool     `hcl:"disable_cache,attr"`
+	WorkingDir   *string   `hcl:"working_dir,attr"`
 }
 
 // Merge current hook with config from source
@@ -53,6 +58,8 @@ func (h *Hook) Merge(src *Hook) error {
 
 	h.TriggerOn = setFirstStringPointer(src.TriggerOn, h.TriggerOn)
 	h.Command = setFirstStringPointer(src.Command, h.Command)
+	h.Script = setFirstStringPointer(src.Script, h.Script)
+	h.WorkingDir = setFirstStringPointer(src.WorkingDir, h.WorkingDir)
 	h.SetEnv = setFirstBoolPointer(src.SetEnv, h.SetEnv)
 	h.FailOnError = setFirstBoolPointer(src.FailOnError, h.FailOnError)
 	h.DisableCache = setFirstBoolPointer(src.DisableCache, h.DisableCache)
@@ -73,7 +80,13 @@ func (h *Hook) Merge(src *Hook) error {
 // Validate that all required settings are correct
 func (h Hook) Validate() (bool, error) {
 	if h.Command == nil || *h.Command == "" {
-		return false, commandIsRequired
+		if h.Script == nil || *h.Script == "" {
+			return false, scriptOrCommandIsRequired
+		}
+	}
+
+	if h.Script != nil && *h.Script != "" && h.Command != nil && *h.Command != "" {
+		return false, scriptAndCommandBothDefined
 	}
 
 	if h.TriggerOn == nil {
