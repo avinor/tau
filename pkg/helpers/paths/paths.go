@@ -10,6 +10,9 @@ import (
 const (
 	// TauPath directory where all processing is done
 	TauPath = ".tau"
+
+	// CachePath is path where tau will store cache items
+	CachePath = ".tau_cache"
 )
 
 // Remove the directory and all its subdirectories

@@ -39,19 +39,18 @@ var (
 
 // GetCommand creates a new command or return command from cache if it has already been
 // created before. Cache key is based on full path for command including arguments
-func GetCommand(file *loader.ParsedFile, hook *config.Hook) *Command {
-	command := *hook.Command
-	if strings.HasPrefix(*hook.Command, ".") {
-		workingDir := filepath.Dir(file.FullPath)
-		command = filepath.Join(workingDir, *hook.Command)
+func GetCommand(file *loader.ParsedFile, hook *config.Hook) (*Command, error) {
+	parsedCommand, err := hook.GetExecutingCommand(filepath.Dir(file.FullPath))
+	if err != nil {
+		return nil, err
 	}
 
-	key := getCacheKey(command, hook)
+	key := getCacheKey(parsedCommand, hook)
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
 
 	if _, exists := cache[key]; exists {
-		return cache[key]
+		return cache[key], nil
 	}
 
 	split := strings.Split(*hook.TriggerOn, ":")
@@ -67,12 +66,12 @@ func GetCommand(file *loader.ParsedFile, hook *config.Hook) *Command {
 	cache[key] = &Command{
 		Hook:          hook,
 		Output:        map[string]string{},
-		parsedCommand: command,
+		parsedCommand: parsedCommand,
 		event:         hookEvent,
 		commands:      hookCommands,
 	}
 
-	return cache[key]
+	return cache[key], nil
 }
 
 // ShouldRun checks if for a given event and command this Command should run
@@ -177,4 +176,24 @@ func getCacheKey(command string, hook *config.Hook) string {
 	}
 
 	return strings.Join(append([]string{command}, *hook.Arguments...), "_")
+}
+
+func getParsedCommand(workingDir string) (string, error) {
+	if h.HasCommand() {
+		if strings.HasPrefix(*h.Command, ".") {
+			return filepath.Join(workingDir, *h.Command), nil
+		}
+	}
+
+	if !h.HasScript() {
+		return "", scriptOrCommandIsRequired
+	}
+
+	client := getter.New(paths.WorkingDir)
+
+	if err := client.Get(*h.Script, file.ModuleDir(), nil); err != nil {
+		return "", err
+	}
+
+	return "", nil
 }

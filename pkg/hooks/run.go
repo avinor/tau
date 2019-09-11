@@ -11,7 +11,10 @@ import (
 // got specific terraform commands.
 func Run(file *loader.ParsedFile, event string, command string) error {
 	for _, hook := range file.Config.Hooks {
-		cmd := GetCommand(file, hook)
+		cmd, err := GetCommand(file, hook)
+		if err != nil {
+			return err
+		}
 
 		if !cmd.ShouldRun(event, command) {
 			ui.Debug("hook %s should not run for command %s", hook.Type, command)

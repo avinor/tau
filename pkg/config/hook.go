@@ -79,13 +79,13 @@ func (h *Hook) Merge(src *Hook) error {
 
 // Validate that all required settings are correct
 func (h Hook) Validate() (bool, error) {
-	if h.Command == nil || *h.Command == "" {
-		if h.Script == nil || *h.Script == "" {
+	if !h.HasCommand() {
+		if !h.HasScript() {
 			return false, scriptOrCommandIsRequired
 		}
 	}
 
-	if h.Script != nil && *h.Script != "" && h.Command != nil && *h.Command != "" {
+	if h.HasCommand() && h.HasScript() {
 		return false, scriptAndCommandBothDefined
 	}
 
@@ -105,6 +105,16 @@ func (h Hook) Validate() (bool, error) {
 	}
 
 	return true, nil
+}
+
+// HasScript returns true if script is defined
+func (h Hook) HasScript() bool {
+	return h.Script != nil && *h.Script != ""
+}
+
+// HasCommand returns true is command is defined
+func (h Hook) HasCommand() bool {
+	return h.Command != nil && *h.Command != ""
 }
 
 // setFirstStringPointer returns first string that is not empty
