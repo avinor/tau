@@ -1,6 +1,9 @@
 package config
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +24,7 @@ type Config struct {
 }
 
 // Merge all sources into current configuration struct.
+// Should just call merge on all blocks / attributes of config struct.
 func (c *Config) Merge(srcs []*Config) error {
 	if err := mergeDatas(c, srcs); err != nil {
 		return err
@@ -51,6 +55,18 @@ func (c *Config) Merge(srcs []*Config) error {
 	}
 
 	return nil
+}
+
+// PostProcess is called after merging all configurations together to perform additional
+// processing after config is read. Can modify config elements
+func (c *Config) PostProcess(file *File) {
+	for _, hook := range c.Hooks {
+		if hook.Command != nil && strings.HasPrefix(*hook.Command, ".") {
+			fileDir := filepath.Dir(file.FullPath)
+			absCommand := filepath.Join(fileDir, *hook.Command)
+			hook.Command = &absCommand
+		}
+	}
 }
 
 // Validate that the configuration is correct. Calls validation on all parts of the struct.

@@ -96,6 +96,8 @@ func (f *File) Config() (*Config, error) {
 		return nil, err
 	}
 
+	config.PostProcess(f)
+
 	return config, nil
 }
 
