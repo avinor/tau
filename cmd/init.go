@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
@@ -137,11 +136,9 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	// Load module files usign go-getter
+	// Load module files using go-getter
 	if !ic.reconfigure {
 		ui.Header("Loading modules...")
-
-		client := getter.New(paths.WorkingDir)
 
 		for _, file := range files {
 			module := file.Config.Module
@@ -153,7 +150,7 @@ func (ic *initCmd) run(args []string) error {
 				version = &ic.sourceVersion
 			}
 
-			if err := client.Get(source, file.ModuleDir(), version); err != nil {
+			if err := ic.Getter.Get(source, file.ModuleDir(), version); err != nil {
 				return err
 			}
 		}

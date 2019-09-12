@@ -144,54 +144,21 @@ func (c *Command) Run() error {
 	return nil
 }
 
-// parseOutput as key=value. If a line cannot be parsed as key=value it will be ignored
-func parseOutput(output string) map[string]string {
-	matches := outputRegexp.FindAllStringSubmatch(output, -1)
-	values := map[string]string{}
-
-	if len(matches) == 0 {
-		return values
-	}
-
-	for _, match := range matches {
-		if len(match) < 3 {
-			continue
-		}
-
-		values[match[1]] = match[2]
-	}
-
-	return values
-}
-
-// getCacheKey returns a unique cache key for a given command with arguments. If disable_cache
-// is set it will generate a random key to make sure it creates new instances
-func getCacheKey(command string, hook *config.Hook) string {
-	if hook.DisableCache != nil && *hook.DisableCache {
-		return pstrings.SecureRandomAlphaString(16)
-	}
-
-	if hook.Arguments == nil {
-		return command
-	}
-
-	return strings.Join(append([]string{command}, *hook.Arguments...), "_")
-}
-
-func getParsedCommand(workingDir string) (string, error) {
-	if h.HasCommand() {
-		if strings.HasPrefix(*h.Command, ".") {
-			return filepath.Join(workingDir, *h.Command), nil
+func getParsedCommand(file *loader.ParsedFile, hook *config.Hook) (string, error) {
+	if hook.HasCommand() {
+		if strings.HasPrefix(*hook.Command, ".") {
+			workingDir := filepath.Dir(file.FullPath)
+			return filepath.Join(workingDir, *hook.Command), nil
 		}
 	}
 
-	if !h.HasScript() {
-		return "", scriptOrCommandIsRequired
+	if !hook.HasScript() {
+		return "", errors.Errorf("hook command or script is required")
 	}
 
 	client := getter.New(paths.WorkingDir)
 
-	if err := client.Get(*h.Script, file.ModuleDir(), nil); err != nil {
+	if err := client.Get(*hook.Script, file.ModuleDir(), nil); err != nil {
 		return "", err
 	}
 

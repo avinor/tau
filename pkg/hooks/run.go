@@ -1,31 +1,65 @@
 package hooks
 
 import (
-	"fmt"
+	"strings"
+	"sync"
 
+	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
+	"github.com/avinor/tau/pkg/getter"
+	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
+type Options struct {
+	Getter   *getter.Client
+	CacheDir string
+}
+
+type Runner struct {
+	options *Options
+
+	// cacheLock makes sure only one command can be generated at a time. For thread safety
+	hookLock sync.Mutex
+
+	// cache of all created commands
+	hooks map[string]*Command
+}
+
+func New(options *Options) *Runner {
+	if options == nil {
+		options = &Options{}
+	}
+
+	return &Runner{
+		options: options,
+	}
+}
+
 // Run all hooks in source for a specific event. Command input can filter hooks that should only be run
 // got specific terraform commands.
-func Run(file *loader.ParsedFile, event string, command string) error {
+func (r *Runner) Run(file *loader.ParsedFile, event, command string) error {
 	for _, hook := range file.Config.Hooks {
-		cmd, err := GetCommand(file, hook)
+		hook, err := r.getHook(file, hook)
 		if err != nil {
 			return err
 		}
 
-		if !cmd.ShouldRun(event, command) {
-			ui.Debug("hook %s should not run for command %s", hook.Type, command)
+		if hook.HasRun() && !hook.Config.DisableCache {
+			ui.Debug("%s has already run")
 			continue
 		}
 
-		if err := cmd.Run(); err != nil {
+		if !hook.ShouldRun(event, command) {
+			ui.Debug("%s should not run for command %s", hook.Type, command)
+			continue
+		}
+
+		if err := hook.Run(); err != nil {
 			return err
 		}
 
-		for key, value := range cmd.Output {
+		for key, value := range hook.Output {
 			ui.Debug("setting env %s", key)
 			file.Env[key] = value
 		}
@@ -34,14 +68,20 @@ func Run(file *loader.ParsedFile, event string, command string) error {
 	return nil
 }
 
-// RunAll executes the hook `event` for all files in collection
-func RunAll(files loader.ParsedFileCollection, event string, command string) error {
-	ui.Header(fmt.Sprintf("Executing %s hook...", event))
-	for _, file := range files {
-		if err := Run(file, event, command); err != nil {
-			return err
-		}
+func (r *Runner) getHook(file *loader.ParsedFile, event string) error {
+
+}
+
+// getCacheKey returns a unique cache key for a given command with arguments. If disable_cache
+// is set it will generate a random key to make sure it creates new instances
+func getCacheKey(command string, hook *config.Hook) string {
+	if hook.DisableCache != nil && *hook.DisableCache {
+		return pstrings.SecureRandomAlphaString(16)
 	}
 
-	return nil
+	if hook.Arguments == nil {
+		return command
+	}
+
+	return strings.Join(append([]string{command}, *hook.Arguments...), "_")
 }
