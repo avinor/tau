@@ -8,6 +8,7 @@ require (
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-cmd/cmd v1.0.5 // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/hcl2 v0.0.0-20190909202536-66c59f909e25
@@ -15,9 +16,9 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mattn/go-isatty v0.0.9
 	github.com/otiai10/copy v1.0.1
+	github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/russross/blackfriday v1.5.2
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.3.0
 	github.com/zclconf/go-cty v1.1.0
