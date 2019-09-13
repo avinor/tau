@@ -5,9 +5,9 @@ import (
 	"github.com/avinor/tau/pkg/hooks/def"
 )
 
-type CommandCreator struct{}
+type Creator struct{}
 
-func (c *CommandCreator) CanCreate(hook *config.Hook) bool {
+func (c *Creator) CanCreate(hook *config.Hook) bool {
 	if !hook.HasCommand() {
 		return false
 	}
@@ -15,7 +15,7 @@ func (c *CommandCreator) CanCreate(hook *config.Hook) bool {
 	return true
 }
 
-func (c *CommandCreator) Create(hook *config.Hook) def.Executor {
+func (c *Creator) Create(hook *config.Hook) def.Executor {
 	var command string
 	var arguments []string
 	var workingDir string

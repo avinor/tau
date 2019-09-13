@@ -9,6 +9,7 @@ import (
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/terraform"
+	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -57,7 +58,16 @@ func (m *meta) init(args []string) error {
 	}
 
 	{
-		m.Engine = terraform.NewEngine()
+		m.Runner = hooks.New(&hooks.Options{
+			Getter:   m.Getter,
+			CacheDir: m.CacheDir,
+		})
+	}
+
+	{
+		m.Engine = terraform.NewEngine(&def.Options{
+			Runner: m.Runner,
+		})
 	}
 
 	ui.Debug("tau dir: %s", m.TauDir)

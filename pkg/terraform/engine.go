@@ -23,7 +23,7 @@ type Engine struct {
 }
 
 // NewEngine creates a terraform engine for the currently installed terraform version
-func NewEngine() *Engine {
+func NewEngine(options *def.Options) *Engine {
 
 	version := Version()
 
@@ -40,7 +40,7 @@ func NewEngine() *Engine {
 
 	switch {
 	case strings.HasPrefix(version, "0.12"):
-		v012Engine := v012.NewEngine()
+		v012Engine := v012.NewEngine(options)
 		compatibility = v012Engine
 		generator = v012Engine
 		executor = v012Engine

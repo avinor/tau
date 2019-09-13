@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/avinor/tau/pkg/getter"
 	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/avinor/tau/pkg/helpers/ui"
+	"github.com/avinor/tau/pkg/hooks/command"
 	"github.com/avinor/tau/pkg/hooks/def"
 	"github.com/go-errors/errors"
 )
@@ -43,6 +45,10 @@ func New(options *Options) *Runner {
 
 	return &Runner{
 		options: options,
+		cache:   map[string]def.Executor{},
+		creators: []def.ExecutorCreator{
+			&command.Creator{},
+		},
 	}
 }
 
@@ -60,19 +66,30 @@ func (r *Runner) Run(file *loader.ParsedFile, event, command string) error {
 			continue
 		}
 
-		if exec.HasRun() {
-			ui.Debug("%s has already run")
-
-			if hook.DisableCache != nil && !*hook.DisableCache {
-				continue
+		if !exec.HasRun() || (hook.DisableCache != nil && *hook.DisableCache) {
+			if err := exec.Run(); err != nil {
+				return err
 			}
-		} else if err := exec.Run(); err != nil {
-			return err
 		}
 
-		for key, value := range pstrings.ParseVars(exec.Output()) {
-			ui.Debug("setting env %s", key)
-			file.Env[key] = value
+		if hook.SetEnv != nil && *hook.SetEnv {
+			for key, value := range pstrings.ParseVars(exec.Output()) {
+				ui.Debug("setting env %s", key)
+				file.Env[key] = value
+			}
+		}
+	}
+
+	return nil
+}
+
+// RunAll executes the hook `event` for all files in collection
+// TODO Remove when fixing output
+func (r *Runner) RunAll(files loader.ParsedFileCollection, event string, command string) error {
+	ui.Header(fmt.Sprintf("Executing %s hook...", event))
+	for _, file := range files {
+		if err := r.Run(file, event, command); err != nil {
+			return err
 		}
 	}
 
@@ -123,7 +140,8 @@ func (r *Runner) getExecutor(hook *config.Hook) (def.Executor, error) {
 
 	for _, creator := range r.creators {
 		if creator.CanCreate(hook) {
-			return creator.Create(hook), nil
+			r.cache[key] = creator.Create(hook)
+			return r.cache[key], nil
 		}
 	}
 
