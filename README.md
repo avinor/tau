@@ -111,6 +111,34 @@ inputs {
 
 ### hook
 
+```terraform
+hook "set_access_key" {
+    #Event to trigger hook on. Possible values are "prepare" and "finish"
+    trigger_on = "prepare"
+
+    # Command to execute, should not include arguments
+    command = "az"
+
+    # Alternative to defining command, reference to script to execute
+    script = "https://raw.githubusercontent.com/avinor/tau/master/hack/az_copy_output_from_state.sh"
+
+    # Arguments to send to command
+    args = ["aks", "get-credentials"]
+
+    # If true it will read output in format "key = value"
+    set_env = true
+
+    # Fail on error or continue running ignoring error
+    fail_on_error = false
+
+    # Disable cache and make sure command is run every time
+    disable_cache = false
+
+    # Working directory when executing command
+    working_dir = "/tmp"
+}
+```
+
 One or more hooks that triggers on specific events during deployment. It can read the output from command run and set environment variables for terraform, for instance access keys etc. `trigger_on` defines which event to trigger the hook on. This can either be just simple event (`prepare` or `finish`) or it can include which commands to trigger for. If hook should only trigger on `init` command, but not any other, then define `trigger_on` as `prepare:init`. Arguments after : is a comma separate list of commands to execute on.
 
 Either `command` or `script` has to be defined. A command can be any locally available command, or local script, while a script is retrieved by using go-getter and can therefore be a script in a remote git repository as well. See [go-getter](https://github.com/hashicorp/go-getter) for download options.
@@ -120,17 +148,6 @@ To read output and set environment variables set `set_env` = true. It will read 
 If `fail_on_error` is set it will accept any failures from command and continue executing terraform commands. Default value is false and it will stop all executions.
 
 To optimize execution and not run same command multiple times (for instance retrieving same access key) it caches output from every command and reuses cached value if called multiple times in same run. To disable cache set `disable_cache` = true.
-
-attribute | Description
-----------|------------
-trigger_on    | Event to trigger hook on. Possible values are "prepare" and "finish"
-command       | Command to execute, should not include arguments
-script        | Alternative to defining command, reference to script to execute
-args          | Arguments to send to command
-set_env       | If true it will read output in format "key = value"
-fail_on_error | Fail on error or continue running ignoring error
-disable_cache | Disable cache and make sure command is run every time
-working_dir   | Working directory when executing command
 
 ### dependency
 
@@ -184,7 +201,46 @@ Variable inputs to send to module on execution. Can contain references to any da
 
 ## Variables
 
+In addition to the `data.` and `dependency.` variables that are resolved by terraform there are some predefined variables available. In this context source is the configuration file that is currently being processed. When reading included files the source variable will be origin file, not file that is included.
 
+Example column shows result based on file `/tmp/virtual-network.hcl`
+
+variable | Description | Example
+---------|-------------|--------
+source.path     | Full path for source file | /tmp/virtual-network.hcl
+source.name     | Name of source file without extension | virtual-network
+source.filename | Filename of source file, same as name just with extension | virtual-network.hcl
+module.path     | Path where module will be downloaded, might not exist early in execution | /tmp/virtual-network.hcl/.tau/virtual-network.hcl/module
+
+Variables can be used when defining backend configuration in auto imported files for instance. By using `source.name` it will resolve to name of source file during processing.
+
+## Auto import
+
+When executing a file or folder it will by default ignore all files ending in `_auto.(hcl|tau)` as those are considered auto import files. It will instead merge those files together with source file. Auto files can be used to define common settings across all modules in same folder. Using variables in auto files makes it possible to define a common backend configuration that will change based on source file being executed.
+
+`common_auto.hcl`
+
+```terraform
+backend "azurerm" {
+    storage_account_name = "tfstate"
+    container_name       = "state"
+    key                  = "westeurope/${source.name}.tfstate"
+}
+```
+
+`virtual-network.hcl`
+
+```terraform
+module {
+    ...
+}
+
+inputs {
+    ...
+}
+```
+
+When running `tau init -f virtual-network-hcl` it will load the `common_auto.hcl` file first and replace `{source.name}` with `virtual-network` since that is the source file. Then it will merge configuration with that from `virtual-network.hcl` file.
 
 ## Comparison
 
