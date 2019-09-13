@@ -6,6 +6,7 @@ import (
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/pkg/errors"
+	"github.com/zclconf/go-cty/cty"
 )
 
 var (
@@ -28,6 +29,8 @@ type ParsedFile struct {
 	Config       *config.Config
 	Env          map[string]string
 	Dependencies map[string]*ParsedFile
+
+	moduleDir string
 }
 
 // GetParsedFile checks if the file has already been parsed and returns previous parsed file
@@ -53,7 +56,7 @@ func GetParsedFile(file string, tauDir string) (*ParsedFile, error) {
 
 // ModuleDir returns the module directory where source module is downloaded
 func (p ParsedFile) ModuleDir() string {
-	return paths.Join(p.TempDir, "module")
+	return p.moduleDir
 }
 
 // DependencyDir returns the dependency directory for dependency `dep`
@@ -80,10 +83,17 @@ func (p ParsedFile) VariableFile() string {
 // parseFile parses the file and returns a newly created ParsedFile. It will create a new
 // struct for every call to function.
 func parseFile(file string, tauDir string) (*ParsedFile, error) {
+
 	configFile, err := config.NewFile(file)
 	if err != nil {
 		return nil, err
 	}
+	tempDir := paths.Join(tauDir, configFile.Name)
+	moduleDir := paths.Join(tempDir, "module")
+
+	configFile.AddToContext("module", cty.ObjectVal(map[string]cty.Value{
+		"path": cty.StringVal(moduleDir),
+	}))
 
 	if err := AddAutoImports(configFile); err != nil {
 		return nil, err
@@ -107,9 +117,10 @@ func parseFile(file string, tauDir string) (*ParsedFile, error) {
 
 	return &ParsedFile{
 		File:         configFile,
-		TempDir:      paths.Join(tauDir, configFile.Name),
+		TempDir:      tempDir,
 		Config:       cfg,
 		Env:          env,
 		Dependencies: map[string]*ParsedFile{},
+		moduleDir:    moduleDir,
 	}, nil
 }

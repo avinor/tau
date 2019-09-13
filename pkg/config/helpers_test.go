@@ -59,8 +59,3 @@ func getBodyAttributes(body hcl.Body) (map[string]string, error) {
 
 	return actual, nil
 }
-
-// stringPointer returns pointer to a string
-func stringPointer(str string) *string {
-	return &str
-}

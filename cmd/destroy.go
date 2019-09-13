@@ -4,7 +4,6 @@ import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/spf13/cobra"
@@ -85,7 +84,7 @@ func (dc *destroyCmd) run(args []string) error {
 		return err
 	}
 
-	if err := hooks.RunAll(files, "prepare", "destroy"); err != nil {
+	if err := dc.Runner.RunAll(files, "prepare", "destroy"); err != nil {
 		return err
 	}
 
@@ -132,7 +131,7 @@ func (dc *destroyCmd) run(args []string) error {
 
 	ui.Separator("")
 
-	if err := hooks.RunAll(files, "finish", "destroy"); err != nil {
+	if err := dc.Runner.RunAll(files, "finish", "destroy"); err != nil {
 		return err
 	}
 

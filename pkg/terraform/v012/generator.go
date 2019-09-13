@@ -4,6 +4,7 @@ import (
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/hclcontext"
+	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/go-errors/errors"
 	"github.com/hashicorp/hcl2/gohcl"
@@ -16,6 +17,7 @@ import (
 // Generator implements the def.Generator interface and can generate files for terraform 0.12 version
 type Generator struct {
 	executor *Executor
+	runner   *hooks.Runner
 }
 
 // GenerateOverrides generates overrides file bytes
@@ -154,7 +156,7 @@ func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, ba
 }
 
 func (g *Generator) generateDataProcessor(file *loader.ParsedFile, trav []hcl.Traversal) (*DependencyProcessor, error) {
-	dataProcessor := NewDependencyProcessor(file, file, g.executor)
+	dataProcessor := NewDependencyProcessor(file, file, g.executor, g.runner)
 
 	// TODO Make sure we use azurerm data provider < 2.0
 	azblock := hclwrite.NewBlock("required_providers", []string{})
@@ -204,7 +206,7 @@ func (g *Generator) generateDepProcessor(file *loader.ParsedFile, dep *config.De
 		return nil, err
 	}
 
-	depProcessor := NewDependencyProcessor(file, depFile, g.executor)
+	depProcessor := NewDependencyProcessor(file, depFile, g.executor, g.runner)
 	depProcessor.File.Body().AppendBlock(block)
 
 	// Find variables using this dependency

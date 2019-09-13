@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,14 +51,14 @@ func TestModuleMerge(t *testing.T) {
 			[]*File{moduleFile2},
 			&Module{
 				Source:  "./test",
-				Version: stringPointer("1.0.0"),
+				Version: strings.ToPointer("1.0.0"),
 			},
 		},
 		{
 			[]*File{moduleFile2, moduleFile3},
 			&Module{
 				Source:  "./test",
-				Version: stringPointer("1.1.0"),
+				Version: strings.ToPointer("1.1.0"),
 			},
 		},
 	}

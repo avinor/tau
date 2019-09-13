@@ -24,7 +24,8 @@ type Client struct {
 	getters   map[string]getter.Getter
 }
 
-const (
+var (
+	// defaultTimeout for context to retrieve the sources
 	defaultTimeout = 10 * time.Second
 )
 
@@ -44,7 +45,7 @@ func New(options *Options) *Client {
 	}
 
 	httpClient := &http.Client{
-		Timeout: defaultTimeout,
+		Timeout: options.Timeout,
 	}
 
 	registryDetector := &RegistryDetector{
@@ -99,19 +100,8 @@ func (c *Client) Clone(workingDir string) *Client {
 	}
 }
 
-// func (c *Client) Get(src, dst string) error {
-// 	return nil
-// }
-
-// func (c *Client) GetVersion(src, version, dst string) error {
-// 	return nil
-// }
-
-// func (c *Client) GetPath(src string) string {
-// 	return src
-// }
-
-// Get retrieves sources from src and load them into dst
+// Get retrieves sources from src and load them into dst folder. If version is set it will try to
+// download from terraform registry. Set to nil to disable this feature.
 func (c *Client) Get(src, dst string, version *string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
 	defer cancel()
@@ -128,6 +118,25 @@ func (c *Client) Get(src, dst string, version *string) error {
 		Dst:       dst,
 		Pwd:       c.options.WorkingDirectory,
 		Mode:      getter.ClientModeAny,
+		Detectors: c.detectors,
+		Getters:   c.getters,
+	}
+
+	return client.Get()
+}
+
+func (c *Client) GetFile(src, dst string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
+	defer cancel()
+
+	ui.Info("- %v", src)
+
+	client := &getter.Client{
+		Ctx:       ctx,
+		Src:       src,
+		Dst:       dst,
+		Pwd:       c.options.WorkingDirectory,
+		Mode:      getter.ClientModeFile,
 		Detectors: c.detectors,
 		Getters:   c.getters,
 	}

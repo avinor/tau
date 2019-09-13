@@ -7,7 +7,6 @@ import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/ghodss/yaml"
@@ -127,7 +126,7 @@ func (oc *outputCmd) run(args []string) error {
 		return err
 	}
 
-	if err := hooks.RunAll(files, "prepare", "output"); err != nil {
+	if err := oc.Runner.RunAll(files, "prepare", "output"); err != nil {
 		return err
 	}
 
@@ -190,7 +189,7 @@ func (oc *outputCmd) run(args []string) error {
 
 	ui.Separator("")
 
-	if err := hooks.RunAll(files, "finish", "output"); err != nil {
+	if err := oc.Runner.RunAll(files, "finish", "output"); err != nil {
 		return err
 	}
 

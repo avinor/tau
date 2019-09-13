@@ -26,6 +26,7 @@ type DependencyProcessor struct {
 	File    *hclwrite.File
 
 	executor *Executor
+	runner   *hooks.Runner
 
 	// acceptApplyFailure should be set if its acceptable that apply fails. Should be set if
 	// no backend is found or unsupported attribute, most probably means a dependency is not deployed
@@ -33,7 +34,7 @@ type DependencyProcessor struct {
 }
 
 // NewDependencyProcessor creates a new dependencyProcessor structure from input arguments
-func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor) *DependencyProcessor {
+func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor, runner *hooks.Runner) *DependencyProcessor {
 	f := hclwrite.NewEmptyFile()
 
 	return &DependencyProcessor{
@@ -42,6 +43,7 @@ func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile,
 		File:       f,
 
 		executor: executor,
+		runner:   runner,
 	}
 }
 
@@ -65,7 +67,7 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 	debugLog := processors.NewUI(ui.Debug)
 	errorLog := processors.NewUI(ui.Error)
 
-	if err := hooks.Run(d.DepFile, "prepare", "init"); err != nil {
+	if err := d.runner.Run(d.DepFile, "prepare", "init"); err != nil {
 		return nil, false, err
 	}
 

@@ -4,7 +4,6 @@ import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/pkg/errors"
@@ -136,11 +135,9 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	// Load module files usign go-getter
+	// Load module files using go-getter
 	if !ic.reconfigure {
 		ui.Header("Loading modules...")
-
-		//client := getter.New(paths.WorkingDir)
 
 		for _, file := range files {
 			module := file.Config.Module
@@ -152,15 +149,13 @@ func (ic *initCmd) run(args []string) error {
 				version = &ic.sourceVersion
 			}
 
-			//client.GetVersion(source, version, file.ModuleDir())
-
 			if err := ic.Getter.Get(source, file.ModuleDir(), version); err != nil {
 				return err
 			}
 		}
 	}
 
-	if err := hooks.RunAll(files, "prepare", "init"); err != nil {
+	if err := ic.Runner.RunAll(files, "prepare", "init"); err != nil {
 		return err
 	}
 
@@ -195,7 +190,7 @@ func (ic *initCmd) run(args []string) error {
 
 	ui.Separator("")
 
-	if err := hooks.RunAll(files, "finish", "init"); err != nil {
+	if err := ic.Runner.RunAll(files, "finish", "init"); err != nil {
 		return err
 	}
 

@@ -7,7 +7,10 @@ import (
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
+	"github.com/avinor/tau/pkg/hooks"
+	hooksdef "github.com/avinor/tau/pkg/hooks/def"
 	"github.com/avinor/tau/pkg/terraform"
+	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +23,10 @@ type meta struct {
 	Engine *terraform.Engine
 	Getter *getter.Client
 	Loader *loader.Loader
+	Runner *hooks.Runner
 
-	TauDir string
+	TauDir   string
+	CacheDir string
 }
 
 func (m *meta) init(args []string) error {
@@ -30,6 +35,7 @@ func (m *meta) init(args []string) error {
 	}
 
 	m.TauDir = paths.JoinAndCreate(workingDir, paths.TauPath)
+	m.CacheDir = paths.JoinAndCreate(workingDir, paths.CachePath)
 
 	{
 		timeout := time.Duration(m.timeout) * time.Second
@@ -53,7 +59,16 @@ func (m *meta) init(args []string) error {
 	}
 
 	{
-		m.Engine = terraform.NewEngine()
+		m.Runner = hooks.New(&hooksdef.Options{
+			Getter:   m.Getter,
+			CacheDir: m.CacheDir,
+		})
+	}
+
+	{
+		m.Engine = terraform.NewEngine(&def.Options{
+			Runner: m.Runner,
+		})
 	}
 
 	ui.Debug("tau dir: %s", m.TauDir)
