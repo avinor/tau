@@ -8,6 +8,7 @@ import (
 	"github.com/avinor/tau/pkg/shell/processors"
 )
 
+// Executor can execute a command
 type Executor struct {
 	Command    string
 	Arguments  []string
@@ -18,15 +19,18 @@ type Executor struct {
 	lock   sync.Mutex
 }
 
+// HasRun checks if command has already run
 func (e *Executor) HasRun() bool {
 	return e.hasRun
 }
 
+// Output returns output string once command has been executed. If command has
+// not been executed it will always return empty string.
 func (e *Executor) Output() string {
 	return e.output
 }
 
-// Run the command hook and parse output
+// Run the command and store result in output
 func (e *Executor) Run() error {
 	e.lock.Lock()
 	defer e.lock.Unlock()

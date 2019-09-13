@@ -5,8 +5,11 @@ import (
 	"github.com/avinor/tau/pkg/hooks/def"
 )
 
+// Creator that can create a command executor
 type Creator struct{}
 
+// CanCreate checks if this creator can create executor for hook. Will check if hook
+// has a command definition.
 func (c *Creator) CanCreate(hook *config.Hook) bool {
 	if !hook.HasCommand() {
 		return false
@@ -15,7 +18,8 @@ func (c *Creator) CanCreate(hook *config.Hook) bool {
 	return true
 }
 
-func (c *Creator) Create(hook *config.Hook) def.Executor {
+// Create a new executor for hook.
+func (c *Creator) Create(hook *config.Hook) (def.Executor, error) {
 	var command string
 	var arguments []string
 	var workingDir string
@@ -36,5 +40,5 @@ func (c *Creator) Create(hook *config.Hook) def.Executor {
 		Command:    command,
 		Arguments:  arguments,
 		WorkingDir: workingDir,
-	}
+	}, nil
 }

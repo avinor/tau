@@ -8,6 +8,7 @@ import (
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
+	hooksdef "github.com/avinor/tau/pkg/hooks/def"
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/fatih/color"
@@ -58,7 +59,7 @@ func (m *meta) init(args []string) error {
 	}
 
 	{
-		m.Runner = hooks.New(&hooks.Options{
+		m.Runner = hooks.New(&hooksdef.Options{
 			Getter:   m.Getter,
 			CacheDir: m.CacheDir,
 		})

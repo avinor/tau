@@ -7,11 +7,11 @@ import (
 
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
-	"github.com/avinor/tau/pkg/getter"
 	pstrings "github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks/command"
 	"github.com/avinor/tau/pkg/hooks/def"
+	"github.com/avinor/tau/pkg/hooks/script"
 	"github.com/go-errors/errors"
 )
 
@@ -20,14 +20,9 @@ var (
 	noExecutorFound = errors.Errorf("no available executor is found for hook")
 )
 
-// Options sent to New function when making a new Runner.
-type Options struct {
-	Getter   *getter.Client
-	CacheDir string
-}
-
+// Runner that can execute hooks
 type Runner struct {
-	options *Options
+	options *def.Options
 
 	// cacheLock makes sure only one executor can be generated at a time. For thread safety
 	cacheLock sync.Mutex
@@ -38,16 +33,16 @@ type Runner struct {
 	creators []def.ExecutorCreator
 }
 
-func New(options *Options) *Runner {
-	if options == nil {
-		options = &Options{}
-	}
-
+// New creates a new runner for executing hooks.
+func New(options *def.Options) *Runner {
 	return &Runner{
 		options: options,
 		cache:   map[string]def.Executor{},
 		creators: []def.ExecutorCreator{
 			&command.Creator{},
+			&script.Creator{
+				Options: options,
+			},
 		},
 	}
 }
@@ -68,6 +63,10 @@ func (r *Runner) Run(file *loader.ParsedFile, event, command string) error {
 
 		if !exec.HasRun() || (hook.DisableCache != nil && *hook.DisableCache) {
 			if err := exec.Run(); err != nil {
+				if hook.FailOnError != nil && !*hook.FailOnError {
+					continue
+				}
+
 				return err
 			}
 		}
@@ -129,6 +128,8 @@ func (r *Runner) ShouldRun(hook *config.Hook, event, command string) bool {
 	return false
 }
 
+// getExecutor checks if executor has already been created and returns from cache if it has.
+// If not it will create a new executor using the creators and store in cache for later use.
 func (r *Runner) getExecutor(hook *config.Hook) (def.Executor, error) {
 	key := getCacheKey(hook)
 	r.cacheLock.Lock()
@@ -140,7 +141,12 @@ func (r *Runner) getExecutor(hook *config.Hook) (def.Executor, error) {
 
 	for _, creator := range r.creators {
 		if creator.CanCreate(hook) {
-			r.cache[key] = creator.Create(hook)
+			executor, err := creator.Create(hook)
+			if err != nil {
+				return nil, err
+			}
+
+			r.cache[key] = executor
 			return r.cache[key], nil
 		}
 	}

@@ -125,6 +125,25 @@ func (c *Client) Get(src, dst string, version *string) error {
 	return client.Get()
 }
 
+func (c *Client) GetFile(src, dst string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
+	defer cancel()
+
+	ui.Info("- %v", src)
+
+	client := &getter.Client{
+		Ctx:       ctx,
+		Src:       src,
+		Dst:       dst,
+		Pwd:       c.options.WorkingDirectory,
+		Mode:      getter.ClientModeFile,
+		Detectors: c.detectors,
+		Getters:   c.getters,
+	}
+
+	return client.Get()
+}
+
 // Detect is a wrapper on go-getter detect and will return the location for source
 func (c *Client) Detect(src string) (string, error) {
 	return getter.Detect(src, c.options.WorkingDirectory, c.detectors)

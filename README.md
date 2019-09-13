@@ -111,7 +111,9 @@ inputs {
 
 ### hook
 
-One or more hooks that triggers on specific events during deployment. It can read the output from command run and set environment variables for terraform, for instance access keys etc.
+One or more hooks that triggers on specific events during deployment. It can read the output from command run and set environment variables for terraform, for instance access keys etc. `trigger_on` defines which event to trigger the hook on. This can either be just simple event (`prepare` or `finish`) or it can include which commands to trigger for. If hook should only trigger on `init` command, but not any other, then define `trigger_on` as `prepare:init`. Arguments after : is a comma separate list of commands to execute on.
+
+Either `command` or `script` has to be defined. A command can be any locally available command, or local script, while a script is retrieved by using go-getter and can therefore be a script in a remote git repository as well. See [go-getter](https://github.com/hashicorp/go-getter) for download options.
 
 To read output and set environment variables set `set_env` = true. It will read all output in format "key = value" and add them to the environment when running terraform.
 
@@ -123,10 +125,12 @@ attribute | Description
 ----------|------------
 trigger_on    | Event to trigger hook on. Possible values are "prepare" and "finish"
 command       | Command to execute, should not include arguments
+script        | Alternative to defining command, reference to script to execute
 args          | Arguments to send to command
 set_env       | If true it will read output in format "key = value"
 fail_on_error | Fail on error or continue running ignoring error
 disable_cache | Disable cache and make sure command is run every time
+working_dir   | Working directory when executing command
 
 ### dependency
 
@@ -177,6 +181,10 @@ version   | Terraform registry version
 ### inputs
 
 Variable inputs to send to module on execution. Can contain references to any data source and dependencies. Before executing plan / apply it will create a `terraform.tfvars` file in the module temporary folder with all resolved variables. It is important to remember that even secrets sent as input variables are stored in remote state.
+
+## Variables
+
+
 
 ## Comparison
 
