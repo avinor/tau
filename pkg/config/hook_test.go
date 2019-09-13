@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,8 +80,8 @@ func TestHookMerge(t *testing.T) {
 			[]*Hook{
 				{
 					Type:      "name",
-					Command:   stringPointer("command"),
-					TriggerOn: stringPointer("prepare"),
+					Command:   strings.ToPointer("command"),
+					TriggerOn: strings.ToPointer("prepare"),
 				},
 			},
 			nil,
@@ -90,8 +91,8 @@ func TestHookMerge(t *testing.T) {
 			[]*Hook{
 				{
 					Type:      "name",
-					Command:   stringPointer("overwrite"),
-					TriggerOn: stringPointer("prepare"),
+					Command:   strings.ToPointer("overwrite"),
+					TriggerOn: strings.ToPointer("prepare"),
 					Arguments: &[]string{"arg1", "arg2"},
 				},
 			},
@@ -102,8 +103,8 @@ func TestHookMerge(t *testing.T) {
 			[]*Hook{
 				{
 					Type:      "name",
-					Command:   stringPointer("overwrite"),
-					TriggerOn: stringPointer("prepare"),
+					Command:   strings.ToPointer("overwrite"),
+					TriggerOn: strings.ToPointer("prepare"),
 					Arguments: &[]string{"arg1", "arg2", "arg3"},
 				},
 			},
