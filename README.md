@@ -8,8 +8,6 @@ Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.ter
 
 There are also other good tools available, see the [comparison](#comparison) at the end.
 
-**NOTE: This is still in development.**
-
 ## Installation
 
 1. Tau requires [terraform](https://www.terraform.io/) 0.12+, download and install first
@@ -26,9 +24,126 @@ There are also other good tools available, see the [comparison](#comparison) at 
 
 **Backend:** Backend configuration is taken out of modules and defined in tau configuration.
 
+## How it works
+
+1. Create a new module in terraform, or use an existing one. Lets use `avinor/kubernetes/azurerm` as an example.
+
+2. Create a tau configuration file that includes the module and sets input parameters
+
+```terraform
+module {
+    source = "avinor/kubernetes/azurerm"
+    version = "1.0.0"
+}
+
+inputs {
+    name = "example"
+    resource_group_name = "example-rg"
+    service_cidr = "10.241.0.0/24"
+    kubernetes_version = "1.13.5"
+
+    ... node pools etc ...
+}
+```
+
+3. Running `tau init` will create a new directory called `.tau` where it downloads the module and then runs `terraform init`.
+
+4. Run `tau plan` and it will create a `terraform.tfvars` file in module directory with the parsed input values before running `terraform plan`.
+
+So far it has just wrapped terraform to do some of the configurations a different way. Lets use some of the more powerful features of tau.
+
+5. Most likely we want state to be stored in a remote storage. Define a backend block in same configuration file to define backend.
+
+```terraform
+backend "azurerm" {
+    storage_account_name = "tfstate"
+    container_name       = "state"
+    key                  = "kubernetes.tfstate"
+}
+```
+
+6. Running `tau init` now will in additon to downloading module also create a `tau_override.tf` file in module directory that configures the backend.
+
+
+7. If using multiple subscriptions and environments we might want to ensure this module is deployed in correct environment. Define an `environment_variables` block to set some env vars.
+
+```terraform
+environment_variables {
+    ARM_SUBSCRIPTION_ID = "xxxx-xxxx-xxxx-xxxx"
+}
+```
+
+8. Some of the input variables might depend on output from another module / tau deployment. Defining a dependency it can read those outputs.
+
+```terraform
+dependency "vnet" {
+    source = "./vnet.hcl"
+}
+
+inputs {
+    ...
+
+    agent_pools = [
+        {
+            name = "ipt"
+            vm_size = "Standard_D2_v3"
+            vnet_subnet_id = dependency.vnet.outputs.subnets.aks
+        },
+    ]
+}
+```
+
+9. Running `tau plan` now first creates a temporary dependency module called `vnet` to resolve the output from that module. It will read the configuration file `vnet.hcl` and read the backend settings. It then creates a data source for remote state to read the output from other module. It never depends on executing the dependant module, just reading from its remote state. Once state has been read it will substitute that into input variables.
+
+10. In addition to reading from another module output it might be necessary to read secrets too. Any `data` blocks defined in configuration file will be resolved similar to dependencies.
+
+```terraform
+data "azurerm_key_vault_secret" "sp" {
+    name = "sp-secret"
+    key_vault_id = "/subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/secrets-rg/providers/Microsoft.KeyVault/vaults/terraform-secrets-kv"
+}
+
+inputs {
+    ...
+
+    service_principal = {
+        client_id = data.azurerm_key_vault_secret.secret.value
+        client_secret = data.azurerm_key_vault_secret.secret.value
+    }
+}
+```
+
+11. Running `tau plan` will in addition to creating temporary dependency module now also create a temporary data module defining all `data` blocks from configuration. Output from those data blocks can be used in input variables like in normal terraform code.
+
+12. All this have created an almost complete configuration. As a last step we want it to perform some initialization first to setup account access. Create a prepare hook to run initialization.
+
+```terraform
+hook "set_access_key" {
+    trigger_on = "prepare"
+    command = "./set_access_key.sh"
+    set_env = true
+}
+```
+
+Usually we are not deploying only one module but many. When running tau commands it will by default process all files in same folder, except those where filename ends in `_auto`. These are merged together in all deployment files.
+
+13. To share some of the initialization between all modules in same folder create a new file `common_auto.hcl` in same folder and move the `hook` and `environment_variables` blocks to new file.
+
+```terraform
+environment_variables {
+    ARM_SUBSCRIPTION_ID = "xxxx-xxxx-xxxx-xxxx"
+}
+
+hook "set_access_key" {
+    trigger_on = "prepare"
+    command = "./set_access_key.sh"
+    set_env = true
+}
+```
+
 ## Configuration
 
-Any files named `.hcl` or `.tau` are read, where each file is one deployment of module.
+Any files named `.hcl` or `.tau` are read, where each file is one deployment of module. Following the how to use above this would be complete example code.
 
 ```terraform
 // One or many hooks that can trigger on prepare or finish
@@ -151,6 +266,18 @@ To optimize execution and not run same command multiple times (for instance retr
 
 ### dependency
 
+```terraform
+dependency "logs" {
+    # Source of dependency, has to be a local file
+    source = "./logs.hcl"
+
+    # Override one or all of attributes from dependency backend configuration
+    backend {
+        sas_token = "override"
+    }
+}
+```
+
 One or more dependencies for this deployment. Using dependency block has 2 effects:
 
 * Make sure modules are deployed in correct order
@@ -159,14 +286,6 @@ One or more dependencies for this deployment. Using dependency block has 2 effec
 When resolving the output from a dependency it does this by using the terraform remote_state data source. Using example above it has a dependency on vnet.hcl that provides an output map of all subnets with their ids. Tau will not try to run any of the dependencies as that could require access it does not have, for instance vnet could be deployed in another subscription. Instead it creates a temporary terraform script that defines one `terraform_remote_state` data source for each variable defined in input block. It reads the backend definition from dependency source, but backend configuration can be overriden with the backend block in dependency definition. By doing it this way it should not be necessary to define any `terraform_remote_state` inside the module itself, and reading output from another module only requires access to its state store.
 
 To resolve dependencies correct it will run any hooks and use environment variables defined in dependency when resolving the remote state output. This to ensure that dependency is resolved in correct environment.
-
-attribute | Description
-----------|------------
-source    | Source of dependency, has to be a local file
-
-block   | Description
---------|------------
-backend | Override one or all of attributes from dependency backend configuration
 
 ### data
 
@@ -178,9 +297,23 @@ See terraform documentation for configuration of data blocks.
 
 ### environment_variables
 
+```terraform
+environment_variables {
+    # Any key = value pair of environment variables
+    ARM_SUBSCRIPTION_ID = "xxxx-xxxx-xxxx-xxxx"
+}
+```
+
 A list of key value pair of environment variables that should be added to the context before running any terraform commands. This could be access keys, subscription ids etc. It is also possible to set environment variables from [hooks](#hook).
 
 ### backend
+
+```terraform
+backend "azurerm" {
+    # Configuration for the specific backend
+    ...
+}
+```
 
 Backend to use for remote state storage. The configuration is same as in terraform, so look in terraform documentation how to configure this for each available remote backend.
 
@@ -188,12 +321,17 @@ Tau will create an override file with backend definition before running the modu
 
 ### module
 
-Module is the source, and optionally version, of module to deploy. Source can be any sources available in go-getter library (http(s), git, local file, s3...) and terraform registry. If the version attribute is defined it will assume that source is from a terraform registry and will attempt to download from registry.
+```terraform
+module {
+    # Source of dependency, supports any go-getter + terraform registry
+    source = "avinor/kubernetes/azurerm"
 
-attribute | Description
-----------|------------
-source    | Source of dependency, supports any go-getter + terraform registry
-version   | Terraform registry version
+    # Terraform registry version, if using terraform registry
+    version = "1.0.0"
+}
+```
+
+Module is the source, and optionally version, of module to deploy. Source can be any sources available in go-getter library (http(s), git, local file, s3...) and terraform registry. If the version attribute is defined it will assume that source is from a terraform registry and will attempt to download from registry.
 
 ### inputs
 
@@ -241,6 +379,10 @@ inputs {
 ```
 
 When running `tau init -f virtual-network-hcl` it will load the `common_auto.hcl` file first and replace `{source.name}` with `virtual-network` since that is the source file. Then it will merge configuration with that from `virtual-network.hcl` file.
+
+## CI Pipeline
+
+When using terraform in a CI pipeline it is recommended to first run plan, then have manual approval of some sort of the plan before running apply. To keep the same plan files from plan stage the entire `.tau` directory can be saved between the stages. Restoring the directory into same folder in apply stage it is possible to run `tau apply` directory to apply all changes from plan.
 
 ## Comparison
 
