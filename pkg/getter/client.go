@@ -126,6 +126,27 @@ func (c *Client) Get(src, dst string, version *string) error {
 	return client.Get()
 }
 
+// GetFile retrieves a single file from src destination. It implements almost same
+// functionallity that Get function, but does only allow a single file to be downloaded.
+func (c *Client) GetFile(src, dst string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
+	defer cancel()
+
+	ui.Info("- %v", src)
+
+	client := &getter.Client{
+		Ctx:       ctx,
+		Src:       src,
+		Dst:       dst,
+		Pwd:       c.options.WorkingDirectory,
+		Mode:      getter.ClientModeFile,
+		Detectors: c.detectors,
+		Getters:   c.getters,
+	}
+
+	return client.Get()
+}
+
 // Detect is a wrapper on go-getter detect and will return a new source string
 // that is the parsed url using correct getter
 func (c *Client) Detect(src string) (string, error) {
