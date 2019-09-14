@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/pkg/errors"
@@ -42,6 +43,12 @@ type Options struct {
 	// TauDirectory is the directory where tau will store temporary files. This is required
 	// for ParsedFile to know location where to download and store files.
 	TauDirectory string
+
+	// CacheDirectory where to download cached resources and scripts for processing
+	CacheDirectory string
+
+	// Getter to retrieve source code with
+	Getter *getter.Client
 
 	// MaxDepth to search for dependencies. Should be enough with 1.
 	MaxDepth int

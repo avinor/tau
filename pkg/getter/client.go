@@ -2,12 +2,10 @@ package getter
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/avinor/tau/pkg/helpers/paths"
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/hashicorp/go-getter"
 )
 
@@ -103,15 +101,9 @@ func (c *Client) Clone(workingDir string) *Client {
 
 // Get retrieves sources from src and load them into dst folder. If version is set it will try to
 // download from terraform registry. Set to nil to disable this feature.
-func (c *Client) Get(src, dst string, version *string) error {
+func (c *Client) Get(src, dst string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
 	defer cancel()
-
-	if version != nil && *version != "" {
-		src = fmt.Sprintf("%s?registryVersion=%s", src, *version)
-	}
-
-	ui.Info("- %v", src)
 
 	client := &getter.Client{
 		Ctx:       ctx,
@@ -128,11 +120,11 @@ func (c *Client) Get(src, dst string, version *string) error {
 
 // GetFile retrieves a single file from src destination. It implements almost same
 // functionallity that Get function, but does only allow a single file to be downloaded.
+// Since terraform registry does not supply single files it cannot download any
+// single files from terraform registry.
 func (c *Client) GetFile(src, dst string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
 	defer cancel()
-
-	ui.Info("- %v", src)
 
 	client := &getter.Client{
 		Ctx:       ctx,

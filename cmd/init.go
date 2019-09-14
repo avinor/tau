@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
@@ -14,11 +15,10 @@ import (
 type initCmd struct {
 	meta
 
-	purge         bool
-	noOverrides   bool
-	source        string
-	sourceVersion string
-	reconfigure   bool
+	purge       bool
+	noOverrides bool
+	source      *config.Module
+	reconfigure bool
 }
 
 var (
@@ -53,7 +53,9 @@ var (
 )
 
 func newInitCmd() *cobra.Command {
-	ic := &initCmd{}
+	ic := &initCmd{
+		source: &config.Module{},
+	}
 
 	initCmd := &cobra.Command{
 		Use:                   "init [-f SOURCE]",
@@ -81,8 +83,8 @@ func newInitCmd() *cobra.Command {
 	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
 	f.BoolVar(&ic.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
 	f.BoolVar(&ic.reconfigure, "reconfigure", false, "reconfigure the backend")
-	f.StringVar(&ic.source, "source", "", "override module source location")
-	f.StringVar(&ic.sourceVersion, "source-version", "", "override module source version, only valid together with source override")
+	f.StringVar(&ic.source.Source, "source", "", "override module source location")
+	f.StringVar(&ic.source.Version, "source-version", "", "override module source version, only valid together with source override")
 
 	ic.addMetaFlags(initCmd)
 
@@ -93,7 +95,7 @@ func newInitCmd() *cobra.Command {
 func (ic *initCmd) processArgs(args []string) error {
 
 	// if source-version is defined then source is also required
-	if ic.source == "" && ic.sourceVersion != "" {
+	if ic.source.Source == "" && ic.source.Version != "" {
 		return sourceArgumentRequired
 	}
 
@@ -102,7 +104,7 @@ func (ic *initCmd) processArgs(args []string) error {
 	}
 
 	// Always purge if source is overwritten
-	if ic.source != "" {
+	if ic.source.Source != "" {
 		ic.purge = true
 	}
 
@@ -130,7 +132,7 @@ func (ic *initCmd) run(args []string) error {
 
 	// if source defined then it can only deploy a single file, not folder
 	if len(files) > 1 {
-		if ic.source != "" && paths.IsDir(ic.file) {
+		if ic.source.Source != "" && paths.IsDir(ic.file) {
 			return sourceMustBeAFile
 		}
 	}
@@ -140,16 +142,13 @@ func (ic *initCmd) run(args []string) error {
 		ui.Header("Loading modules...")
 
 		for _, file := range files {
-			module := file.Config.Module
-			source := module.Source
-			version := module.Version
+			source := file.Config.Module.GetSource()
 
-			if ic.source != "" {
-				source = ic.source
-				version = &ic.sourceVersion
+			if ic.source.Source != "" {
+				source = ic.source.GetSource()
 			}
 
-			if err := ic.Getter.Get(source, file.ModuleDir(), version); err != nil {
+			if err := ic.Getter.Get(source, file.ModuleDir()); err != nil {
 				return err
 			}
 		}
