@@ -158,13 +158,6 @@ func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, ba
 func (g *Generator) generateDataProcessor(file *loader.ParsedFile, trav []hcl.Traversal) (*DependencyProcessor, error) {
 	dataProcessor := NewDependencyProcessor(file, file, g.executor, g.runner)
 
-	// TODO Make sure we use azurerm data provider < 2.0
-	azblock := hclwrite.NewBlock("required_providers", []string{})
-	azblock.Body().SetAttributeValue("azurerm", cty.StringVal("< 2.0.0"))
-	tblock := hclwrite.NewBlock("terraform", []string{})
-	tblock.Body().AppendBlock(azblock)
-	dataProcessor.File.Body().AppendBlock(tblock)
-
 	for _, data := range file.Config.Datas {
 		block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
 		if err != nil {
