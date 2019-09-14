@@ -11,13 +11,14 @@ import (
 	"github.com/hashicorp/go-getter"
 )
 
-// Options for initialization
+// Options for initialization a new getter client
 type Options struct {
 	Timeout          time.Duration
 	WorkingDirectory string
 }
 
-// Client to retrieve sources
+// Client used to download or copy source files with. Support all features
+// that go-getter supports, local files, http, git etc.
 type Client struct {
 	options   *Options
 	detectors []getter.Detector
@@ -125,26 +126,8 @@ func (c *Client) Get(src, dst string, version *string) error {
 	return client.Get()
 }
 
-func (c *Client) GetFile(src, dst string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), c.options.Timeout)
-	defer cancel()
-
-	ui.Info("- %v", src)
-
-	client := &getter.Client{
-		Ctx:       ctx,
-		Src:       src,
-		Dst:       dst,
-		Pwd:       c.options.WorkingDirectory,
-		Mode:      getter.ClientModeFile,
-		Detectors: c.detectors,
-		Getters:   c.getters,
-	}
-
-	return client.Get()
-}
-
-// Detect is a wrapper on go-getter detect and will return the location for source
+// Detect is a wrapper on go-getter detect and will return a new source string
+// that is the parsed url using correct getter
 func (c *Client) Detect(src string) (string, error) {
 	return getter.Detect(src, c.options.WorkingDirectory, c.detectors)
 }
