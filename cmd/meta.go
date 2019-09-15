@@ -52,7 +52,9 @@ func (m *meta) init(args []string) error {
 		options := &loader.Options{
 			WorkingDirectory: workingDir,
 			TauDirectory:     m.TauDir,
+			CacheDirectory:   m.CacheDir,
 			MaxDepth:         m.maxDependencyDepth,
+			Getter:           m.Getter,
 		}
 
 		m.Loader = loader.New(options)
