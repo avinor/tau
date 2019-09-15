@@ -54,7 +54,7 @@ const (
 	hookTest7 = `
 		hook "name" {
 			script = "path"
-			trigger_on = "prepare"
+			trigger_on = "prepare:init"
 		}
 	`
 )

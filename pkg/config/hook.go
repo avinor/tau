@@ -94,8 +94,9 @@ func (h Hook) Validate() (bool, error) {
 	}
 
 	validTrigger := false
+	triggerOn := strings.Split(strings.ToLower(*h.TriggerOn), ":")[0]
 	for _, trigger := range ValidHookTriggers {
-		if trigger == strings.ToLower(*h.TriggerOn) {
+		if trigger == triggerOn {
 			validTrigger = true
 		}
 	}
