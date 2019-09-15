@@ -4,6 +4,7 @@ import (
 	"github.com/avinor/tau/pkg/config/comp"
 
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +34,21 @@ func (b *Backend) Merge(src *Backend) error {
 		return differentBackendTypes
 	}
 
-	b.Config = hcl.MergeBodies([]hcl.Body{b.Config, src.Config})
+	body := &hclsyntax.Body{
+		Attributes: hclsyntax.Attributes{},
+	}
+	bb := b.Config.(*hclsyntax.Body)
+	sb := src.Config.(*hclsyntax.Body)
+
+	for k, v := range bb.Attributes {
+		body.Attributes[k] = v
+	}
+
+	for k, v := range sb.Attributes {
+		body.Attributes[k] = v
+	}
+
+	b.Config = body
 
 	return nil
 }

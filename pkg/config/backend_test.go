@@ -43,16 +43,17 @@ var (
 
 func TestBackendMerge(t *testing.T) {
 	tests := []struct {
-		Files     []*File
-		Expected  map[string]string
-		Error     error
-		AttrError bool
+		Files    []*File
+		Expected map[string]string
+		Error    error
 	}{
 		{
 			[]*File{backendFile1, backendFile2},
+			map[string]string{
+				"storage_account_name": "overwrite",
+				"container_name":       "state",
+			},
 			nil,
-			nil,
-			true,
 		},
 		{
 			[]*File{backendFile1, backendFile3},
@@ -62,7 +63,6 @@ func TestBackendMerge(t *testing.T) {
 				"key":                  "addition",
 			},
 			nil,
-			false,
 		},
 		{
 			[]*File{backendFile4},
@@ -70,13 +70,11 @@ func TestBackendMerge(t *testing.T) {
 				"region": "oregon",
 			},
 			nil,
-			false,
 		},
 		{
 			[]*File{backendFile1, backendFile4},
 			nil,
 			differentBackendTypes,
-			false,
 		},
 	}
 
@@ -92,15 +90,7 @@ func TestBackendMerge(t *testing.T) {
 
 			actual, err := getBodyAttributes(config.Backend.Config)
 			if err != nil {
-				if test.AttrError {
-					return
-				}
-
 				t.Fatal("failed getting attribute body", err)
-			}
-
-			if test.AttrError {
-				t.Fatal("expected attribute failure")
 			}
 
 			assert.Equal(t, test.Expected, actual)
