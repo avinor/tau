@@ -97,3 +97,63 @@ func TestBackendMerge(t *testing.T) {
 		})
 	}
 }
+
+func TestBackendMergeWithStruct(t *testing.T) {
+	tests := []struct {
+		Files    []*File
+		Expected map[string]string
+		Error    error
+	}{
+		{
+			[]*File{backendFile1, backendFile2},
+			map[string]string{
+				"storage_account_name": "overwrite",
+				"container_name":       "state",
+			},
+			nil,
+		},
+		{
+			[]*File{backendFile1, backendFile3},
+			map[string]string{
+				"storage_account_name": "test",
+				"container_name":       "state",
+				"key":                  "addition",
+			},
+			nil,
+		},
+		{
+			[]*File{backendFile4},
+			map[string]string{
+				"region": "oregon",
+			},
+			nil,
+		},
+		{
+			[]*File{backendFile1, backendFile4},
+			nil,
+			differentBackendTypes,
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+			configs := getConfigFromFiles(t, test.Files)
+
+			backend := &Backend{}
+
+			for _, config := range configs {
+				if err := backend.Merge(config.Backend); err != nil {
+					assert.EqualError(t, err, test.Error.Error())
+					return
+				}
+			}
+
+			actual, err := getBodyAttributes(backend.Config)
+			if err != nil {
+				t.Fatal("failed getting attribute body", err)
+			}
+
+			assert.Equal(t, test.Expected, actual)
+		})
+	}
+}

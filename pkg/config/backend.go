@@ -30,6 +30,10 @@ func (b *Backend) Merge(src *Backend) error {
 		return nil
 	}
 
+	if b.Type == "" {
+		b.Type = src.Type
+	}
+
 	if b.Type != src.Type {
 		return differentBackendTypes
 	}
@@ -37,15 +41,19 @@ func (b *Backend) Merge(src *Backend) error {
 	body := &hclsyntax.Body{
 		Attributes: hclsyntax.Attributes{},
 	}
-	bb := b.Config.(*hclsyntax.Body)
-	sb := src.Config.(*hclsyntax.Body)
 
-	for k, v := range bb.Attributes {
-		body.Attributes[k] = v
+	bb, bok := b.Config.(*hclsyntax.Body)
+	if bok {
+		for k, v := range bb.Attributes {
+			body.Attributes[k] = v
+		}
 	}
 
-	for k, v := range sb.Attributes {
-		body.Attributes[k] = v
+	sb, sok := src.Config.(*hclsyntax.Body)
+	if sok {
+		for k, v := range sb.Attributes {
+			body.Attributes[k] = v
+		}
 	}
 
 	b.Config = body
