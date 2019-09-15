@@ -59,8 +59,6 @@ func NewEngine(options *def.Options) *Engine {
 // CreateOverrides create the tau_override file in module folder. This file will overide
 // backend settings
 func (e *Engine) CreateOverrides(file *loader.ParsedFile) error {
-	ui.Header("Creating overrides...")
-
 	content, create, err := e.Generator.GenerateOverrides(file)
 
 	if err != nil {

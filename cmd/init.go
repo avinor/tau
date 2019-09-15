@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
@@ -138,58 +139,102 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	// Load module files using go-getter
-	if !ic.reconfigure {
-		ui.Header("Loading modules...")
+	// if !ic.reconfigure {
+	// 	ui.Header("Loading modules...")
 
-		for _, file := range files {
-			source := file.Config.Module.GetSource()
+	// 	for _, file := range files {
+	// 		source := file.Config.Module.GetSource()
 
-			if ic.source.Source != "" {
-				source = ic.source.GetSource()
-			}
+	// 		if ic.source.Source != "" {
+	// 			source = ic.source.GetSource()
+	// 		}
 
-			if err := ic.Getter.Get(source, file.ModuleDir()); err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := ic.Runner.RunAll(files, "prepare", "init"); err != nil {
-		return err
-	}
+	// 		if err := ic.Getter.Get(source, file.ModuleDir()); err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
 
 	for _, file := range files {
-		ui.Separator(file.Name)
-
-		if !ic.noOverrides {
-			if err := ic.Engine.CreateOverrides(file); err != nil {
-				return err
-			}
-		}
-
-		ui.NewLine()
-
-		options := &shell.Options{
-			WorkingDirectory: file.ModuleDir(),
-			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
-			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              file.Env,
-		}
-
-		extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
-
-		if ic.reconfigure {
-			extraArgs = append(extraArgs, "-reconfigure", "-force-copy")
-		}
-
-		if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
+		if err := ic.runFile(file); err != nil {
 			return err
 		}
 	}
 
-	ui.Separator("")
+	return nil
+}
 
-	if err := ic.Runner.RunAll(files, "finish", "init"); err != nil {
+func (ic *initCmd) runFile(file *loader.ParsedFile) error {
+	ui.Separator(file.Name)
+
+	ui.Header("Initializing tau...")
+
+	// Loading module
+
+	if !ic.reconfigure {
+		module := file.Config.Module
+
+		if ic.source.Source != "" {
+			module = ic.source
+		}
+
+		if module.Version != "" {
+			ui.Info("- Loading module from terraform registry %s, version %s", module.Source, module.Version)
+		} else {
+			ui.Info("- Loading module from %s", module.Source)
+		}
+
+		if err := ic.Getter.Get(module.GetSource(), file.ModuleDir()); err != nil {
+			return err
+		}
+	}
+
+	// Running prepare hook
+
+	ui.Info("- Executing prepare hooks")
+
+	if err := ic.Runner.Run(file, "prepare", "init"); err != nil {
+		return err
+	}
+
+	// Creating overrides
+
+	if !ic.noOverrides {
+		ui.Info("- Creating overrides")
+
+		if err := ic.Engine.CreateOverrides(file); err != nil {
+			return err
+		}
+	}
+
+	// Executing terraform command
+
+	ui.NewLine()
+
+	options := &shell.Options{
+		WorkingDirectory: file.ModuleDir(),
+		Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
+		Env:              file.Env,
+	}
+
+	extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
+
+	if ic.reconfigure {
+		extraArgs = append(extraArgs, "-reconfigure", "-force-copy")
+	}
+
+	if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
+		return err
+	}
+
+	ui.Header("Finishing tau...")
+
+	// Executing finish hook
+
+	ui.Info("- Executing finish hooks")
+
+	if err := ic.Runner.Run(file, "finish", "init"); err != nil {
 		return err
 	}
 
