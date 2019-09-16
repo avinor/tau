@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -114,15 +116,10 @@ func newPtCmd(name string, command passThroughCommand) *cobra.Command {
 }
 
 func (pt *ptCmd) run(args []string) error {
-	files, err := pt.Loader.Load(pt.file)
+	// load all sources
+	files, err := pt.load()
 	if err != nil {
 		return err
-	}
-
-	if len(files) == 0 {
-		ui.NewLine()
-		ui.Warn("No sources found")
-		return nil
 	}
 
 	// Verify all modules have been initialized
@@ -130,30 +127,54 @@ func (pt *ptCmd) run(args []string) error {
 		return err
 	}
 
-	if err := pt.Runner.RunAll(files, "prepare", pt.name); err != nil {
-		return err
-	}
-
 	for _, file := range files {
-		options := &shell.Options{
-			WorkingDirectory: file.ModuleDir(),
-			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
-			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              file.Env,
-		}
-
-		ui.Separator(file.Name)
-
-		extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
-		extraArgs = append(extraArgs, args...)
-		if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
+		if err := pt.runFile(file, args); err != nil {
 			return err
 		}
 	}
 
-	ui.Separator("")
+	ui.NewLine()
 
-	if err := pt.Runner.RunAll(files, "finish", pt.name); err != nil {
+	return nil
+}
+
+func (pt *ptCmd) runFile(file *loader.ParsedFile, args []string) error {
+	ui.Separator(file.Name)
+
+	// Running prepare hook
+
+	ui.Header("Executing prepare hooks...")
+
+	if err := pt.Runner.Run(file, "prepare", pt.name); err != nil {
+		return err
+	}
+
+	// Executing terraform command
+
+	ui.NewLine()
+	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
+	ui.NewLine()
+
+	options := &shell.Options{
+		WorkingDirectory: file.ModuleDir(),
+		Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
+		Env:              file.Env,
+	}
+
+	ui.Separator(file.Name)
+
+	extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
+	extraArgs = append(extraArgs, args...)
+	if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
+		return err
+	}
+
+	// Executing finish hook
+
+	ui.Header("Executing finish hooks...")
+
+	if err := pt.Runner.Run(file, "finish", pt.name); err != nil {
 		return err
 	}
 

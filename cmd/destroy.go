@@ -98,7 +98,7 @@ func (dc *destroyCmd) run(args []string) error {
 	}
 
 	if noVariablesExists {
-		dc.resolveDependencies(files)
+		//dc.resolveDependencies(files)
 	}
 
 	for _, file := range files {

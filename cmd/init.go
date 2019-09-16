@@ -8,6 +8,7 @@ import (
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -120,15 +121,9 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	// load all sources
-	files, err := ic.Loader.Load(ic.file)
+	files, err := ic.load()
 	if err != nil {
 		return err
-	}
-
-	if len(files) == 0 {
-		ui.NewLine()
-		ui.Warn("No sources found in path")
-		return nil
 	}
 
 	// if source defined then it can only deploy a single file, not folder
@@ -138,28 +133,13 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	// Load module files using go-getter
-	// if !ic.reconfigure {
-	// 	ui.Header("Loading modules...")
-
-	// 	for _, file := range files {
-	// 		source := file.Config.Module.GetSource()
-
-	// 		if ic.source.Source != "" {
-	// 			source = ic.source.GetSource()
-	// 		}
-
-	// 		if err := ic.Getter.Get(source, file.ModuleDir()); err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
-
 	for _, file := range files {
 		if err := ic.runFile(file); err != nil {
 			return err
 		}
 	}
+
+	ui.NewLine()
 
 	return nil
 }
@@ -189,26 +169,28 @@ func (ic *initCmd) runFile(file *loader.ParsedFile) error {
 		}
 	}
 
-	// Running prepare hook
-
-	ui.Info("- Executing prepare hooks")
-
-	if err := ic.Runner.Run(file, "prepare", "init"); err != nil {
-		return err
-	}
-
 	// Creating overrides
 
 	if !ic.noOverrides {
-		ui.Info("- Creating overrides")
+		ui.Info("- Creating overrides for backend")
 
 		if err := ic.Engine.CreateOverrides(file); err != nil {
 			return err
 		}
 	}
 
+	// Running prepare hook
+
+	ui.Header("Executing prepare hooks...")
+
+	if err := ic.Runner.Run(file, "prepare", "init"); err != nil {
+		return err
+	}
+
 	// Executing terraform command
 
+	ui.NewLine()
+	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
 	ui.NewLine()
 
 	options := &shell.Options{
@@ -228,11 +210,9 @@ func (ic *initCmd) runFile(file *loader.ParsedFile) error {
 		return err
 	}
 
-	ui.Header("Finishing tau...")
-
 	// Executing finish hook
 
-	ui.Info("- Executing finish hooks")
+	ui.Header("Executing finish hooks...")
 
 	if err := ic.Runner.Run(file, "finish", "init"); err != nil {
 		return err

@@ -5,10 +5,12 @@ import (
 	"strings"
 
 	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -105,15 +107,10 @@ func (oc *outputCmd) shouldProcessOutput() bool {
 }
 
 func (oc *outputCmd) run(args []string) error {
-	files, err := oc.Loader.Load(oc.file)
+	// load all sources
+	files, err := oc.load()
 	if err != nil {
 		return err
-	}
-
-	if len(files) == 0 {
-		ui.NewLine()
-		ui.Warn("No sources found")
-		return nil
 	}
 
 	// if source defined then it can only deploy a single file, not folder
@@ -126,72 +123,90 @@ func (oc *outputCmd) run(args []string) error {
 		return err
 	}
 
-	if err := oc.Runner.RunAll(files, "prepare", "output"); err != nil {
+	for _, file := range files {
+		if err := oc.runFile(file); err != nil {
+			return err
+		}
+	}
+
+	ui.NewLine()
+
+	return nil
+}
+
+func (oc *outputCmd) runFile(file *loader.ParsedFile) error {
+	ui.Separator(file.Name)
+
+	// Running prepare hook
+
+	ui.Header("Executing prepare hooks...")
+
+	if err := oc.Runner.Run(file, "prepare", "output"); err != nil {
 		return err
 	}
 
-	// Check if any plans exist, if not then run plan first
-	noVariablesExists := true
-	for _, file := range files {
-		if paths.IsFile(file.VariableFile()) {
-			noVariablesExists = false
-			continue
-		}
-	}
+	// Resolving dependencies
 
-	if noVariablesExists {
-		oc.resolveDependencies(files)
-	}
-
-	var values map[string]cty.Value
-
-	for _, file := range files {
-		ui.Separator(file.Name)
-
-		if !paths.IsFile(file.VariableFile()) {
-			ui.Warn("No values file exists for %s", file.Name)
-			continue
-		}
-
-		outputProcessor := oc.Engine.Executor.NewOutputProcessor()
-
-		options := &shell.Options{
-			WorkingDirectory: file.ModuleDir(),
-			Stdout:           shell.Processors(outputProcessor),
-			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              file.Env,
-		}
-
-		if !oc.shouldProcessOutput() {
-			options.Stdout = append(options.Stdout, processors.NewUI(ui.Info))
-		}
-
-		extraArgs := getExtraArgs(oc.Engine.Compatibility.GetInvalidArgs("output")...)
-
-		if oc.shouldProcessOutput() {
-			extraArgs = append(extraArgs, "-json")
-		}
-
-		if err := oc.Engine.Executor.Execute(options, "output", extraArgs...); err != nil {
+	if !paths.IsFile(file.VariableFile()) {
+		success, err := oc.resolveDependencies(file)
+		if err != nil {
 			return err
 		}
 
-		if oc.shouldProcessOutput() {
-			output, err := outputProcessor.GetOutput()
-			if err != nil {
-				return err
-			}
-			values = output
+		if !success {
+			return nil
 		}
-
-		paths.Remove(file.VariableFile())
 	}
 
-	ui.Separator("")
+	// Executing terraform command
 
-	if err := oc.Runner.RunAll(files, "finish", "output"); err != nil {
+	ui.NewLine()
+	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
+	ui.NewLine()
+
+	outputProcessor := oc.Engine.Executor.NewOutputProcessor()
+
+	options := &shell.Options{
+		WorkingDirectory: file.ModuleDir(),
+		Stdout:           shell.Processors(outputProcessor),
+		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
+		Env:              file.Env,
+	}
+
+	if !oc.shouldProcessOutput() {
+		options.Stdout = append(options.Stdout, processors.NewUI(ui.Info))
+	}
+
+	extraArgs := getExtraArgs(oc.Engine.Compatibility.GetInvalidArgs("output")...)
+
+	if oc.shouldProcessOutput() {
+		extraArgs = append(extraArgs, "-json")
+	}
+
+	if err := oc.Engine.Executor.Execute(options, "output", extraArgs...); err != nil {
 		return err
 	}
+
+	var values map[string]cty.Value
+	if oc.shouldProcessOutput() {
+		output, err := outputProcessor.GetOutput()
+		if err != nil {
+			return err
+		}
+		values = output
+	}
+
+	paths.Remove(file.VariableFile())
+
+	// Executing finish hook
+
+	ui.Header("Executing finish hooks...")
+
+	if err := oc.Runner.Run(file, "finish", "output"); err != nil {
+		return err
+	}
+
+	// Printing output
 
 	ui.NewLine()
 

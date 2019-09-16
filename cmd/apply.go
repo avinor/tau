@@ -98,7 +98,7 @@ func (ac *applyCmd) run(args []string) error {
 	}
 
 	if noPlansExists {
-		ac.resolveDependencies(files)
+		//ac.resolveDependencies(files)
 	} else {
 		ui.Header("Found tau.plan files, only applying valid plans...")
 	}

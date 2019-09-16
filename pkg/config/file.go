@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/avinor/tau/pkg/helpers/hclcontext"
 	"github.com/hashicorp/hcl2/gohcl"
@@ -85,6 +87,19 @@ func (f *File) Config() (*Config, error) {
 	config.PostProcess(f)
 
 	return config, nil
+}
+
+func (f *File) String() string {
+	if len(f.children) == 0 {
+		return f.Name
+	}
+
+	children := []string{}
+	for _, child := range f.children {
+		children = append(children, child.Name)
+	}
+
+	return fmt.Sprintf("%s (included %s)", f.Name, strings.Join(children, ", "))
 }
 
 // parse the file using evaluation context from input. It will add source variables to the context

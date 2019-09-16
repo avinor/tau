@@ -12,7 +12,13 @@ import (
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+)
+
+var (
+	// noSourceInPath is returned when there are no source files in path
+	noSourceInPath = errors.Errorf("no source files found in path")
 )
 
 type meta struct {
@@ -89,37 +95,53 @@ func (m *meta) addMetaFlags(cmd *cobra.Command) {
 	f.IntVar(&m.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 }
 
-// resolveDependencies resolves the dependencies for all files
-func (m *meta) resolveDependencies(files []*loader.ParsedFile) error {
-	showDepFailureInfo := false
-	ui.Header("Resolving dependencies...")
-	for _, file := range files {
-		if file.Config.Inputs == nil {
-			continue
-		}
+// load wraps the Loader.Load function to load all files and return to caller.
+// Also prints some helpful messages and checks that there are loaded files.
+func (m *meta) load() (loader.ParsedFileCollection, error) {
+	ui.Header("Loading files...")
 
-		success, err := m.Engine.ResolveDependencies(file)
-		if err != nil {
-			return err
-		}
-
-		if !success {
-			showDepFailureInfo = true
-			continue
-		}
-
-		if err := m.Engine.WriteInputVariables(file); err != nil {
-			return err
-		}
+	// load all sources
+	files, err := m.Loader.Load(m.file)
+	if err != nil {
+		return nil, err
 	}
 
-	if showDepFailureInfo {
+	for _, file := range files {
+		ui.Info("- Loaded %s", file)
+	}
+
+	if len(files) == 0 {
+		return nil, noSourceInPath
+	}
+
+	return files, nil
+}
+
+// resolveDependencies resolves the dependencies for all files
+func (m *meta) resolveDependencies(file *loader.ParsedFile) (bool, error) {
+	if file.Config.Inputs == nil {
+		return true, nil
+	}
+
+	ui.Header("Resolving dependencies...")
+
+	success, err := m.Engine.ResolveDependencies(file)
+	if err != nil {
+		return false, err
+	}
+
+	if !success {
 		ui.NewLine()
 		ui.Info(color.GreenString("Some of the dependencies failed to resolve. This can be because dependency"))
 		ui.Info(color.GreenString("have not been applied yet, and therefore it cannot read remote-state."))
-		ui.Info(color.GreenString("It will continue to plan those modules that can be applied and skip failed."))
 		ui.NewLine()
+
+		return false, nil
 	}
 
-	return nil
+	if err := m.Engine.WriteInputVariables(file); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -62,15 +64,10 @@ func newPlanCmd() *cobra.Command {
 }
 
 func (pc *planCmd) run(args []string) error {
-	files, err := pc.Loader.Load(pc.file)
+	// load all sources
+	files, err := pc.load()
 	if err != nil {
 		return err
-	}
-
-	if len(files) == 0 {
-		ui.NewLine()
-		ui.Warn("No sources found")
-		return nil
 	}
 
 	// Verify all modules have been initialized
@@ -78,39 +75,68 @@ func (pc *planCmd) run(args []string) error {
 		return err
 	}
 
-	if err := pc.Runner.RunAll(files, "prepare", "plan"); err != nil {
-		return err
-	}
-
-	if err := pc.resolveDependencies(files); err != nil {
-		return err
-	}
-
 	for _, file := range files {
-		ui.Separator(file.Name)
-
-		if !paths.IsFile(file.VariableFile()) {
-			ui.Warn("Cannot create a plan for %s", file.Name)
-			continue
-		}
-
-		options := &shell.Options{
-			WorkingDirectory: file.ModuleDir(),
-			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
-			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              file.Env,
-		}
-
-		extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
-		extraArgs = append(extraArgs, fmt.Sprintf("-out=%s", file.PlanFile()))
-		if err := pc.Engine.Executor.Execute(options, "plan", extraArgs...); err != nil {
+		if err := pc.runFile(file); err != nil {
 			return err
 		}
 	}
 
-	ui.Separator("")
+	ui.NewLine()
 
-	if err := pc.Runner.RunAll(files, "finish", "plan"); err != nil {
+	return nil
+}
+
+func (pc *planCmd) runFile(file *loader.ParsedFile) error {
+	ui.Separator(file.Name)
+
+	// Running prepare hook
+
+	ui.Header("Executing prepare hooks...")
+
+	if err := pc.Runner.Run(file, "prepare", "plan"); err != nil {
+		return err
+	}
+
+	// Resolving dependencies
+
+	success, err := pc.resolveDependencies(file)
+	if err != nil {
+		return err
+	}
+
+	if !success {
+		return nil
+	}
+
+	// Executing terraform command
+
+	ui.NewLine()
+	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
+	ui.NewLine()
+
+	if !paths.IsFile(file.VariableFile()) {
+		ui.Warn("Cannot create a plan for %s", file.Name)
+		return nil
+	}
+
+	options := &shell.Options{
+		WorkingDirectory: file.ModuleDir(),
+		Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
+		Env:              file.Env,
+	}
+
+	extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
+	extraArgs = append(extraArgs, fmt.Sprintf("-out=%s", file.PlanFile()))
+	if err := pc.Engine.Executor.Execute(options, "plan", extraArgs...); err != nil {
+		return err
+	}
+
+	// Executing finish hook
+
+	ui.Header("Executing finish hooks...")
+
+	if err := pc.Runner.Run(file, "finish", "plan"); err != nil {
 		return err
 	}
 

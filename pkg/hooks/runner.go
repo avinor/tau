@@ -62,6 +62,8 @@ func (r *Runner) Run(file *loader.ParsedFile, event, command string) error {
 		}
 
 		if !exec.HasRun() || (hook.DisableCache != nil && *hook.DisableCache) {
+			ui.Info("- Running hook %s...", hook.Type)
+
 			if err := exec.Run(file.Env); err != nil {
 				if hook.FailOnError != nil && !*hook.FailOnError {
 					continue

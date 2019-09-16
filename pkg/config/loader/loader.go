@@ -10,7 +10,6 @@ import (
 
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/pkg/errors"
 )
 
@@ -83,8 +82,6 @@ func (l *Loader) Load(path string) (ParsedFileCollection, error) {
 	if path == "" {
 		return nil, sourcePathNotFoundError
 	}
-
-	ui.Header("Loading files...")
 
 	files, err := l.loadFromPath(path)
 	if err != nil {
