@@ -12,10 +12,6 @@ import (
 var (
 	// filePathMustBeAbsError is returned when a file path is relative
 	filePathMustBeAbsError = errors.Errorf("file path must be absolute")
-
-	// loaded is a map of already loaded ParsedFile. Will always be checked so same file is
-	// not loaded twice. Map key is absolute path of file
-	loaded = map[string]*ParsedFile{}
 )
 
 // ParsedFile is a parsed configuration file. It is a composite of config.File so includes also
@@ -33,25 +29,52 @@ type ParsedFile struct {
 	moduleDir string
 }
 
-// GetParsedFile checks if the file has already been parsed and returns previous parsed file
-// or loads the file if not already loaded. Next time this is called with same source file
-// it will return a reference to the previous loaded file.
-func GetParsedFile(file string, tauDir string) (*ParsedFile, error) {
-	if !filepath.IsAbs(file) {
+// NewParsedFile creates a new parsed file from input parameters. It does not try to read the file
+// on disk, but filename has to be an absolute path to file.
+func NewParsedFile(filename string, content []byte, tauDir, cacheDir string) (*ParsedFile, error) {
+	if !filepath.IsAbs(filename) {
 		return nil, filePathMustBeAbsError
 	}
 
-	if _, already := loaded[file]; already {
-		return loaded[file], nil
+	configFile, err := config.NewFile(filename, content)
+	if err != nil {
+		return nil, err
+	}
+	tempDir := paths.Join(tauDir, configFile.Name)
+	moduleDir := paths.Join(tempDir, "module")
+
+	configFile.AddToContext("module", cty.ObjectVal(map[string]cty.Value{
+		"path": cty.StringVal(moduleDir),
+	}))
+
+	if err := AddAutoImports(configFile); err != nil {
+		return nil, err
 	}
 
-	parsed, err := parseFile(file, tauDir)
+	cfg, err := configFile.Config()
 	if err != nil {
 		return nil, err
 	}
 
-	loaded[file] = parsed
-	return parsed, nil
+	env, err := cfg.Environment.Parse(configFile.EvalContext())
+	if err != nil {
+		return nil, err
+	}
+
+	env["TF_PLUGIN_CACHE_DIR"] = paths.JoinAndCreate(cacheDir, "_plugins")
+
+	if ok, err := cfg.Validate(); !ok {
+		return nil, err
+	}
+
+	return &ParsedFile{
+		File:         configFile,
+		TempDir:      tempDir,
+		Config:       cfg,
+		Env:          env,
+		Dependencies: map[string]*ParsedFile{},
+		moduleDir:    moduleDir,
+	}, nil
 }
 
 // ModuleDir returns the module directory where source module is downloaded
@@ -78,49 +101,4 @@ func (p ParsedFile) PlanFile() string {
 // VariableFile returns name of input variable file
 func (p ParsedFile) VariableFile() string {
 	return paths.Join(p.ModuleDir(), "terraform.tfvars")
-}
-
-// parseFile parses the file and returns a newly created ParsedFile. It will create a new
-// struct for every call to function.
-func parseFile(file string, tauDir string) (*ParsedFile, error) {
-
-	configFile, err := config.NewFile(file)
-	if err != nil {
-		return nil, err
-	}
-	tempDir := paths.Join(tauDir, configFile.Name)
-	moduleDir := paths.Join(tempDir, "module")
-
-	configFile.AddToContext("module", cty.ObjectVal(map[string]cty.Value{
-		"path": cty.StringVal(moduleDir),
-	}))
-
-	if err := AddAutoImports(configFile); err != nil {
-		return nil, err
-	}
-
-	cfg, err := configFile.Config()
-	if err != nil {
-		return nil, err
-	}
-
-	env, err := cfg.Environment.Parse(configFile.EvalContext())
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO env["TF_PLUGIN_CACHE_DIR"] = paths.JoinAndCreate(tauDir, "_plugins")
-
-	if ok, err := cfg.Validate(); !ok {
-		return nil, err
-	}
-
-	return &ParsedFile{
-		File:         configFile,
-		TempDir:      tempDir,
-		Config:       cfg,
-		Env:          env,
-		Dependencies: map[string]*ParsedFile{},
-		moduleDir:    moduleDir,
-	}, nil
 }

@@ -1,12 +1,9 @@
 package config
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/avinor/tau/pkg/helpers/hclcontext"
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"
@@ -35,20 +32,9 @@ type File struct {
 }
 
 // NewFile returns a new File. It will check that it exists and read content, but not parse it
-func NewFile(file string) (*File, error) {
-	name := filepath.Base(file)
-	absPath, err := filepath.Abs(file)
-	if err != nil {
-		return nil, err
-	}
-
-	ui.Info("- loading %s", name)
-
-	if _, err := os.Stat(absPath); err != nil {
-		return nil, err
-	}
-
-	content, err := ioutil.ReadFile(absPath)
+func NewFile(filename string, content []byte) (*File, error) {
+	name := filepath.Base(filename)
+	absPath, err := filepath.Abs(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +44,7 @@ func NewFile(file string) (*File, error) {
 		FullPath: absPath,
 		Content:  content,
 		children: []*File{},
-		context:  getNewEvalContext(file),
+		context:  getNewEvalContext(filename),
 	}, nil
 }
 

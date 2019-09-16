@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -38,7 +40,7 @@ func AddAutoImports(file *config.File) error {
 
 	cacheList := []*config.File{}
 	for _, af := range autoFiles {
-		configFile, err := config.NewFile(af)
+		configFile, err := readConfigFile(af)
 		if err != nil {
 			return err
 		}
@@ -57,4 +59,22 @@ func addAutoChildren(file *config.File, children []*config.File) {
 	for _, child := range children {
 		file.AddChild(child)
 	}
+}
+
+func readConfigFile(file string) (*config.File, error) {
+	if _, err := os.Stat(file); err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	configFile, err := config.NewFile(file, content)
+	if err != nil {
+		return nil, err
+	}
+
+	return configFile, nil
 }

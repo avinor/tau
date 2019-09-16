@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -33,6 +35,10 @@ var (
 // Loader client for loading sources
 type Loader struct {
 	options *Options
+
+	// loaded is a map of already loaded ParsedFile. Will always be checked so same file is
+	// not loaded twice. Map key is absolute path of file
+	loaded map[string]*ParsedFile
 }
 
 // Options when loading modules. WorkingDirectory is directory where it will search for
@@ -66,6 +72,7 @@ func New(options *Options) *Loader {
 
 	return &Loader{
 		options: options,
+		loaded:  map[string]*ParsedFile{},
 	}
 }
 
@@ -106,7 +113,7 @@ func (l *Loader) loadFromPath(path string) ([]*ParsedFile, error) {
 
 	files := []*ParsedFile{}
 	for _, file := range sources {
-		file, err := GetParsedFile(file, l.options.TauDirectory)
+		file, err := l.getParsedFile(file)
 		if err != nil {
 			return nil, err
 		}
@@ -153,4 +160,30 @@ func (l *Loader) loadDependencies(files []*ParsedFile, depth int) error {
 	}
 
 	return nil
+}
+
+// getParsedFile checks if the file has already been parsed and returns previous parsed file
+// or loads the file if not already loaded. Next time this is called with same source file
+// it will return a reference to the previous loaded file.
+func (l *Loader) getParsedFile(file string) (*ParsedFile, error) {
+	if _, already := l.loaded[file]; already {
+		return l.loaded[file], nil
+	}
+
+	if _, err := os.Stat(file); err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed, err := NewParsedFile(file, content, l.options.TauDirectory, l.options.CacheDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	l.loaded[file] = parsed
+	return parsed, nil
 }
