@@ -31,7 +31,7 @@ func (e *Executor) Output() string {
 }
 
 // Run the command and store result in output
-func (e *Executor) Run() error {
+func (e *Executor) Run(env map[string]string) error {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
@@ -42,6 +42,7 @@ func (e *Executor) Run() error {
 		Stdout:           shell.Processors(buffer),
 		Stderr:           shell.Processors(logp),
 		WorkingDirectory: e.WorkingDir,
+		Env:              env,
 	}
 
 	args := []string{}

@@ -62,7 +62,7 @@ func (r *Runner) Run(file *loader.ParsedFile, event, command string) error {
 		}
 
 		if !exec.HasRun() || (hook.DisableCache != nil && *hook.DisableCache) {
-			if err := exec.Run(); err != nil {
+			if err := exec.Run(file.Env); err != nil {
 				if hook.FailOnError != nil && !*hook.FailOnError {
 					continue
 				}
