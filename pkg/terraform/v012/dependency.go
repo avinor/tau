@@ -80,7 +80,7 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 
 	base := filepath.Base(dest)
 
-	ui.Info("- %s", base)
+	ui.Info("- Processing dependency %s", base)
 
 	ui.Debug("running terraform init on %s", base)
 	if err := d.executor.Execute(options, "init", "-input=false"); err != nil {
