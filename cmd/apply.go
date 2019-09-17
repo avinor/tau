@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -68,23 +70,14 @@ func newApplyCmd() *cobra.Command {
 }
 
 func (ac *applyCmd) run(args []string) error {
-	files, err := ac.Loader.Load(ac.file)
+	// load all sources
+	files, err := ac.load()
 	if err != nil {
 		return err
 	}
 
-	if len(files) == 0 {
-		ui.NewLine()
-		ui.Warn("No sources found")
-		return nil
-	}
-
 	// Verify all modules have been initialized
 	if err := files.IsAllInitialized(); err != nil {
-		return err
-	}
-
-	if err := ac.Runner.RunAll(files, "prepare", "apply"); err != nil {
 		return err
 	}
 
@@ -97,57 +90,89 @@ func (ac *applyCmd) run(args []string) error {
 		}
 	}
 
-	if noPlansExists {
-		//ac.resolveDependencies(files)
-	} else {
+	if !noPlansExists {
 		ui.Header("Found tau.plan files, only applying valid plans...")
 	}
 
 	for _, file := range files {
-		planFileExists := paths.IsFile(file.PlanFile())
-
-		ui.Separator(file.Name)
-
-		if !planFileExists && !noPlansExists {
-			ui.Warn("No plan exists for %s", file.Name)
-			continue
-		}
-
-		if !paths.IsFile(file.VariableFile()) {
-			ui.Warn("No values file exists for %s", file.Name)
-			continue
-		}
-
-		options := &shell.Options{
-			WorkingDirectory: file.ModuleDir(),
-			Stdout:           shell.Processors(processors.NewUI(ui.Info)),
-			Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-			Env:              file.Env,
-		}
-
-		extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
-		extraArgs = append(extraArgs, "-input=false")
-
-		if ac.autoApprove {
-			extraArgs = append(extraArgs, "-auto-approve")
-		}
-
-		if planFileExists {
-			extraArgs = append(extraArgs, file.PlanFile())
-		}
-
-		if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
+		if err := ac.runFile(file, !noPlansExists); err != nil {
 			return err
-		}
-
-		if ac.deletePlan {
-			paths.Remove(file.PlanFile())
 		}
 	}
 
-	ui.Separator("")
+	ui.NewLine()
 
-	if err := ac.Runner.RunAll(files, "finish", "apply"); err != nil {
+	return nil
+}
+
+func (ac *applyCmd) runFile(file *loader.ParsedFile, onlyPlans bool) error {
+	ui.Separator(file.Name)
+
+	// Running prepare hook
+
+	ui.Header("Executing prepare hooks...")
+
+	if err := ac.Runner.Run(file, "prepare", "destroy"); err != nil {
+		return err
+	}
+
+	// Resolving dependencies
+
+	if !paths.IsFile(file.VariableFile()) {
+		success, err := ac.resolveDependencies(file)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			return nil
+		}
+	}
+
+	planFileExists := paths.IsFile(file.PlanFile())
+
+	if !planFileExists && onlyPlans {
+		ui.Warn("No plan exists")
+		return nil
+	}
+
+	// Executing terraform command
+
+	ui.NewLine()
+	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
+	ui.NewLine()
+
+	options := &shell.Options{
+		WorkingDirectory: file.ModuleDir(),
+		Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
+		Env:              file.Env,
+	}
+
+	extraArgs := getExtraArgs(ac.Engine.Compatibility.GetInvalidArgs("apply")...)
+	extraArgs = append(extraArgs, "-input=false")
+
+	if ac.autoApprove {
+		extraArgs = append(extraArgs, "-auto-approve")
+	}
+
+	if planFileExists {
+		extraArgs = append(extraArgs, file.PlanFile())
+	}
+
+	if err := ac.Engine.Executor.Execute(options, "apply", extraArgs...); err != nil {
+		return err
+	}
+
+	if ac.deletePlan {
+		paths.Remove(file.PlanFile())
+	}
+
+	// Executing finish hook
+
+	ui.Header("Executing finish hooks...")
+
+	if err := ac.Runner.Run(file, "finish", "destroy"); err != nil {
 		return err
 	}
 

@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -78,19 +77,6 @@ func (r *Runner) Run(file *loader.ParsedFile, event, command string) error {
 				ui.Debug("setting env %s", key)
 				file.Env[key] = value
 			}
-		}
-	}
-
-	return nil
-}
-
-// RunAll executes the hook `event` for all files in collection
-// TODO Remove when fixing output
-func (r *Runner) RunAll(files loader.ParsedFileCollection, event string, command string) error {
-	ui.Header(fmt.Sprintf("Executing %s hook...", event))
-	for _, file := range files {
-		if err := r.Run(file, event, command); err != nil {
-			return err
 		}
 	}
 
