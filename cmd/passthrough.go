@@ -23,6 +23,7 @@ type passThroughCommand struct {
 	Example          string
 	SingleResource   bool
 	MaximumNArgs     int
+	AdditionalArgs   []string
 }
 
 var (
@@ -33,6 +34,7 @@ var (
 			LongDescription:  "Force unlock remote state lock",
 			SingleResource:   true,
 			MaximumNArgs:     1,
+			AdditionalArgs:   []string{"-force"},
 		},
 		"get": {
 			Use:              "get [-f SOURCE]",
@@ -165,6 +167,7 @@ func (pt *ptCmd) runFile(file *loader.ParsedFile, args []string) error {
 	ui.Separator(file.Name)
 
 	extraArgs := getExtraArgs(pt.Engine.Compatibility.GetInvalidArgs(pt.name)...)
+	extraArgs = append(extraArgs, pt.command.AdditionalArgs...)
 	extraArgs = append(extraArgs, args...)
 	if err := pt.Engine.Executor.Execute(options, pt.name, extraArgs...); err != nil {
 		return err
