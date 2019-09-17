@@ -31,10 +31,14 @@ type DependencyProcessor struct {
 	// acceptApplyFailure should be set if its acceptable that apply fails. Should be set if
 	// no backend is found or unsupported attribute, most probably means a dependency is not deployed
 	acceptApplyFailure bool
+
+	// runInSeparateEnv will spawn a new environment running all hooks and setting environment variables
+	// when set to true. Setting to false will make sure it runs in same environment
+	runInSeparateEnv bool
 }
 
 // NewDependencyProcessor creates a new dependencyProcessor structure from input arguments
-func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor, runner *hooks.Runner) *DependencyProcessor {
+func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile, executor *Executor, runner *hooks.Runner, runInSeparateEnv bool) *DependencyProcessor {
 	f := hclwrite.NewEmptyFile()
 
 	return &DependencyProcessor{
@@ -44,6 +48,8 @@ func NewDependencyProcessor(file *loader.ParsedFile, depFile *loader.ParsedFile,
 
 		executor: executor,
 		runner:   runner,
+
+		runInSeparateEnv: runInSeparateEnv,
 	}
 }
 
@@ -67,15 +73,19 @@ func (d *DependencyProcessor) Process() (map[string]cty.Value, bool, error) {
 	debugLog := processors.NewUI(ui.Debug)
 	errorLog := processors.NewUI(ui.Error)
 
-	if err := d.runner.Run(d.DepFile, "prepare", "init"); err != nil {
-		return nil, false, err
-	}
-
 	options := &shell.Options{
 		Stdout:           shell.Processors(debugLog),
 		Stderr:           shell.Processors(d, errorLog),
 		WorkingDirectory: dest,
-		Env:              d.DepFile.Env,
+		Env:              d.ParsedFile.Env,
+	}
+
+	if d.runInSeparateEnv {
+		if err := d.runner.Run(d.DepFile, "prepare", "init"); err != nil {
+			return nil, false, err
+		}
+
+		options.Env = d.DepFile.Env
 	}
 
 	base := filepath.Base(dest)

@@ -16,9 +16,14 @@ var (
 // define the backend block in dependency and only define the attributes that should be overridden.
 // For instance it can be useful to override token attribute if current module and dependency module
 // use different token's for authentication
+//
+// If RunInSeparateEnv is set to true it should fork a new environment that resolves all
+// dependencies in separate process (environment relative to dependency). Otherwise it will
+// resolve all dependencies in same environment as current execution.
 type Dependency struct {
-	Name   string `hcl:"name,label"`
-	Source string `hcl:"source,attr"`
+	Name             string `hcl:"name,label"`
+	Source           string `hcl:"source,attr"`
+	RunInSeparateEnv bool   `hcl:"run_in_separate_env,optional"`
 
 	Backend *Backend `hcl:"backend,block"`
 }
@@ -36,6 +41,10 @@ func (d *Dependency) Merge(src *Dependency) error {
 
 	if src.Source != "" {
 		d.Source = src.Source
+	}
+
+	if src.RunInSeparateEnv {
+		d.RunInSeparateEnv = src.RunInSeparateEnv
 	}
 
 	if d.Backend == nil && src.Backend != nil {

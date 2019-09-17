@@ -271,6 +271,9 @@ dependency "logs" {
     # Source of dependency, has to be a local file
     source = "./logs.hcl"
 
+    # Resolve the dependency in separate environment
+    run_in_separate_env = true
+
     # Override one or all of attributes from dependency backend configuration
     backend {
         sas_token = "override"
@@ -285,7 +288,7 @@ One or more dependencies for this deployment. Using dependency block has 2 effec
 
 When resolving the output from a dependency it does this by using the terraform remote_state data source. Using example above it has a dependency on vnet.hcl that provides an output map of all subnets with their ids. Tau will not try to run any of the dependencies as that could require access it does not have, for instance vnet could be deployed in another subscription. Instead it creates a temporary terraform script that defines one `terraform_remote_state` data source for each variable defined in input block. It reads the backend definition from dependency source, but backend configuration can be overriden with the backend block in dependency definition. By doing it this way it should not be necessary to define any `terraform_remote_state` inside the module itself, and reading output from another module only requires access to its state store.
 
-To resolve dependencies correct it will run any hooks and use environment variables defined in dependency when resolving the remote state output. This to ensure that dependency is resolved in correct environment.
+By default it will inherit the same environment variables (from hooks as well) as current deployment, unless `run_in_separate_env` attribute is set to true. When this is set to true it will not inherit any environment variables and that dependency will be resolved by running any hooks defined in dependency first. This is useful if dependency is deployed in different subscription.
 
 ### data
 

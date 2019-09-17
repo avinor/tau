@@ -145,7 +145,7 @@ func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name str
 }
 
 func (g *Generator) generateDataProcessor(file *loader.ParsedFile, trav []hcl.Traversal) (*DependencyProcessor, error) {
-	dataProcessor := NewDependencyProcessor(file, file, g.executor, g.runner)
+	dataProcessor := NewDependencyProcessor(file, file, g.executor, g.runner, false)
 
 	for _, data := range file.Config.Datas {
 		block, err := g.generateHclWriterBlock("data", []string{data.Type, data.Name}, data.Config.(*hclsyntax.Body))
@@ -189,7 +189,7 @@ func (g *Generator) generateDepProcessor(file *loader.ParsedFile, dep *config.De
 		return nil, err
 	}
 
-	depProcessor := NewDependencyProcessor(file, depFile, g.executor, g.runner)
+	depProcessor := NewDependencyProcessor(file, depFile, g.executor, g.runner, dep.RunInSeparateEnv)
 	depProcessor.File.Body().AppendBlock(block)
 
 	// Find variables using this dependency
