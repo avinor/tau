@@ -129,27 +129,16 @@ func (g *Generator) generateHclWriterBlock(typeName string, labels []string, bod
 	return block, nil
 }
 
-func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name, backend string, bodies ...hcl.Body) (*hclwrite.Block, error) {
+func (g *Generator) generateRemoteBackendBlock(file *loader.ParsedFile, name string, backend *config.Backend) (*hclwrite.Block, error) {
 	block := hclwrite.NewBlock("data", []string{"terraform_remote_state", name})
 	blockBody := block.Body()
 
-	values := map[string]cty.Value{}
-	for _, body := range bodies {
-		if body == nil {
-			continue
-		}
-
-		vals, err := processBackendBody(body, file.EvalContext())
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range vals {
-			values[k] = v
-		}
+	values, err := processBackendBody(backend.Config, file.EvalContext())
+	if err != nil {
+		return nil, err
 	}
 
-	blockBody.SetAttributeValue("backend", cty.StringVal(backend))
+	blockBody.SetAttributeValue("backend", cty.StringVal(backend.Type))
 	blockBody.SetAttributeValue("config", cty.MapVal(values))
 
 	return block, nil
@@ -185,16 +174,17 @@ func (g *Generator) generateDepProcessor(file *loader.ParsedFile, dep *config.De
 		return nil, errors.Errorf("Dependencies must have a backend")
 	}
 
-	if dep.Backend != nil && depFile.Config.Backend.Type != dep.Backend.Type {
-		return nil, errors.Errorf("Dependency backend type and override backend type must match")
+	backend := &config.Backend{}
+
+	if err := backend.Merge(depFile.Config.Backend); err != nil {
+		return nil, err
 	}
 
-	var depBackend hcl.Body
-	if dep.Backend != nil {
-		depBackend = dep.Backend.Config
+	if err := backend.Merge(dep.Backend); err != nil {
+		return nil, err
 	}
 
-	block, err := g.generateRemoteBackendBlock(depFile, dep.Name, depFile.Config.Backend.Type, depFile.Config.Backend.Config, depBackend)
+	block, err := g.generateRemoteBackendBlock(depFile, dep.Name, backend)
 	if err != nil {
 		return nil, err
 	}
