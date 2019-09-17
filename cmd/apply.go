@@ -112,7 +112,7 @@ func (ac *applyCmd) runFile(file *loader.ParsedFile, onlyPlans bool) error {
 
 	ui.Header("Executing prepare hooks...")
 
-	if err := ac.Runner.Run(file, "prepare", "destroy"); err != nil {
+	if err := ac.Runner.Run(file, "prepare", "apply"); err != nil {
 		return err
 	}
 
@@ -172,7 +172,7 @@ func (ac *applyCmd) runFile(file *loader.ParsedFile, onlyPlans bool) error {
 
 	ui.Header("Executing finish hooks...")
 
-	if err := ac.Runner.Run(file, "finish", "destroy"); err != nil {
+	if err := ac.Runner.Run(file, "finish", "apply"); err != nil {
 		return err
 	}
 
