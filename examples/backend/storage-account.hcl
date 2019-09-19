@@ -1,12 +1,3 @@
-data "azurerm_key_vault_secret" "test" {
-  name      = "secret-sauce"
-  key_vault_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mygroup1/providers/Microsoft.KeyVault/vaults/vault1"
-}
-
-dependency "vnet" {
-    source = "./virtual-network.tau"
-}
-
 backend "azurerm" {
     storage_account_name = "abcd1234"
     container_name       = "tfstate"
@@ -26,11 +17,7 @@ inputs {
 
     containers = [
         {
-            name = azurerm_key_vault_secret.test.value
-            access_type = "private"
-        },
-        {
-            name = dependency.vnet.name
+            name = "test"
             access_type = "private"
         },
     ]
