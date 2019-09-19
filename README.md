@@ -141,6 +141,10 @@ hook "set_access_key" {
 }
 ```
 
+## Remote state
+
+See documentation on how to handle [single](./docs/single_backend.md) and [multiple backends](./docs/multiple_backends.md).
+
 ## Configuration
 
 Any files named `.hcl` or `.tau` are read, where each file is one deployment of module. Following the how to use above this would be complete example code.
