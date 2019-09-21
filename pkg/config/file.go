@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/avinor/tau/pkg/helpers/hclcontext"
+	hclcontext "github.com/avinor/tau/pkg/helpers/hcl"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"
