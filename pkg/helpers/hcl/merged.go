@@ -6,25 +6,10 @@ import (
 	hcl2 "github.com/hashicorp/hcl2/hcl"
 )
 
-// MergeFiles combines the given files to produce a single body that contains
-// configuration from all of the given files.
-//
-// The ordering of the given files decides the order in which contained
-// elements will be returned. If any top-level attributes are defined with
-// the same name across multiple files, a diagnostic will be produced from
-// the Content and PartialContent methods describing this error in a
-// user-friendly way.
-func MergeFiles(files []*hcl2.File) hcl2.Body {
-	var bodies []hcl2.Body
-	for _, file := range files {
-		bodies = append(bodies, file.Body)
-	}
-	return MergeBodies(bodies)
-}
-
-// MergeBodies is like MergeFiles except it deals directly with bodies, rather
-// than with entire files.
-func MergeBodies(bodies []hcl2.Body) hcl2.Body {
+// MergeBodiesWithOverides merges several bodies into one. This is similar
+// implementation as the one in official library, but it overwrites attributes
+// that are already defined.
+func MergeBodiesWithOverides(bodies []hcl2.Body) hcl2.Body {
 	if len(bodies) == 0 {
 		// Swap out for our singleton empty body, to reduce the number of
 		// empty slices we have hanging around.
@@ -206,6 +191,6 @@ func (mb mergedBodies) mergedContent(schema *hcl2.BodySchema, partial bool) (*hc
 		}
 	}
 
-	leftoverBody := MergeBodies(mergedLeftovers)
+	leftoverBody := MergeBodiesWithOverides(mergedLeftovers)
 	return content, leftoverBody, diags
 }

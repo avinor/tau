@@ -38,7 +38,7 @@ func (b *Backend) Merge(src *Backend) error {
 		return differentBackendTypes
 	}
 
-	b.Config = helperhcl.MergeBodies([]hcl.Body{b.Config, src.Config})
+	b.Config = helperhcl.MergeBodiesWithOverides([]hcl.Body{b.Config, src.Config})
 
 	return nil
 }
