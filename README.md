@@ -6,29 +6,27 @@
 
 Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.terraform.io/) that makes terraform execution and secret handling easier. It tries to conform to the principal of keeping code DRY (Don't Repeat Yourself) and bases all executions on terraform modules. Since terraform already provides a lot of excellent features it tries to not change that too much but use those features best possible.
 
-There are also other good tools available, see the [comparison](#comparison) at the end.
-
-## Installation
-
-1. Tau requires [terraform](https://www.terraform.io/) 0.12+, download and install first
-2. Download tau from [Release page](https://github.com/avinor/tau/releases) for your OS
-3. Rename file to `tau` and add it to your `PATH`
-
 ## Highlights
 
 **DRY:** All executions are based on using terraform modules. Tau configuration file just describes how to execute / deploy the modules.
 
-**Dependency handling:** Tau handles dependencies between different modules. Executing them in correct order and passing output from one module as input to another.
+**Dependency handling:** Tau handles dependencies between different modules. Executing them in correct order and making output from one module available to others.
 
 **Secret handling:** Recommended way to deal with secrets is passing them in as input variables. Using the build-in data sources in terraform tau can send anything as input variables to terraform.
 
 **Backend:** Backend configuration is taken out of modules and defined in tau configuration.
 
+## Installation
+
+1. Tau requires [terraform](https://www.terraform.io/) 0.12+, [download](https://www.terraform.io/downloads.html) and install first
+2. Download tau from [Release page](https://github.com/avinor/tau/releases) for your OS
+3. Rename file to `tau` and add it to your `PATH`
+
 ## How it works
 
 1. Create a new module in terraform, or use an existing one. Lets use `avinor/kubernetes/azurerm` as an example.
 
-2. Create a tau configuration file that includes the module and sets input parameters
+2. Create a tau configuration file (ending in `.hcl` or `.tau`) that includes the module and sets input parameters
 
 ```terraform
 module {
@@ -62,10 +60,9 @@ backend "azurerm" {
 }
 ```
 
-6. Running `tau init` now will in additon to downloading module also create a `tau_override.tf` file in module directory that configures the backend.
+6. Running `tau init` will now in additon to downloading module also create a `tau_override.tf` file in module directory that configures the backend.
 
-
-7. If using multiple subscriptions and environments we might want to ensure this module is deployed in correct environment. Define an `environment_variables` block to set some env vars.
+7. If using multiple subscriptions and environments we might want to ensure this module is deployed in correct environment. Define an `environment_variables` block to set some env vars for terraform commands.
 
 ```terraform
 environment_variables {
@@ -73,7 +70,7 @@ environment_variables {
 }
 ```
 
-8. Some of the input variables might depend on output from another module / tau deployment. Defining a dependency it can read those outputs.
+8. Some of the input variables might depend on output from another module / tau deployment. By using a dependency it can pass those outputs and make them available for input variables.
 
 ```terraform
 dependency "vnet" {
@@ -93,9 +90,9 @@ inputs {
 }
 ```
 
-9. Running `tau plan` now first creates a temporary dependency module called `vnet` to resolve the output from that module. It will read the configuration file `vnet.hcl` and read the backend settings. It then creates a data source for remote state to read the output from other module. It never depends on executing the dependant module, just reading from its remote state. Once state has been read it will substitute that into input variables.
+9. When running `tau plan` now it will try to resolve the dependencies first by reading the output variables from dependencies remote state. By using the remote state it only needs access to the state file for dependency, and not require to execute any terraform commands. Once read from remote state it will use that as input variable when running `terraform plan`.
 
-10. In addition to reading from another module output it might be necessary to read secrets too. Any `data` blocks defined in configuration file will be resolved similar to dependencies.
+10. In addition to reading from another module output it might be necessary to read secrets too. Any `data` blocks defined in configuration file will be resolved first and sent as input to module.
 
 ```terraform
 data "azurerm_key_vault_secret" "sp" {
@@ -141,13 +138,15 @@ hook "set_access_key" {
 }
 ```
 
+It is now configured to execute hook and set environment variables for all executions in same folder. Any new configuration files in same folder will execute same hook.
+
 ## Remote state
 
 See documentation on how to handle [single](./docs/single_backend.md) and [multiple backends](./docs/multiple_backends.md).
 
 ## Configuration
 
-Any files named `.hcl` or `.tau` are read, where each file is one deployment of module. Following the how to use above this would be complete example code.
+Any files named `.hcl` or `.tau` are read, where each file is one deployment of module. Based on the example in "How it works" section above it could end up like this:
 
 ```terraform
 // One or many hooks that can trigger on prepare or finish
@@ -393,13 +392,13 @@ When using terraform in a CI pipeline it is recommended to first run plan, then 
 
 ## Comparison
 
-A short comparison to other similar tools and why we decided to create and use `tau`.
+There are other great tools for deploying terraform modules as well. This is a short comparison of them and why we wrote tau.
 
-### [Terragrunt](https://github.com/gruntwork-io/terragrunt)
+### Terragrunt
 
-Terragrunt is a nice tool to reuse modules for multiple deployments, however we disagreed on some of the design choices and also wanted to have a better way to handle secrets.
+[Terragrunt](https://github.com/gruntwork-io/terragrunt) is a nice tool to reuse modules for multiple deployments, however we disagreed on some of the design choices and also wanted to have a better way to handle secrets.
 
-We started using terragrunt but with the 0.12 release of terraform it stopped working until terragrunt updated to latest terraform syntax. This was a weakness in terragrunt being too dependant on terraform syntax. It now uses a newer syntax and therefore does not have this problem anymore.
+We started using terragrunt but with the 0.12 release of terraform it stopped working until terragrunt updated to latest terraform syntax. While we had this challenge we also had some issues on how to handle secrets and needed a better way for that.
 
 #### Backend defined in module
 
@@ -415,9 +414,9 @@ Terragrunt recommends using a `terraform_remote_state` data source to retrieve d
 
 Terragrunt don't have any way to handle secrets. It supports sending environment variables to commands, but cannot retrieve secrets from an Azure Key Vault for instance.
 
-### [Astro](https://github.com/uber/astro/)
+### Astro
 
-Astro is a tool created by Uber to manage terraform executions.
+[Astro]((https://github.com/uber/astro/)) is a tool created by Uber to manage terraform executions.
 
 #### YAML
 
