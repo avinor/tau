@@ -60,13 +60,13 @@ const (
 )
 
 var (
-	hookFile1 = fileFromString("hook1", hookTest1)
-	hookFile2 = fileFromString("hook2", hookTest2)
-	hookFile3 = fileFromString("hook3", hookTest3)
-	hookFile4 = fileFromString("hook4", hookTest4)
-	hookFile5 = fileFromString("hook5", hookTest5)
-	hookFile6 = fileFromString("hook6", hookTest6)
-	hookFile7 = fileFromString("hook7", hookTest7)
+	hookFile1, _ = NewFile("/hook1", []byte(hookTest1))
+	hookFile2, _ = NewFile("/hook2", []byte(hookTest2))
+	hookFile3, _ = NewFile("/hook3", []byte(hookTest3))
+	hookFile4, _ = NewFile("/hook4", []byte(hookTest4))
+	hookFile5, _ = NewFile("/hook5", []byte(hookTest5))
+	hookFile6, _ = NewFile("/hook6", []byte(hookTest6))
+	hookFile7, _ = NewFile("/hook7", []byte(hookTest7))
 )
 
 func TestHookMerge(t *testing.T) {

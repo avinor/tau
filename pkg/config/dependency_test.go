@@ -48,12 +48,12 @@ const (
 )
 
 var (
-	depFile1 = fileFromString("dep1", depTest1)
-	depFile2 = fileFromString("dep2", depTest2)
-	depFile3 = fileFromString("dep3", depTest3)
-	depFile4 = fileFromString("dep4", depTest4)
-	depFile5 = fileFromString("dep5", depTest5)
-	depFile6 = fileFromString("dep6", depTest6)
+	depFile1, _ = NewFile("/dep1", []byte(depTest1))
+	depFile2, _ = NewFile("/dep2", []byte(depTest2))
+	depFile3, _ = NewFile("/dep3", []byte(depTest3))
+	depFile4, _ = NewFile("/dep4", []byte(depTest4))
+	depFile5, _ = NewFile("/dep5", []byte(depTest5))
+	depFile6, _ = NewFile("/dep6", []byte(depTest6))
 )
 
 func TestDependencyMerge(t *testing.T) {

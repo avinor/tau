@@ -12,16 +12,6 @@ type ValidationResult struct {
 	Error  error
 }
 
-// fileFromString creates a File struct from string content
-func fileFromString(name string, content string) *File {
-	return &File{
-		Name:     name,
-		FullPath: name,
-		Content:  []byte(content),
-		children: []*File{},
-	}
-}
-
 // getConfigFromFiles parses the files and returns the config structures
 // If it fails to parse it will call t.Fatal to stop test
 func getConfigFromFiles(t *testing.T, files []*File) []*Config {

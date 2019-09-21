@@ -35,10 +35,10 @@ const (
 )
 
 var (
-	envFile1 = fileFromString("env1", envTest1)
-	envFile2 = fileFromString("env2", envTest2)
-	envFile3 = fileFromString("env3", envTest3)
-	envFile4 = fileFromString("env4", envTest4)
+	envFile1, _ = NewFile("/env1", []byte(envTest1))
+	envFile2, _ = NewFile("/env2", []byte(envTest2))
+	envFile3, _ = NewFile("/env3", []byte(envTest3))
+	envFile4, _ = NewFile("/env4", []byte(envTest4))
 )
 
 func TestEnvironmentRegexp(t *testing.T) {

@@ -34,10 +34,10 @@ const (
 )
 
 var (
-	dataFile1 = fileFromString("data1", dataTest1)
-	dataFile2 = fileFromString("data2", dataTest2)
-	dataFile3 = fileFromString("data3", dataTest3)
-	dataFile4 = fileFromString("data4", dataTest4)
+	dataFile1, _ = NewFile("/data1", []byte(dataTest1))
+	dataFile2, _ = NewFile("/data2", []byte(dataTest2))
+	dataFile3, _ = NewFile("/data3", []byte(dataTest3))
+	dataFile4, _ = NewFile("/data4", []byte(dataTest4))
 )
 
 type ExpectedData struct {

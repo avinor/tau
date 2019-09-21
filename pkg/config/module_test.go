@@ -30,9 +30,9 @@ const (
 )
 
 var (
-	moduleFile1 = fileFromString("module1", moduleTest1)
-	moduleFile2 = fileFromString("module2", moduleTest2)
-	moduleFile3 = fileFromString("module3", moduleTest3)
+	moduleFile1, _ = NewFile("/module1", []byte(moduleTest1))
+	moduleFile2, _ = NewFile("/module2", []byte(moduleTest2))
+	moduleFile3, _ = NewFile("/module3", []byte(moduleTest3))
 )
 
 func TestModuleMerge(t *testing.T) {

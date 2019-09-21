@@ -35,10 +35,10 @@ const (
 )
 
 var (
-	backendFile1 = fileFromString("backend1", backendTest1)
-	backendFile2 = fileFromString("backend2", backendTest2)
-	backendFile3 = fileFromString("backend3", backendTest3)
-	backendFile4 = fileFromString("backend4", backendTest4)
+	backendFile1, _ = NewFile("/backend1", []byte(backendTest1))
+	backendFile2, _ = NewFile("/backend2", []byte(backendTest2))
+	backendFile3, _ = NewFile("/backend3", []byte(backendTest3))
+	backendFile4, _ = NewFile("/backend4", []byte(backendTest4))
 )
 
 func TestBackendMerge(t *testing.T) {
