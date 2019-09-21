@@ -1,4 +1,4 @@
-package hclcontext
+package hcl
 
 import (
 	"os"
