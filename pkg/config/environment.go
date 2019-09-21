@@ -17,6 +17,12 @@ var (
 
 	// envVariableNotMatch is error if regexp for env variables do not match
 	envVariableNotMatch = errors.Errorf("environment variable contains invalid character")
+
+	// envCannotContainList is returned if some attributes in env variables is a list of items
+	envCannotContainList = errors.Errorf("environment variables cannot contain a list of items")
+
+	// envCannotContainMap is returned if some attributes in env variables is a map of items
+	envCannotContainMap = errors.Errorf("environment variables cannot contain a map of items")
 )
 
 // Environment variables that should be added to the shell commands run (specfifically terraform).
@@ -48,6 +54,14 @@ func (e Environment) Validate() (bool, error) {
 	for _, attr := range attrs {
 		if !envRegexp.MatchString(attr.Name) {
 			return false, envVariableNotMatch
+		}
+
+		if _, diags := hcl.ExprMap(attr.Expr); diags == nil {
+			return false, envCannotContainMap
+		}
+
+		if _, diags := hcl.ExprList(attr.Expr); diags == nil {
+			return false, envCannotContainList
 		}
 	}
 

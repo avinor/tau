@@ -32,6 +32,20 @@ const (
 			test123 = "number"
 		}
 	`
+
+	envTest5 = `
+		environment_variables {
+			test = {
+				mapitem = "list"
+			}
+		}
+	`
+
+	envTest6 = `
+		environment_variables {
+			list = ["test"]
+		}
+	`
 )
 
 var (
@@ -39,6 +53,8 @@ var (
 	envFile2, _ = NewFile("/env2", []byte(envTest2))
 	envFile3, _ = NewFile("/env3", []byte(envTest3))
 	envFile4, _ = NewFile("/env4", []byte(envTest4))
+	envFile5, _ = NewFile("/env5", []byte(envTest5))
+	envFile6, _ = NewFile("/env6", []byte(envTest6))
 )
 
 func TestEnvironmentRegexp(t *testing.T) {
@@ -145,6 +161,14 @@ func TestEnvironmentValidation(t *testing.T) {
 		{
 			[]*File{envFile3},
 			ValidationResult{Result: false, Error: envVariableNotMatch},
+		},
+		{
+			[]*File{envFile5},
+			ValidationResult{Result: false, Error: envCannotContainMap},
+		},
+		{
+			[]*File{envFile6},
+			ValidationResult{Result: false, Error: envCannotContainList},
 		},
 	}
 
