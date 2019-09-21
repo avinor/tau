@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/avinor/tau/pkg/config/comp"
+	helperhcl "github.com/avinor/tau/pkg/helpers/hcl"
 	"github.com/hashicorp/hcl2/hcl"
 )
 
@@ -19,7 +20,7 @@ func (i *Inputs) Merge(src *Inputs) error {
 		return nil
 	}
 
-	i.Config = hcl.MergeBodies([]hcl.Body{i.Config, src.Config})
+	i.Config = helperhcl.MergeBodiesWithOverides([]hcl.Body{i.Config, src.Config})
 
 	return nil
 }

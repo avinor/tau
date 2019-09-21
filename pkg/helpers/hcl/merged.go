@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	hcl2 "github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 )
 
 // MergeBodiesWithOverides merges several bodies into one. This is similar
@@ -97,6 +98,40 @@ func (mb mergedBodies) JustAttributes() (hcl2.Attributes, hcl2.Diagnostics) {
 
 		if thisAttrs != nil {
 			for name, attr := range thisAttrs {
+				if existing := attrs[name]; existing != nil {
+					if attrMap, diags := hcl2.ExprMap(attr.Expr); diags == nil {
+						existingAttrMap, diags := hcl2.ExprMap(attrs[name].Expr)
+						if diags != nil {
+							diags = diags.Append(&hcl2.Diagnostic{
+								Severity: hcl2.DiagError,
+								Summary:  "Incompatible types",
+								Detail: fmt.Sprintf(
+									"Argument %q has different types",
+									name,
+								),
+								Subject: &attr.NameRange,
+							})
+							continue
+						}
+
+						existingAttrMap = append(existingAttrMap, attrMap...)
+
+						items := make([]hclsyntax.ObjectConsItem, len(existingAttrMap))
+						for idx, existingAttr := range existingAttrMap {
+							items[idx] = hclsyntax.ObjectConsItem{
+								KeyExpr:   existingAttr.Key.(hclsyntax.Expression),
+								ValueExpr: existingAttr.Value.(hclsyntax.Expression),
+							}
+						}
+
+						attrs[name].Expr = &hclsyntax.ObjectConsExpr{
+							Items: items,
+						}
+
+						continue
+					}
+				}
+
 				attrs[name] = attr
 			}
 		}

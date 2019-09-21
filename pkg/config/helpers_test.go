@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/hcl2/hcl"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // ValidationResult is used when creating test struct to check validation results
@@ -45,6 +46,27 @@ func getBodyAttributes(body hcl.Body) (map[string]string, error) {
 		}
 
 		actual[attr.Name] = value.AsString()
+	}
+
+	return actual, nil
+}
+
+// getCtyBodyAttributes returns map of string -> cty.Value with all attributes
+// on hcl.Body. It will use nil evalContext so no functions can be used
+func getCtyBodyAttributes(body hcl.Body) (map[string]cty.Value, error) {
+	attrs, diags := body.JustAttributes()
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	actual := map[string]cty.Value{}
+	for _, attr := range attrs {
+		value, diags := attr.Expr.Value(nil)
+		if diags.HasErrors() {
+			return nil, diags
+		}
+
+		actual[attr.Name] = value
 	}
 
 	return actual, nil
