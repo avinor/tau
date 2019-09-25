@@ -30,7 +30,7 @@ all: build
 
 .PHONY: build
 build: bootstrap
-	GOBIN=$(BINDIR) $(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)'
+	$(GO) install $(GOFLAGS) -ldflags '$(LDFLAGS)'
 
 .PHONY: clean
 clean:
