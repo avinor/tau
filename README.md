@@ -22,6 +22,8 @@ Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.ter
 2. Download tau from [Release page](https://github.com/avinor/tau/releases) for your OS
 3. Rename file to `tau` and add it to your `PATH`
 
+Alternatively clone this repository and run `go install` to install latest version.
+
 ## How it works
 
 1. Create a new module in terraform, or use an existing one. Lets use `avinor/kubernetes/azurerm` as an example.
