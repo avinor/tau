@@ -12,6 +12,7 @@ require (
 	github.com/go-errors/errors v1.0.1
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/hcl/v2 v2.0.0
+	github.com/hashicorp/hcl2 v0.0.0-20190821123243-0c888d1241f6
 	github.com/hashicorp/terraform v0.12.8
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mattn/go-isatty v0.0.9
