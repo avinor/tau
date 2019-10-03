@@ -54,7 +54,7 @@ func newOutputCmd() *cobra.Command {
 	oc := &outputCmd{}
 
 	outputCmd := &cobra.Command{
-		Use:                   "output [-f SORUCE]",
+		Use:                   "output [-f SOURCE]",
 		Short:                 "Print output from module",
 		Long:                  outputLong,
 		Example:               outputExample,
