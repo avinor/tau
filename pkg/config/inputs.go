@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/avinor/tau/pkg/config/comp"
 	helperhcl "github.com/avinor/tau/pkg/helpers/hcl"
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // Inputs that are sent to module for deployment. Config is converted to a map of attributes.

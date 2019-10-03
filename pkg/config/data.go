@@ -5,7 +5,7 @@ import (
 
 	"github.com/avinor/tau/pkg/config/comp"
 
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // Data sources as defined by terraform. This is just a copy of the terraform model and is

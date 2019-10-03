@@ -1,8 +1,8 @@
 package comp
 
 import (
-	"github.com/hashicorp/hcl2/gohcl"
-	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl/v2/gohcl"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // Remainer includes a hcl remain tag to parse all remaining items in block

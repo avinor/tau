@@ -11,7 +11,7 @@ require (
 	github.com/go-cmd/cmd v1.0.5 // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/hashicorp/go-getter v1.4.0
-	github.com/hashicorp/hcl2 v0.0.0-20190909202536-66c59f909e25
+	github.com/hashicorp/hcl/v2 v2.0.0
 	github.com/hashicorp/terraform v0.12.8
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mattn/go-isatty v0.0.9

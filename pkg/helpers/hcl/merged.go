@@ -3,8 +3,8 @@ package hcl
 import (
 	"fmt"
 
-	hcl2 "github.com/hashicorp/hcl2/hcl"
-	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	hcl2 "github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 // MergeBodiesWithOverides merges several bodies into one. This is similar
