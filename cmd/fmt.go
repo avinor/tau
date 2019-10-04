@@ -10,7 +10,7 @@ import (
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/hcl2/hclwrite"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/spf13/cobra"
 )
 
