@@ -123,10 +123,8 @@ func (oc *outputCmd) run(args []string) error {
 		return err
 	}
 
-	for _, file := range files {
-		if err := oc.runFile(file); err != nil {
-			return err
-		}
+	if err := files.Walk(oc.runFile); err != nil {
+		return err
 	}
 
 	ui.NewLine()

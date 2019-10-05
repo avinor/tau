@@ -75,10 +75,8 @@ func (pc *planCmd) run(args []string) error {
 		return err
 	}
 
-	for _, file := range files {
-		if err := pc.runFile(file); err != nil {
-			return err
-		}
+	if err := files.Walk(pc.runFile); err != nil {
+		return err
 	}
 
 	ui.NewLine()

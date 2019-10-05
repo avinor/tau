@@ -129,10 +129,10 @@ func (pt *ptCmd) run(args []string) error {
 		return err
 	}
 
-	for _, file := range files {
-		if err := pt.runFile(file, args); err != nil {
-			return err
-		}
+	if err := files.Walk(func(file *loader.ParsedFile) error {
+		return pt.runFile(file, args)
+	}); err != nil {
+		return err
 	}
 
 	ui.NewLine()

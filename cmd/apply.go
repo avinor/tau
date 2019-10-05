@@ -94,10 +94,10 @@ func (ac *applyCmd) run(args []string) error {
 		ui.Header("Found tau.plan files, only applying valid plans...")
 	}
 
-	for _, file := range files {
-		if err := ac.runFile(file, !noPlansExists); err != nil {
-			return err
-		}
+	if err := files.Walk(func(file *loader.ParsedFile) error {
+		return ac.runFile(file, !noPlansExists)
+	}); err != nil {
+		return err
 	}
 
 	ui.NewLine()

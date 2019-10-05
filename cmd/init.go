@@ -133,10 +133,8 @@ func (ic *initCmd) run(args []string) error {
 		}
 	}
 
-	for _, file := range files {
-		if err := ic.runFile(file); err != nil {
-			return err
-		}
+	if err := files.Walk(ic.runFile); err != nil {
+		return err
 	}
 
 	ui.NewLine()

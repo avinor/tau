@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	hclcontext "github.com/avinor/tau/pkg/helpers/hcl"
-	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/zclconf/go-cty/cty"
 )

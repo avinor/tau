@@ -78,10 +78,8 @@ func (fc *fmtCmd) run(args []string) error {
 
 	ui.Header("Formatting files...")
 
-	for _, file := range files {
-		if err := fc.formatFile(file); err != nil {
-			return err
-		}
+	if err := files.Walk(fc.formatFile); err != nil {
+		return err
 	}
 
 	ui.NewLine()

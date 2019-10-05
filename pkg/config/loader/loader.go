@@ -92,8 +92,6 @@ func (l *Loader) Load(path string) (ParsedFileCollection, error) {
 		return nil, err
 	}
 
-	sortFiles(files)
-
 	return files, nil
 }
 
