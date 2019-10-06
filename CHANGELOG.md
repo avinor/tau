@@ -1,3 +1,8 @@
+## 0.3.0 (Not released)
+
+- Added `tau fmt` command to format tau files
+- Fixed execution order. Could sometimes execute dependencies too late.
+
 ## 0.2.0 (22. September 2019)
 
 Improved merging of blocks. Previously map attributes in inputs block with same name would cause an error with duplicate attributes. With this release it will merge the maps together.
