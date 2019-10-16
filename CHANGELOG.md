@@ -1,4 +1,8 @@
-## 0.3.0 (Not released)
+## 0.4.0 (Not released)
+
+Nothing so far
+
+## 0.3.0 (16. October 2019)
 
 - Added `tau fmt` command to format tau files
 - Fixed execution order. Could sometimes execute dependencies too late.
