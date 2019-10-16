@@ -2,6 +2,7 @@
 
 - Added `tau fmt` command to format tau files
 - Fixed execution order. Could sometimes execute dependencies too late.
+- Support for defining -f multiple times to load many files / folders at same time
 
 ## 0.2.0 (22. September 2019)
 
