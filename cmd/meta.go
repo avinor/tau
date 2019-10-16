@@ -24,7 +24,7 @@ var (
 type meta struct {
 	timeout            int
 	maxDependencyDepth int
-	file               string
+	files              []string
 
 	Engine *terraform.Engine
 	Getter *getter.Client
@@ -91,7 +91,7 @@ func (m *meta) init(args []string) error {
 func (m *meta) addMetaFlags(cmd *cobra.Command) {
 	f := cmd.Flags()
 	f.IntVar(&m.timeout, "timeout", 10, "timeout for http client when retrieving sources")
-	f.StringVarP(&m.file, "file", "f", ".", "file or directory to run configuration for")
+	f.StringArrayVarP(&m.files, "file", "f", []string{"."}, "file or directory to run configuration for")
 	f.IntVar(&m.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 }
 
@@ -101,7 +101,7 @@ func (m *meta) load() (loader.ParsedFileCollection, error) {
 	ui.Header("Loading files...")
 
 	// load all sources
-	files, err := m.Loader.Load(m.file)
+	files, err := m.Loader.Load(m.files)
 	if err != nil {
 		return nil, err
 	}

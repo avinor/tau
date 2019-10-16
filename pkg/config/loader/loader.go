@@ -78,14 +78,20 @@ func New(options *Options) *Loader {
 // Load files from path and return list of all ParsedFile found at path. Path can either
 // be a single file or a directory, in which case it will load all files found in
 // directory.
-func (l *Loader) Load(path string) (ParsedFileCollection, error) {
-	if path == "" {
-		return nil, sourcePathNotFoundError
-	}
+func (l *Loader) Load(paths []string) (ParsedFileCollection, error) {
+	files := make([]*ParsedFile, 0)
 
-	files, err := l.loadFromPath(path)
-	if err != nil {
-		return nil, err
+	for _, path := range paths {
+		if path == "" {
+			return nil, sourcePathNotFoundError
+		}
+
+		loaded, err := l.loadFromPath(path)
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, loaded...)
 	}
 
 	if err := l.loadDependencies(files, 0); err != nil {

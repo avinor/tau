@@ -127,10 +127,8 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	// if source defined then it can only deploy a single file, not folder
-	if len(files) > 1 {
-		if ic.source.Source != "" && paths.IsDir(ic.file) {
-			return sourceMustBeAFile
-		}
+	if len(files) > 1 && ic.source.Source != "" {
+		return sourceMustBeAFile
 	}
 
 	if err := files.Walk(ic.runFile); err != nil {
