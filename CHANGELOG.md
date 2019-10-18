@@ -37,12 +37,12 @@ Merging these 2 files together will now result in a map with `costCenter`, `reso
 
 FEATURES:
 
-* Support merging items in input maps together [#13](https://github.com/avinor/tau/issues/13)
+- Support merging items in input maps together [#13](https://github.com/avinor/tau/issues/13)
 
 IMPROVEMENTS:
 
-* Checks that `environment_variables` are not maps or lists
-* Improved merging of `backend`, `environment_variables` and `inputs`.
+- Checks that `environment_variables` are not maps or lists
+- Improved merging of `backend`, `environment_variables` and `inputs`.
 
 ## 0.1.0 (18. September 2019)
 
