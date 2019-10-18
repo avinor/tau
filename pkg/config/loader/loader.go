@@ -27,7 +27,7 @@ var (
 	// does not support look ahead this function makes sure to also check that it does
 	// not contain _auto keyword
 	moduleMatchFunc = func(str string) bool {
-		return moduleRegexp.MatchString(str) && !strings.Contains(str, "_auto")
+		return moduleRegexp.MatchString(str) && !strings.Contains(strings.ToLower(str), "_auto")
 	}
 )
 

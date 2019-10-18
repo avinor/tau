@@ -18,6 +18,8 @@ func TestAutoRegexp(t *testing.T) {
 		{"/tmp/test.tau", false},
 		{"test_auto.hcl", true},
 		{"test_auto.tau", true},
+		{"test_Auto.tau", true},
+		{"test_AUTO.tau", true},
 		{"test.hclr", false},
 		{"test.taur", false},
 		{"/tmp/hcl", false},
