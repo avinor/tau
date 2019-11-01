@@ -25,6 +25,7 @@ type ParsedFile struct {
 	Config       *config.Config
 	Env          map[string]string
 	Dependencies map[string]*ParsedFile
+	ShouldDelete bool
 
 	moduleDir string
 }
@@ -34,6 +35,11 @@ type ParsedFile struct {
 func NewParsedFile(filename string, content []byte, tauDir, cacheDir string) (*ParsedFile, error) {
 	if !filepath.IsAbs(filename) {
 		return nil, filePathMustBeAbsError
+	}
+
+	del, altered := shouldDeleteFile(filename)
+	if del {
+		filename = altered
 	}
 
 	configFile, err := config.NewFile(filename, content)
@@ -73,6 +79,7 @@ func NewParsedFile(filename string, content []byte, tauDir, cacheDir string) (*P
 		Config:       cfg,
 		Env:          env,
 		Dependencies: map[string]*ParsedFile{},
+		ShouldDelete: del,
 		moduleDir:    moduleDir,
 	}, nil
 }
