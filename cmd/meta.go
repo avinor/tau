@@ -28,6 +28,7 @@ type meta struct {
 	timeout            int
 	maxDependencyDepth int
 	files              []string
+	noAutoInit         bool
 
 	Engine *terraform.Engine
 	Getter *getter.Client
@@ -102,6 +103,7 @@ func (m *meta) addMetaFlags(cmd *cobra.Command) {
 	f := cmd.Flags()
 	f.IntVar(&m.timeout, "timeout", 10, "timeout for http client when retrieving sources")
 	f.StringArrayVarP(&m.files, "file", "f", []string{"."}, "file or directory to run configuration for")
+	f.BoolVar(&m.noAutoInit, "no-auto-init", false, "disable auto init")
 	f.IntVar(&m.maxDependencyDepth, "max-dependency-depth", 1, "defines max dependency depth when traversing dependencies") //nolint:lll
 }
 
@@ -156,6 +158,21 @@ func (m *meta) resolveDependencies(file *loader.ParsedFile) (bool, error) {
 	return true, nil
 }
 
+// autoInit can be called by any command to auto initialize the module
+func (m *meta) autoInit(file *loader.ParsedFile) error {
+	if file.IsInitialized() {
+		return nil
+	}
+
+	if m.noAutoInit {
+		ui.Debug("no-auto-init set, not initializing module")
+		return nil
+	}
+
+	return m.runInit(file, nil)
+}
+
+// runInit initializes the parsed file
 func (m *meta) runInit(file *loader.ParsedFile, options *initOptions) error {
 	if options == nil {
 		options = &initOptions{}
@@ -168,7 +185,7 @@ func (m *meta) runInit(file *loader.ParsedFile, options *initOptions) error {
 	if !options.reconfigure {
 		module := file.Config.Module
 
-		if options.source.Source != "" {
+		if options.source != nil && options.source.Source != "" {
 			module = options.source
 		}
 

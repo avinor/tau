@@ -71,8 +71,10 @@ func (pc *planCmd) run(args []string) error {
 	}
 
 	// Verify all modules have been initialized
-	if err := files.IsAllInitialized(); err != nil {
-		return err
+	if pc.meta.noAutoInit {
+		if err := files.IsAllInitialized(); err != nil {
+			return err
+		}
 	}
 
 	if err := files.Walk(pc.runFile); err != nil {
@@ -94,6 +96,8 @@ func (pc *planCmd) runFile(file *loader.ParsedFile) error {
 	if err := pc.Runner.Run(file, "prepare", "plan"); err != nil {
 		return err
 	}
+
+	pc.autoInit(file)
 
 	// Resolving dependencies
 
