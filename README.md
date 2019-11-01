@@ -392,6 +392,13 @@ When running `tau init -f virtual-network-hcl` it will load the `common_auto.hcl
 
 When using terraform in a CI pipeline it is recommended to first run plan, then have manual approval of some sort of the plan before running apply. To keep the same plan files from plan stage the entire `.tau` directory can be saved between the stages. Restoring the directory into same folder in apply stage it is possible to run `tau apply` directory to apply all changes from plan.
 
+## Delete deployment
+
+To destroy or delete some resources it will not be enough to just remove the tau file from repository. That will just cause next deployment to not do anything with those resources. To make sure it generates a new plan to destroy resources prefix the file with `DESTROY_` or `DELETE_`, commit code and let pipelines run. It will then create a plan to destroy those resources instead of updating them.
+
+- Prefix is case insensitve.
+- Once resources has been destroyed the files can be removed from repository.
+
 ## Comparison
 
 There are other great tools for deploying terraform modules as well. This is a short comparison of them and why we wrote tau.
