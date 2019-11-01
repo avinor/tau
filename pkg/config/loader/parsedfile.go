@@ -102,3 +102,8 @@ func (p ParsedFile) PlanFile() string {
 func (p ParsedFile) VariableFile() string {
 	return paths.Join(p.ModuleDir(), "terraform.tfvars")
 }
+
+// IsInitialized returns true if the module has been initialized already
+func (p ParsedFile) IsInitialized() bool {
+	return paths.IsDir(p.ModuleDir())
+}

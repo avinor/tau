@@ -3,7 +3,6 @@ package loader
 import (
 	"sync"
 
-	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/hashicorp/terraform/dag"
 	"github.com/hashicorp/terraform/tfdiags"
 	"github.com/pkg/errors"
@@ -26,7 +25,7 @@ type WalkFunc func(file *ParsedFile) error
 // IsAllInitialized checks if all modules have been initilized
 func (c ParsedFileCollection) IsAllInitialized() error {
 	for _, file := range c {
-		if !paths.IsDir(file.ModuleDir()) {
+		if !file.IsInitialized() {
 			return moduleNotInitError
 		}
 	}
