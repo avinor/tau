@@ -3,12 +3,15 @@ package cmd
 import (
 	"time"
 
+	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/getter"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/hooks"
 	hooksdef "github.com/avinor/tau/pkg/hooks/def"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/avinor/tau/pkg/terraform/def"
 	"github.com/fatih/color"
@@ -33,6 +36,13 @@ type meta struct {
 
 	TauDir   string
 	CacheDir string
+}
+
+type initOptions struct {
+	purge       bool
+	noOverrides bool
+	source      *config.Module
+	reconfigure bool
 }
 
 func (m *meta) init(args []string) error {
@@ -144,4 +154,67 @@ func (m *meta) resolveDependencies(file *loader.ParsedFile) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (m *meta) runInit(file *loader.ParsedFile, options *initOptions) error {
+	if options == nil {
+		options = &initOptions{}
+	}
+
+	ui.Header("Initializing tau...")
+
+	// Loading module
+
+	if !options.reconfigure {
+		module := file.Config.Module
+
+		if options.source.Source != "" {
+			module = options.source
+		}
+
+		if module.Version != "" {
+			ui.Info("- Loading module from terraform registry %s, version %s", module.Source, module.Version)
+		} else {
+			ui.Info("- Loading module from %s", module.Source)
+		}
+
+		if err := m.Getter.Get(module.GetSource(), file.ModuleDir()); err != nil {
+			return err
+		}
+	}
+
+	// Creating overrides
+
+	if !options.noOverrides {
+		ui.Info("- Creating overrides for backend")
+
+		if err := m.Engine.CreateOverrides(file); err != nil {
+			return err
+		}
+	}
+
+	// Executing terraform command
+
+	ui.NewLine()
+	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
+	ui.NewLine()
+
+	shellOptions := &shell.Options{
+		WorkingDirectory: file.ModuleDir(),
+		Stdout:           shell.Processors(processors.NewUI(ui.Info)),
+		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
+		Env:              file.Env,
+	}
+
+	extraArgs := getExtraArgs(m.Engine.Compatibility.GetInvalidArgs("init")...)
+
+	if options.reconfigure {
+		extraArgs = append(extraArgs, "-reconfigure", "-force-copy")
+	}
+
+	if err := m.Engine.Executor.Execute(shellOptions, "init", extraArgs...); err != nil {
+		return err
+	}
+
+	return nil
 }

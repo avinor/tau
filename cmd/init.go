@@ -6,9 +6,6 @@ import (
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/avinor/tau/pkg/shell"
-	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -17,10 +14,7 @@ import (
 type initCmd struct {
 	meta
 
-	purge       bool
-	noOverrides bool
-	source      *config.Module
-	reconfigure bool
+	options *initOptions
 }
 
 var (
@@ -56,7 +50,9 @@ var (
 
 func newInitCmd() *cobra.Command {
 	ic := &initCmd{
-		source: &config.Module{},
+		options: &initOptions{
+			source: &config.Module{},
+		},
 	}
 
 	initCmd := &cobra.Command{
@@ -82,11 +78,11 @@ func newInitCmd() *cobra.Command {
 	}
 
 	f := initCmd.Flags()
-	f.BoolVar(&ic.purge, "purge", true, "purge temporary folder before init")
-	f.BoolVar(&ic.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
-	f.BoolVar(&ic.reconfigure, "reconfigure", false, "reconfigure the backend")
-	f.StringVar(&ic.source.Source, "source", "", "override module source location")
-	f.StringVar(&ic.source.Version, "source-version", "", "override module source version, only valid together with source override")
+	f.BoolVar(&ic.options.purge, "purge", true, "purge temporary folder before init")
+	f.BoolVar(&ic.options.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
+	f.BoolVar(&ic.options.reconfigure, "reconfigure", false, "reconfigure the backend")
+	f.StringVar(&ic.options.source.Source, "source", "", "override module source location")
+	f.StringVar(&ic.options.source.Version, "source-version", "", "override module source version, only valid together with source override")
 
 	ic.addMetaFlags(initCmd)
 
@@ -97,17 +93,17 @@ func newInitCmd() *cobra.Command {
 func (ic *initCmd) processArgs(args []string) error {
 
 	// if source-version is defined then source is also required
-	if ic.source.Source == "" && ic.source.Version != "" {
+	if ic.options.source.Source == "" && ic.options.source.Version != "" {
 		return sourceArgumentRequired
 	}
 
-	if ic.reconfigure && ic.purge {
+	if ic.options.reconfigure && ic.options.purge {
 		return purgeAndReconfigureTogether
 	}
 
 	// Always purge if source is overwritten
-	if ic.source.Source != "" {
-		ic.purge = true
+	if ic.options.source.Source != "" {
+		ic.options.purge = true
 	}
 
 	return nil
@@ -115,7 +111,7 @@ func (ic *initCmd) processArgs(args []string) error {
 
 // run initialization command
 func (ic *initCmd) run(args []string) error {
-	if ic.purge {
+	if ic.options.purge {
 		ui.Debug("Purging temporary folder")
 		paths.Remove(ic.TauDir)
 	}
@@ -127,7 +123,7 @@ func (ic *initCmd) run(args []string) error {
 	}
 
 	// if source defined then it can only deploy a single file, not folder
-	if len(files) > 1 && ic.source.Source != "" {
+	if len(files) > 1 && ic.options.source.Source != "" {
 		return sourceMustBeAFile
 	}
 
@@ -143,38 +139,6 @@ func (ic *initCmd) run(args []string) error {
 func (ic *initCmd) runFile(file *loader.ParsedFile) error {
 	ui.Separator(file.Name)
 
-	ui.Header("Initializing tau...")
-
-	// Loading module
-
-	if !ic.reconfigure {
-		module := file.Config.Module
-
-		if ic.source.Source != "" {
-			module = ic.source
-		}
-
-		if module.Version != "" {
-			ui.Info("- Loading module from terraform registry %s, version %s", module.Source, module.Version)
-		} else {
-			ui.Info("- Loading module from %s", module.Source)
-		}
-
-		if err := ic.Getter.Get(module.GetSource(), file.ModuleDir()); err != nil {
-			return err
-		}
-	}
-
-	// Creating overrides
-
-	if !ic.noOverrides {
-		ui.Info("- Creating overrides for backend")
-
-		if err := ic.Engine.CreateOverrides(file); err != nil {
-			return err
-		}
-	}
-
 	// Running prepare hook
 
 	ui.Header("Executing prepare hooks...")
@@ -185,26 +149,7 @@ func (ic *initCmd) runFile(file *loader.ParsedFile) error {
 
 	// Executing terraform command
 
-	ui.NewLine()
-	ui.Info(color.New(color.FgGreen, color.Bold).Sprint("Tau has been successfully initialized!"))
-	ui.NewLine()
-
-	options := &shell.Options{
-		WorkingDirectory: file.ModuleDir(),
-		Stdout:           shell.Processors(processors.NewUI(ui.Info)),
-		Stderr:           shell.Processors(processors.NewUI(ui.Error)),
-		Env:              file.Env,
-	}
-
-	extraArgs := getExtraArgs(ic.Engine.Compatibility.GetInvalidArgs("init")...)
-
-	if ic.reconfigure {
-		extraArgs = append(extraArgs, "-reconfigure", "-force-copy")
-	}
-
-	if err := ic.Engine.Executor.Execute(options, "init", extraArgs...); err != nil {
-		return err
-	}
+	ic.runInit(file, ic.options)
 
 	// Executing finish hook
 
