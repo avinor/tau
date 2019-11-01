@@ -119,8 +119,10 @@ func (oc *outputCmd) run(args []string) error {
 	}
 
 	// Verify all modules have been initialized
-	if err := files.IsAllInitialized(); err != nil {
-		return err
+	if oc.meta.noAutoInit {
+		if err := files.IsAllInitialized(); err != nil {
+			return err
+		}
 	}
 
 	if err := files.Walk(oc.runFile); err != nil {
@@ -142,6 +144,8 @@ func (oc *outputCmd) runFile(file *loader.ParsedFile) error {
 	if err := oc.Runner.Run(file, "prepare", "output"); err != nil {
 		return err
 	}
+
+	oc.autoInit(file)
 
 	// Resolving dependencies
 

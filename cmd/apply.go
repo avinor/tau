@@ -77,8 +77,10 @@ func (ac *applyCmd) run(args []string) error {
 	}
 
 	// Verify all modules have been initialized
-	if err := files.IsAllInitialized(); err != nil {
-		return err
+	if ac.meta.noAutoInit {
+		if err := files.IsAllInitialized(); err != nil {
+			return err
+		}
 	}
 
 	// Check if any plans exist, if not then run plan first
@@ -115,6 +117,8 @@ func (ac *applyCmd) runFile(file *loader.ParsedFile, onlyPlans bool) error {
 	if err := ac.Runner.Run(file, "prepare", "apply"); err != nil {
 		return err
 	}
+
+	ac.autoInit(file)
 
 	// Resolving dependencies
 

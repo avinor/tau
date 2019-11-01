@@ -125,8 +125,10 @@ func (pt *ptCmd) run(args []string) error {
 	}
 
 	// Verify all modules have been initialized
-	if err := files.IsAllInitialized(); err != nil {
-		return err
+	if pt.meta.noAutoInit {
+		if err := files.IsAllInitialized(); err != nil {
+			return err
+		}
 	}
 
 	if err := files.Walk(func(file *loader.ParsedFile) error {
@@ -150,6 +152,8 @@ func (pt *ptCmd) runFile(file *loader.ParsedFile, args []string) error {
 	if err := pt.Runner.Run(file, "prepare", pt.name); err != nil {
 		return err
 	}
+
+	pt.autoInit(file)
 
 	// Executing terraform command
 

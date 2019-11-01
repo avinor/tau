@@ -77,8 +77,10 @@ func (dc *destroyCmd) run(args []string) error {
 	}
 
 	// Verify all modules have been initialized
-	if err := files.IsAllInitialized(); err != nil {
-		return err
+	if dc.meta.noAutoInit {
+		if err := files.IsAllInitialized(); err != nil {
+			return err
+		}
 	}
 
 	for _, file := range files {
@@ -102,6 +104,8 @@ func (dc *destroyCmd) runFile(file *loader.ParsedFile) error {
 	if err := dc.Runner.Run(file, "prepare", "destroy"); err != nil {
 		return err
 	}
+
+	dc.autoInit(file)
 
 	// Resolving dependencies
 
