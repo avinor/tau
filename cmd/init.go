@@ -82,7 +82,7 @@ func newInitCmd() *cobra.Command {
 	}
 
 	f := initCmd.Flags()
-	f.BoolVar(&ic.purge, "purge", false, "purge temporary folder before init")
+	f.BoolVar(&ic.purge, "purge", true, "purge temporary folder before init")
 	f.BoolVar(&ic.noOverrides, "no-overrides", false, "do not create any overrides (backend config)")
 	f.BoolVar(&ic.reconfigure, "reconfigure", false, "reconfigure the backend")
 	f.StringVar(&ic.source.Source, "source", "", "override module source location")
