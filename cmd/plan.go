@@ -130,6 +130,11 @@ func (pc *planCmd) runFile(file *loader.ParsedFile) error {
 
 	extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
 	extraArgs = append(extraArgs, fmt.Sprintf("-out=%s", file.PlanFile()))
+
+	if file.ShouldDelete {
+		extraArgs = append(extraArgs, "-destroy")
+	}
+
 	if err := pc.Engine.Executor.Execute(options, "plan", extraArgs...); err != nil {
 		return err
 	}
