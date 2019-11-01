@@ -3,8 +3,14 @@ package loader
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/avinor/tau/pkg/helpers/ui"
+)
+
+var (
+	// deleteFileRegex is regular expression to match files that should be deleted
+	deleteFileRegex = regexp.MustCompile("(?i)^(delete|destroy)_?")
 )
 
 // findFiles searches in path for files matching against a custom matching function. All files
@@ -46,4 +52,20 @@ func findFiles(path string, matchFunc func(string) bool) ([]string, error) {
 	ui.Debug("Found %v template file(s): %v", len(matches), matches)
 
 	return matches, nil
+}
+
+// shouldDeleteFile checks if the file should be deleted and returns true if it
+// should. It will also return an altered filename if file should be deleted.
+// Ignore altered filename if file should not be deleted
+func shouldDeleteFile(filename string) (bool, string) {
+	base := filepath.Base(filename)
+
+	if !deleteFileRegex.MatchString(base) {
+		return false, filename
+	}
+
+	dir := filepath.Dir(filename)
+	altered := deleteFileRegex.ReplaceAllString(base, "")
+
+	return true, filepath.Join(dir, altered)
 }
