@@ -41,7 +41,6 @@ func newVersionCmd() *cobra.Command {
 }
 
 func (ver *versionCmd) printVersion() {
-	ui.Info("tau %s", BuildTag)
-	ui.Info("Git Commit: %s", BuildSha)
-	ui.Info("Git Tree State: %s", GitTreeState)
+	ui.Info("tau version %s", BuildTag)
+	ui.Info("commit: %s", BuildSha)
 }
