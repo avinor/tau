@@ -1,6 +1,6 @@
 ## 0.4.0 (Not released)
 
-Nothing so far
+- Running auto init by default. If module has not been initialized before running `plan` or similar commands it will initialize it automatically. Can be turned off with `--no-auto-init` flag.
 
 ## 0.3.0 (16. October 2019)
 
