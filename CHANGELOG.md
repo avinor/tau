@@ -1,5 +1,7 @@
 ## 0.5.0 (Not released)
 
+- Added `--destroy` option for `plan` command to create plan to destroy all resources 
+
 ## 0.4.0 (02. November 2019)
 
 - Running auto init by default. If module has not been initialized before running `plan` or similar commands it will initialize it automatically. Can be turned off with `--no-auto-init` flag.

@@ -15,6 +15,8 @@ import (
 
 type planCmd struct {
 	meta
+
+	destroy bool
 }
 
 var (
@@ -57,6 +59,9 @@ func newPlanCmd() *cobra.Command {
 			return pc.run(args)
 		},
 	}
+
+	f := planCmd.Flags()
+	f.BoolVar(&pc.destroy, "destroy", false, "create plan to destroy resources")
 
 	pc.addMetaFlags(planCmd)
 
@@ -131,7 +136,7 @@ func (pc *planCmd) runFile(file *loader.ParsedFile) error {
 	extraArgs := getExtraArgs(pc.Engine.Compatibility.GetInvalidArgs("plan")...)
 	extraArgs = append(extraArgs, fmt.Sprintf("-out=%s", file.PlanFile()))
 
-	if file.ShouldDelete {
+	if file.ShouldDelete || pc.destroy {
 		extraArgs = append(extraArgs, "-destroy")
 	}
 
