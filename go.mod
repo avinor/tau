@@ -4,11 +4,10 @@ go 1.13
 
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
-	github.com/avinor/cmd v1.0.4
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-cmd/cmd v1.0.5 // indirect
+	github.com/go-cmd/cmd v1.0.5
 	github.com/go-errors/errors v1.0.1
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/hcl/v2 v2.0.0

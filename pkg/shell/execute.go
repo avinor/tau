@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/avinor/cmd"
-	"github.com/avinor/tau/pkg/helpers/ui"
+	"github.com/go-cmd/cmd"
 	"github.com/go-errors/errors"
+
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 // Execute a shell command
