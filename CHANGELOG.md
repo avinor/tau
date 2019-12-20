@@ -1,6 +1,7 @@
 ## 0.5.0 (Not released)
 
-- Added `--destroy` option for `plan` command to create plan to destroy all resources 
+- Added `--destroy` option for `plan` command to create plan to destroy all resources
+- Use go-cmd dependency instead of forked version
 
 ## 0.4.0 (02. November 2019)
 
