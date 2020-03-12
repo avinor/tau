@@ -1,5 +1,6 @@
-## 0.5.0 (Not released)
+## 0.6.0 (Not released)
 
+## 0.5.0 (12. March 2020)
 - Added `--destroy` option for `plan` command to create plan to destroy all resources
 - Use go-cmd dependency instead of forked version
 
