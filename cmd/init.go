@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 // initCmd with arguments and clients used to initialize a module
@@ -149,7 +150,9 @@ func (ic *initCmd) runFile(file *loader.ParsedFile) error {
 
 	// Executing terraform command
 
-	ic.runInit(file, ic.options)
+	if err := ic.runInit(file, ic.options); err != nil {
+		return err
+	}
 
 	// Executing finish hook
 
