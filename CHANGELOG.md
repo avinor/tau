@@ -1,5 +1,7 @@
 ## 0.6.0 (Not released)
 
+## 0.5.1 (14. April 2020)
+
 - Upgraded to go 1.14
 - Fixed issue #26 Fail if module does not exist
 
