@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/spf13/cobra"
 )
 
 var (

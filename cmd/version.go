@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/spf13/cobra"
+
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 var (

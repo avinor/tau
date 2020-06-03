@@ -1,14 +1,15 @@
 package cmd
 
 import (
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
+
 	"github.com/avinor/tau/internal/templates"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/shell"
 	"github.com/avinor/tau/pkg/shell/processors"
-	"github.com/fatih/color"
-	"github.com/spf13/cobra"
 )
 
 type destroyCmd struct {

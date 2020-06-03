@@ -1,6 +1,8 @@
 package ui
 
-import "os"
+import (
+	"os"
+)
 
 var (
 	// handler is a singleton handler, override with SetHandler function

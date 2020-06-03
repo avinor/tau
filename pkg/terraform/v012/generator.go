@@ -1,17 +1,18 @@
 package v012
 
 import (
+	"github.com/go-errors/errors"
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/gohcl"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	hclcontext "github.com/avinor/tau/pkg/helpers/hcl"
 	"github.com/avinor/tau/pkg/hooks"
 	"github.com/avinor/tau/pkg/terraform/def"
-	"github.com/go-errors/errors"
-	"github.com/hashicorp/hcl/v2/gohcl"
-	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // Generator implements the def.Generator interface and can generate files for terraform 0.12 version

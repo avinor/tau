@@ -3,9 +3,10 @@ package v012
 import (
 	"encoding/json"
 
-	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
+
+	"github.com/avinor/tau/pkg/shell/processors"
 )
 
 // OutputProcessor processes output from terrafrom and parses them into variables.

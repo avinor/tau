@@ -5,12 +5,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/ctytree"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/terraform/def"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // Engine that can process version specific terraform commands

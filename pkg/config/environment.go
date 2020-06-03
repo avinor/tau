@@ -3,12 +3,12 @@ package config
 import (
 	"regexp"
 
-	"github.com/avinor/tau/pkg/config/comp"
-
-	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/pkg/errors"
 	"github.com/zclconf/go-cty/cty"
+
+	"github.com/avinor/tau/pkg/config/comp"
 )
 
 var (

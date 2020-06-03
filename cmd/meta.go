@@ -3,6 +3,10 @@ package cmd
 import (
 	"time"
 
+	"github.com/fatih/color"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/getter"
@@ -14,9 +18,6 @@ import (
 	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/avinor/tau/pkg/terraform"
 	"github.com/avinor/tau/pkg/terraform/def"
-	"github.com/fatih/color"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 var (

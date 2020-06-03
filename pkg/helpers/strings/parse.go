@@ -1,6 +1,8 @@
 package strings
 
-import "regexp"
+import (
+	"regexp"
+)
 
 var (
 	outputRegexp = regexp.MustCompile("(?m:^\\s*\"?([^\"=\\s]*)\"?\\s*=\\s*\"?([^\"\\n]*)\"?$)")

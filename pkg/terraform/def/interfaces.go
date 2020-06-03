@@ -1,9 +1,10 @@
 package def
 
 import (
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/shell"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // DependencyProcessor can process a dependency and return the values from output.

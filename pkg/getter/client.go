@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/hashicorp/go-getter"
+
+	"github.com/avinor/tau/pkg/helpers/paths"
 )
 
 // Options for initialization a new getter client

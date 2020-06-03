@@ -4,6 +4,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-errors/errors"
+
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/config/loader"
 	pstrings "github.com/avinor/tau/pkg/helpers/strings"
@@ -11,7 +13,6 @@ import (
 	"github.com/avinor/tau/pkg/hooks/command"
 	"github.com/avinor/tau/pkg/hooks/def"
 	"github.com/avinor/tau/pkg/hooks/script"
-	"github.com/go-errors/errors"
 )
 
 var (

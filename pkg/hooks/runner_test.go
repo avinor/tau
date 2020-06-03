@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/avinor/tau/pkg/config"
 	"github.com/avinor/tau/pkg/helpers/strings"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldRun(t *testing.T) {

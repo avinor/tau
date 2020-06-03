@@ -3,10 +3,11 @@ package loader
 import (
 	"path/filepath"
 
-	"github.com/avinor/tau/pkg/config"
-	"github.com/avinor/tau/pkg/helpers/paths"
 	"github.com/pkg/errors"
 	"github.com/zclconf/go-cty/cty"
+
+	"github.com/avinor/tau/pkg/config"
+	"github.com/avinor/tau/pkg/helpers/paths"
 )
 
 var (

@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
-	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/spf13/cobra"
+
+	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/config/loader"
+	"github.com/avinor/tau/pkg/helpers/ui"
 )
 
 type fmtCmd struct {

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/avinor/tau/pkg/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/avinor/tau/pkg/config"
 )
 
 var (

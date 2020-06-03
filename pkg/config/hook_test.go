@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/avinor/tau/pkg/helpers/strings"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/avinor/tau/pkg/helpers/strings"
 )
 
 const (

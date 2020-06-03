@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/avinor/tau/internal/templates"
-	"github.com/avinor/tau/pkg/config/loader"
-	"github.com/avinor/tau/pkg/helpers/paths"
-	"github.com/avinor/tau/pkg/helpers/ui"
-	"github.com/avinor/tau/pkg/shell"
-	"github.com/avinor/tau/pkg/shell/processors"
 	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
+
+	"github.com/avinor/tau/internal/templates"
+	"github.com/avinor/tau/pkg/config/loader"
+	"github.com/avinor/tau/pkg/helpers/paths"
+	"github.com/avinor/tau/pkg/helpers/ui"
+	"github.com/avinor/tau/pkg/shell"
+	"github.com/avinor/tau/pkg/shell/processors"
 )
 
 type outputCmd struct {
