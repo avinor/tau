@@ -1,5 +1,5 @@
 ## 0.6.0 (Not released)
-- Upgrade terraform to v0.12.26
+- Upgrade terraform to v0.13.5
 
 ## 0.5.1 (14. April 2020)
 
