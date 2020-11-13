@@ -5,13 +5,13 @@ import (
 	"os"
 
 	"github.com/zclconf/go-cty/cty"
+	"golang.org/x/mod/semver"
 
 	"github.com/avinor/tau/pkg/config/loader"
 	"github.com/avinor/tau/pkg/helpers/ctytree"
 	"github.com/avinor/tau/pkg/helpers/ui"
 	"github.com/avinor/tau/pkg/terraform/def"
 	v012 "github.com/avinor/tau/pkg/terraform/v012"
-	"golang.org/x/mod/semver"
 )
 
 // Engine that can process version specific terraform commands
@@ -40,7 +40,7 @@ func NewEngine(options *def.Options) *Engine {
 	var executor def.Executor
 
 	switch {
-	case semver.Compare(version, "0.12") >= 0:
+	case semver.Compare("v"+version, "v0.12") >= 0:
 		v012Engine := v012.NewEngine(options)
 		compatibility = v012Engine
 		generator = v012Engine

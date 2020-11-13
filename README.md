@@ -18,7 +18,7 @@ Tau (Terraform Avinor Utility) is a thin wrapper for [Terraform](https://www.ter
 
 ## Installation
 
-1. Tau requires [terraform](https://www.terraform.io/) 0.13+, [download](https://www.terraform.io/downloads.html) and install first
+1. Tau requires [terraform](https://www.terraform.io/) 0.12+, [download](https://www.terraform.io/downloads.html) and install first
 2. Download tau from [Release page](https://github.com/avinor/tau/releases) for your OS
 3. Rename file to `tau` and add it to your `PATH`
 
