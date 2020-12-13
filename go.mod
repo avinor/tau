@@ -7,7 +7,7 @@ require (
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-cmd/cmd v1.2.1
+	github.com/go-cmd/cmd v1.3.0
 	github.com/go-errors/errors v1.1.1
 	github.com/hashicorp/go-getter v1.5.0
 	github.com/hashicorp/hcl/v2 v2.6.0
