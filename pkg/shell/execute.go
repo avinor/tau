@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/go-cmd/cmd"
 	"github.com/go-errors/errors"
@@ -14,6 +13,7 @@ import (
 
 // Execute a shell command
 func Execute(options *Options, command string, args ...string) error {
+
 	if options == nil {
 		options = &Options{}
 	}
@@ -42,12 +42,24 @@ func Execute(options *Options, command string, args ...string) error {
 	ui.Debug("command: %s %s", execCmd.Name, strings.Join(execCmd.Args, " "))
 
 	// Print STDOUT and STDERR lines streaming from Cmd
+	doneChan := make(chan struct{})
 	go func() {
-		for {
+
+		defer close(doneChan)
+
+		for execCmd.Stdout != nil || execCmd.Stderr != nil {
 			select {
-			case line := <-execCmd.Stdout:
+			case line, open := <-execCmd.Stdout:
+				if !open {
+					execCmd.Stdout = nil
+					continue
+				}
 				processLine(options.Stdout, line)
-			case line := <-execCmd.Stderr:
+			case line, open := <-execCmd.Stderr:
+				if !open {
+					execCmd.Stderr = nil
+					continue
+				}
 				processLine(options.Stderr, line)
 			}
 		}
@@ -55,9 +67,7 @@ func Execute(options *Options, command string, args ...string) error {
 
 	status := <-execCmd.Start()
 
-	for len(execCmd.Stdout) > 0 || len(execCmd.Stderr) > 0 {
-		time.Sleep(10 * time.Millisecond)
-	}
+	<-doneChan
 
 	if status.Error != nil {
 		return status.Error
