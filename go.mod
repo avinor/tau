@@ -1,6 +1,6 @@
 module github.com/avinor/tau
 
-go 1.14
+go 1.15
 
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
