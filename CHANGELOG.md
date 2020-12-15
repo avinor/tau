@@ -1,5 +1,7 @@
-## 0.6.0 (Not released)
-- Upgrade terraform to v0.13.5
+## 0.5.2 (Not released)
+- Fix possible race condition in use og go-cmd
+- Terraform 0.12.10
+- Upgraded to go 1.15
 
 ## 0.5.1 (14. April 2020)
 
