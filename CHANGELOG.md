@@ -1,4 +1,5 @@
-## 0.5.2 (Not released)
+## 0.5.2 (09. March 2021)
+
 - Fix possible race condition in use og go-cmd
 - Terraform 0.12.10
 - Upgraded to go 1.15
