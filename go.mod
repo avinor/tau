@@ -9,7 +9,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.3.0
 	github.com/go-errors/errors v1.1.1
-	github.com/hashicorp/go-getter v1.5.0
+	github.com/hashicorp/go-getter v1.5.11
 	github.com/hashicorp/hcl/v2 v2.6.0
 	github.com/hashicorp/terraform v0.12.10
 	github.com/kylelemons/godebug v1.1.0
