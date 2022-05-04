@@ -37,4 +37,4 @@ if [ -z "$KEY" ]; then
     KEY=$(jq -r '.backend.config.key' .terraform/terraform.tfstate)
 fi
 
-az storage blob upload -f output.tfstate --subscription $SUBSCRIPTION --account-name $STORAGE_ACCOUNT_NAME --container-name $CONTAINER_NAME --name $KEY
+az storage blob upload --overwrite -f output.tfstate --subscription $SUBSCRIPTION --account-name $STORAGE_ACCOUNT_NAME --container-name $CONTAINER_NAME --name $KEY
