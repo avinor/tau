@@ -1,5 +1,9 @@
+# DEPRECATED
+Tau is deprecated and will be archived. As Tau is no longer supported, please consider forking or using alternatives such as Terraform Enterprise or Terragrunt.
+
 # Tau
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 [![CircleCI](https://circleci.com/gh/avinor/tau.svg?style=svg)](https://circleci.com/gh/avinor/tau)
 [![Go Report Card](https://goreportcard.com/badge/github.com/avinor/tau)](https://goreportcard.com/report/github.com/avinor/tau)
 [![GoDoc](https://godoc.org/github.com/avinor/tau?status.svg)](https://godoc.org/github.com/avinor/tau)
